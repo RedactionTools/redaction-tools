@@ -1,0 +1,45 @@
+name: Deploy
+
+on:
+  push:
+    branches: [prod]
+  workflow_dispatch:
+    inputs:
+      server:
+        description: Server to deploy
+        required: true
+        type: choice
+        options: [prod]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - id: cfg
+        run: |
+          server="${{ github.event.inputs.server || github.ref_name }}"
+          # shellcheck disable=SC1090
+          source "deploy/servers/${server}.conf"
+          {
+            echo "server=${server}"
+            echo "host=${DEPLOY_HOST}"
+            echo "user=${DEPLOY_USER}"
+            echo "port=${DEPLOY_PORT:-22}"
+            echo "dir=${DEPLOY_DIR}"
+            echo "compose_file=${DEPLOY_COMPOSE_FILE}"
+          } >>"$GITHUB_OUTPUT"
+
+      - uses: appleboy/ssh-action@master
+        with:
+          host: ${{ steps.cfg.outputs.host }}
+          username: ${{ steps.cfg.outputs.user }}
+          port: ${{ steps.cfg.outputs.port }}
+          key: ${{ secrets[format('DEPLOY_{0}_SSH_KEY', steps.cfg.outputs.server)] }}
+          script: |
+            cd ${{ steps.cfg.outputs.dir }}
+            git fetch origin
+            git checkout ${{ steps.cfg.outputs.server }}
+            git reset --hard origin/${{ steps.cfg.outputs.server }}
+            docker compose -f ${{ steps.cfg.outputs.compose_file }} up -d --build

@@ -223,6 +223,11 @@ backend/media/
 .DS_Store
 .idea/
 
+# Deploy
+.env.*
+!.env.example
+/deploy/keys/
+
 # Frontend (Next.js / bun)
 # Not ignored on purpose: frontend/bun.lock and the Orval output under
 # frontend/src/lib/api/generated/, both of which CI checks for staleness.
