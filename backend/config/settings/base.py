@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     # Local
     "apps.core",
     "apps.accounts",
+    "apps.catalog",
 ]
 
 MIDDLEWARE = [
@@ -233,12 +234,37 @@ STORAGES = {
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# Throttling reads the default cache. LocMem is per process, so with several
+# gunicorn workers the effective limit is rate x workers - acceptable for a soft
+# anti-abuse control, and the reason this is an env var rather than a literal.
+CACHES = {
+    "default": {
+        "BACKEND": env("CACHE_BACKEND", default="django.core.cache.backends.locmem.LocMemCache"),
+        "LOCATION": env("CACHE_LOCATION", default="redaction-tools"),
+    }
+}
+
 MAILERS = {
     "default": {
         "BACKEND": env("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend"),
     },
 }
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="noreply@redaction-tools.com")
+
+# --- Catalog ---------------------------------------------------------------
+# Hosts the SSRF guard refuses outright, on top of the private-range check. The
+# defaults are this stack's own compose service names, so a dev environment
+# fails closed rather than discovering the hole in production.
+CATALOG_BLOCKED_HOSTS = env.list(
+    "CATALOG_BLOCKED_HOSTS", default=["localhost", "backend", "db", "qcluster", "frontend"]
+)
+
+# Per-account limits on the write endpoints. Login is the primary anti-abuse
+# control; these stop one account flooding a review queue.
+CATALOG_READ_RATE = env("CATALOG_READ_RATE", default="120/min")
+CATALOG_SUBMIT_RATE = env("CATALOG_SUBMIT_RATE", default="5/hour")
+CATALOG_CLAIM_RATE = env("CATALOG_CLAIM_RATE", default="10/day")
+CATALOG_MAX_OPEN_SUBMISSIONS = env.int("CATALOG_MAX_OPEN_SUBMISSIONS", default=5)
 
 LOGGING = {
     "version": 1,

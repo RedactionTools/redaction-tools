@@ -244,3 +244,4 @@ frontend/.env.*.local
 !frontend/src/**
 !frontend/public/
 !frontend/public/**
+docs/plan.md

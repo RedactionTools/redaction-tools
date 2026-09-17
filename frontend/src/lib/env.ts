@@ -10,8 +10,10 @@ import { z } from 'zod'
  */
 const clientSchema = z.object({
   NEXT_PUBLIC_API_URL: z.url().default('http://localhost:8007'),
+  NEXT_PUBLIC_SITE_URL: z.url().default('http://localhost:3007'),
 })
 
 export const clientEnv = clientSchema.parse({
   NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+  NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
 })

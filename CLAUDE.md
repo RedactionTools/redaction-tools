@@ -3,6 +3,8 @@
 Catalog/directory of redaction tools with benchmarks and a leaderboard.
 `backend/` is Django + django-ninja; `frontend/` is Next.js on bun.
 
+`DEVELOPMENT.md` covers setup, the auth flow and the schema pipeline.
+
 ## Use `make`, not the underlying tools
 
 `make help` lists every target. Targets are namespaced per component
@@ -50,6 +52,27 @@ server-rendered `/accounts/` allauth views.
 
 Google credentials come from environment variables, **not** a `SocialApp` row in
 the admin — configuring both raises `MultipleObjectsReturned`.
+
+## The catalog lives in `apps/catalog/`
+
+The parts that bite if you miss them:
+
+- **`Tool.is_listable()` is the public gate.** It reads related rows, so it runs in Python, not
+  SQL - which is why `ToolQuerySet.listable()` returns a list. Every public route filters
+  through it; a tool that fails it is a row, not a page.
+- **Filtering is OR within a dimension, AND across.** That means one chained `.filter()` per
+  dimension in `apps/catalog/filters.py`; a single combined `__in` would OR everything and turn
+  each added filter into a widening one.
+- **`PlanPrice.save()` pins anything non-crawler.** Staff and vendor figures are authoritative
+  by default, so the crawler (phase 2) can never overwrite one.
+- **Owners never write a price.** `PriceProposal` is the only path, and it publishes through the
+  admin as `source=VENDOR`, pinned and badged.
+- **Seed migrations are idempotent** and guarded by an existence check. They put 7 tools in every
+  test database, so a test asserting "the catalog is empty" will not hold.
+- Catalog routes and `sitemap.ts` are `force-dynamic`: `next build` runs with no backend (CI
+  builds the image), so anything prerendered would bake an empty catalog into the bundle.
+- `orval.config.ts` sets neither `useQuery` nor `useMutation` on purpose - each applies to every
+  operation, so setting either gives POSTs query hooks or GETs mutation hooks.
 
 ## Conventions
 

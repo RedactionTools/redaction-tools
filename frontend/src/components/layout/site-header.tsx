@@ -12,7 +12,13 @@ export function SiteHeader() {
           <Logo />
           Redaction Tools
         </Link>
-        <nav className="flex items-center gap-6">
+        <nav className="flex items-center gap-6 text-sm">
+          <Link href="/methodology" className="text-muted-foreground hover:text-foreground">
+            Methodology
+          </Link>
+          <Link href="/submit" className="text-muted-foreground hover:text-foreground">
+            Submit a tool
+          </Link>
           <UserMenu />
         </nav>
       </Container>

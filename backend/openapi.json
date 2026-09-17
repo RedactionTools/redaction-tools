@@ -55,6 +55,660 @@
           }
         ]
       }
+    },
+    "/api/v1/catalog/tools": {
+      "get": {
+        "operationId": "list_tools",
+        "summary": "List catalog tools",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "media",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Media"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "deployment",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Deployment"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "method",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Method"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "pricing_model",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Pricing Model"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "compliance",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Compliance"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "platform",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Platform"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "capability",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Capability"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "audience",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Audience"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "has_free_tier",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Has Free Tier"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "ordering",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ordering"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "default": 1,
+              "title": "Page",
+              "type": "integer"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "default": 50,
+              "title": "Page Size",
+              "type": "integer"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ToolPageOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
+    "/api/v1/catalog/tools/{slug}": {
+      "get": {
+        "operationId": "get_tool",
+        "summary": "One tool profile",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ToolDetailOut"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
+    "/api/v1/catalog/facets": {
+      "get": {
+        "operationId": "list_facets",
+        "summary": "Facet dimensions and counts",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/FacetDimensionOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
+    "/api/v1/catalog/stats": {
+      "get": {
+        "operationId": "get_catalog_stats",
+        "summary": "Catalog totals for the hub lede",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogStatsOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
+    "/api/v1/catalog/submissions": {
+      "post": {
+        "operationId": "submit_tool",
+        "summary": "Submit a tool for review",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ToolSubmissionOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "catalog"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ToolSubmissionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      },
+      "get": {
+        "operationId": "list_my_submissions",
+        "summary": "Submissions you have made",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ToolSubmissionOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "catalog"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/catalog/claims": {
+      "post": {
+        "operationId": "claim_tool",
+        "summary": "Claim a listing",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ToolClaimOut"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "catalog"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ToolClaimIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/catalog/claims/{claim_id}/verify": {
+      "post": {
+        "operationId": "verify_tool_claim",
+        "summary": "Confirm the emailed claim code",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "claim_id",
+            "schema": {
+              "title": "Claim Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ToolClaimOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorSchema"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "catalog"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ToolClaimVerifyIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/catalog/my-listings": {
+      "get": {
+        "operationId": "list_my_listings",
+        "summary": "Listings you maintain",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MyListingOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "catalog"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/catalog/my-listings/{slug}/revisions": {
+      "post": {
+        "operationId": "propose_tool_revision",
+        "summary": "Propose an edit to a listing you maintain",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ToolRevisionOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "catalog"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ToolRevisionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/catalog/my-listings/{slug}/price-proposals": {
+      "post": {
+        "operationId": "propose_tool_price",
+        "summary": "Propose a price correction",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PriceProposalOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "catalog"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PriceProposalIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/catalog/price-proposals/{proposal_id}": {
+      "delete": {
+        "operationId": "withdraw_price_proposal",
+        "summary": "Withdraw a pending price proposal",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "proposal_id",
+            "schema": {
+              "title": "Proposal Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "catalog"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -104,6 +758,1304 @@
           "is_staff"
         ],
         "title": "UserSchema",
+        "type": "object"
+      },
+      "ToolFilters": {
+        "properties": {
+          "media": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Media"
+          },
+          "deployment": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deployment"
+          },
+          "method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Method"
+          },
+          "pricing_model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pricing Model"
+          },
+          "compliance": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Compliance"
+          },
+          "platform": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Platform"
+          },
+          "capability": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capability"
+          },
+          "audience": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Audience"
+          },
+          "has_free_tier": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Has Free Tier"
+          },
+          "q": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Q"
+          },
+          "ordering": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ordering"
+          }
+        },
+        "title": "ToolFilters",
+        "type": "object"
+      },
+      "PriceSummaryOut": {
+        "description": "The one price a comparison row can honestly show, plus its provenance.",
+        "properties": {
+          "has_free_tier": {
+            "title": "Has Free Tier",
+            "type": "boolean"
+          },
+          "is_trial": {
+            "title": "Is Trial",
+            "type": "boolean"
+          },
+          "trial_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trial Days"
+          },
+          "is_quote_only": {
+            "title": "Is Quote Only",
+            "type": "boolean"
+          },
+          "from_amount": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "From Amount"
+          },
+          "currency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Currency"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit"
+          },
+          "billing_period": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Billing Period"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "is_pinned": {
+            "title": "Is Pinned",
+            "type": "boolean"
+          },
+          "source_note": {
+            "title": "Source Note",
+            "type": "string"
+          },
+          "source_url": {
+            "title": "Source Url",
+            "type": "string"
+          },
+          "last_verified_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Verified At"
+          },
+          "last_changed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Changed At"
+          },
+          "is_stale": {
+            "title": "Is Stale",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "has_free_tier",
+          "is_trial",
+          "trial_days",
+          "is_quote_only",
+          "from_amount",
+          "currency",
+          "unit",
+          "billing_period",
+          "source",
+          "is_pinned",
+          "source_note",
+          "source_url",
+          "last_verified_at",
+          "last_changed_at",
+          "is_stale"
+        ],
+        "title": "PriceSummaryOut",
+        "type": "object"
+      },
+      "ToolListItemOut": {
+        "properties": {
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "tagline": {
+            "title": "Tagline",
+            "type": "string"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          },
+          "logo_url": {
+            "title": "Logo Url",
+            "type": "string"
+          },
+          "is_first_party": {
+            "title": "Is First Party",
+            "type": "boolean"
+          },
+          "vendor": {
+            "$ref": "#/components/schemas/VendorOut"
+          },
+          "facet_slugs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Facet Slugs",
+            "type": "array"
+          },
+          "price_summary": {
+            "$ref": "#/components/schemas/PriceSummaryOut"
+          }
+        },
+        "required": [
+          "slug",
+          "name",
+          "tagline",
+          "summary",
+          "logo_url",
+          "is_first_party",
+          "vendor",
+          "facet_slugs",
+          "price_summary"
+        ],
+        "title": "ToolListItemOut",
+        "type": "object"
+      },
+      "ToolPageOut": {
+        "description": "One page of hub rows. `count` is the size of the whole filtered set.",
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ToolListItemOut"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "count",
+          "items"
+        ],
+        "title": "ToolPageOut",
+        "type": "object"
+      },
+      "VendorOut": {
+        "properties": {
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "hq_country": {
+            "title": "Hq Country",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slug",
+          "name",
+          "hq_country"
+        ],
+        "title": "VendorOut",
+        "type": "object"
+      },
+      "PlanLimitOut": {
+        "properties": {
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          },
+          "is_unlimited": {
+            "title": "Is Unlimited",
+            "type": "boolean"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "display": {
+            "title": "Display",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "label",
+          "value",
+          "unit",
+          "is_unlimited",
+          "note",
+          "display"
+        ],
+        "title": "PlanLimitOut",
+        "type": "object"
+      },
+      "PlanOut": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "tier_order": {
+            "title": "Tier Order",
+            "type": "integer"
+          },
+          "is_free_tier": {
+            "title": "Is Free Tier",
+            "type": "boolean"
+          },
+          "is_trial": {
+            "title": "Is Trial",
+            "type": "boolean"
+          },
+          "trial_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trial Days"
+          },
+          "is_enterprise_quote": {
+            "title": "Is Enterprise Quote",
+            "type": "boolean"
+          },
+          "min_seats": {
+            "title": "Min Seats",
+            "type": "integer"
+          },
+          "highlights": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Highlights",
+            "type": "array"
+          },
+          "source_url": {
+            "title": "Source Url",
+            "type": "string"
+          },
+          "verified_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verified At"
+          },
+          "prices": {
+            "items": {
+              "$ref": "#/components/schemas/PriceOut"
+            },
+            "title": "Prices",
+            "type": "array"
+          },
+          "limits": {
+            "items": {
+              "$ref": "#/components/schemas/PlanLimitOut"
+            },
+            "title": "Limits",
+            "type": "array"
+          }
+        },
+        "required": [
+          "code",
+          "name",
+          "tier_order",
+          "is_free_tier",
+          "is_trial",
+          "trial_days",
+          "is_enterprise_quote",
+          "min_seats",
+          "highlights",
+          "source_url",
+          "verified_at",
+          "prices",
+          "limits"
+        ],
+        "title": "PlanOut",
+        "type": "object"
+      },
+      "PriceOut": {
+        "properties": {
+          "amount": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Amount",
+            "type": "string"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          },
+          "billing_period": {
+            "title": "Billing Period",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "is_pinned": {
+            "title": "Is Pinned",
+            "type": "boolean"
+          },
+          "source_note": {
+            "title": "Source Note",
+            "type": "string"
+          },
+          "source_evidence_url": {
+            "title": "Source Evidence Url",
+            "type": "string"
+          },
+          "effective_from": {
+            "format": "date-time",
+            "title": "Effective From",
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "currency",
+          "unit",
+          "billing_period",
+          "source",
+          "is_pinned",
+          "source_note",
+          "source_evidence_url",
+          "effective_from"
+        ],
+        "title": "PriceOut",
+        "type": "object"
+      },
+      "ToolDetailOut": {
+        "properties": {
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "tagline": {
+            "title": "Tagline",
+            "type": "string"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          },
+          "logo_url": {
+            "title": "Logo Url",
+            "type": "string"
+          },
+          "is_first_party": {
+            "title": "Is First Party",
+            "type": "boolean"
+          },
+          "vendor": {
+            "$ref": "#/components/schemas/VendorOut"
+          },
+          "facet_slugs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Facet Slugs",
+            "type": "array"
+          },
+          "price_summary": {
+            "$ref": "#/components/schemas/PriceSummaryOut"
+          },
+          "website_url": {
+            "title": "Website Url",
+            "type": "string"
+          },
+          "pricing_url": {
+            "title": "Pricing Url",
+            "type": "string"
+          },
+          "docs_url": {
+            "title": "Docs Url",
+            "type": "string"
+          },
+          "description_md": {
+            "title": "Description Md",
+            "type": "string"
+          },
+          "vendor_copy_md": {
+            "title": "Vendor Copy Md",
+            "type": "string"
+          },
+          "pros": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Pros",
+            "type": "array"
+          },
+          "cons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Cons",
+            "type": "array"
+          },
+          "faq": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Faq",
+            "type": "array"
+          },
+          "plans": {
+            "items": {
+              "$ref": "#/components/schemas/PlanOut"
+            },
+            "title": "Plans",
+            "type": "array"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slug",
+          "name",
+          "tagline",
+          "summary",
+          "logo_url",
+          "is_first_party",
+          "vendor",
+          "facet_slugs",
+          "price_summary",
+          "website_url",
+          "pricing_url",
+          "docs_url",
+          "description_md",
+          "vendor_copy_md",
+          "pros",
+          "cons",
+          "faq",
+          "plans",
+          "updated_at"
+        ],
+        "title": "ToolDetailOut",
+        "type": "object"
+      },
+      "ErrorSchema": {
+        "description": "The body every documented 4xx carries.\n\nNinja documents only the success shape by default, so an error shape that the\nfrontend branches on has to be declared explicitly on the route.",
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          }
+        },
+        "required": [
+          "detail"
+        ],
+        "title": "ErrorSchema",
+        "type": "object"
+      },
+      "FacetDimensionOut": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "values": {
+            "items": {
+              "$ref": "#/components/schemas/FacetValueOut"
+            },
+            "title": "Values",
+            "type": "array"
+          }
+        },
+        "required": [
+          "code",
+          "label",
+          "values"
+        ],
+        "title": "FacetDimensionOut",
+        "type": "object"
+      },
+      "FacetValueOut": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "has_landing_page": {
+            "title": "Has Landing Page",
+            "type": "boolean"
+          },
+          "tool_count": {
+            "title": "Tool Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "code",
+          "slug",
+          "label",
+          "has_landing_page",
+          "tool_count"
+        ],
+        "title": "FacetValueOut",
+        "type": "object"
+      },
+      "CatalogStatsOut": {
+        "description": "What the homepage lede states: a count, a date and a price range.",
+        "properties": {
+          "tools": {
+            "title": "Tools",
+            "type": "integer"
+          },
+          "with_free_tier": {
+            "title": "With Free Tier",
+            "type": "integer"
+          },
+          "media": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Media",
+            "type": "array"
+          },
+          "cheapest_amount": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cheapest Amount"
+          },
+          "dearest_amount": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dearest Amount"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "generated_at": {
+            "format": "date-time",
+            "title": "Generated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tools",
+          "with_free_tier",
+          "media",
+          "cheapest_amount",
+          "dearest_amount",
+          "currency",
+          "generated_at"
+        ],
+        "title": "CatalogStatsOut",
+        "type": "object"
+      },
+      "ToolSubmissionOut": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "homepage_url": {
+            "title": "Homepage Url",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "reviewed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewed At"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "homepage_url",
+          "status",
+          "created_at",
+          "reviewed_at"
+        ],
+        "title": "ToolSubmissionOut",
+        "type": "object"
+      },
+      "ToolSubmissionIn": {
+        "description": "What a submitter may state. None of it is published verbatim.",
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "homepage_url": {
+            "title": "Homepage Url",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "vendor_name": {
+            "default": "",
+            "title": "Vendor Name",
+            "type": "string"
+          },
+          "pricing_url": {
+            "default": "",
+            "title": "Pricing Url",
+            "type": "string"
+          },
+          "docs_url": {
+            "default": "",
+            "title": "Docs Url",
+            "type": "string"
+          },
+          "logo_url": {
+            "default": "",
+            "title": "Logo Url",
+            "type": "string"
+          },
+          "proposed_media": {
+            "default": "",
+            "title": "Proposed Media",
+            "type": "string"
+          },
+          "proposed_deployment": {
+            "default": "",
+            "title": "Proposed Deployment",
+            "type": "string"
+          },
+          "proposed_method": {
+            "default": "",
+            "title": "Proposed Method",
+            "type": "string"
+          },
+          "notes": {
+            "default": "",
+            "title": "Notes",
+            "type": "string"
+          },
+          "contact_email": {
+            "default": "",
+            "title": "Contact Email",
+            "type": "string"
+          },
+          "submitter_is_owner": {
+            "default": false,
+            "title": "Submitter Is Owner",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "homepage_url",
+          "description"
+        ],
+        "title": "ToolSubmissionIn",
+        "type": "object"
+      },
+      "ToolClaimOut": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "tool": {
+            "title": "Tool",
+            "type": "string"
+          },
+          "work_email": {
+            "title": "Work Email",
+            "type": "string"
+          },
+          "domain_matched": {
+            "title": "Domain Matched",
+            "type": "boolean"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "email_verified_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email Verified At"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "tool",
+          "work_email",
+          "domain_matched",
+          "status",
+          "email_verified_at",
+          "created_at"
+        ],
+        "title": "ToolClaimOut",
+        "type": "object"
+      },
+      "ToolClaimIn": {
+        "properties": {
+          "tool": {
+            "title": "Tool",
+            "type": "string"
+          },
+          "work_email": {
+            "title": "Work Email",
+            "type": "string"
+          },
+          "role": {
+            "default": "",
+            "title": "Role",
+            "type": "string"
+          },
+          "evidence": {
+            "default": "",
+            "title": "Evidence",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tool",
+          "work_email"
+        ],
+        "title": "ToolClaimIn",
+        "type": "object"
+      },
+      "ToolClaimVerifyIn": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "title": "ToolClaimVerifyIn",
+        "type": "object"
+      },
+      "MyListingOut": {
+        "properties": {
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "tagline": {
+            "title": "Tagline",
+            "type": "string"
+          },
+          "pricing_url": {
+            "title": "Pricing Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slug",
+          "name",
+          "status",
+          "tagline",
+          "pricing_url"
+        ],
+        "title": "MyListingOut",
+        "type": "object"
+      },
+      "ToolRevisionOut": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "tool": {
+            "title": "Tool",
+            "type": "string"
+          },
+          "changes": {
+            "additionalProperties": true,
+            "title": "Changes",
+            "type": "object"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "admin_comment": {
+            "title": "Admin Comment",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "applied_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Applied At"
+          }
+        },
+        "required": [
+          "id",
+          "tool",
+          "changes",
+          "status",
+          "admin_comment",
+          "created_at",
+          "applied_at"
+        ],
+        "title": "ToolRevisionOut",
+        "type": "object"
+      },
+      "ToolRevisionIn": {
+        "properties": {
+          "changes": {
+            "additionalProperties": true,
+            "title": "Changes",
+            "type": "object"
+          }
+        },
+        "required": [
+          "changes"
+        ],
+        "title": "ToolRevisionIn",
+        "type": "object"
+      },
+      "PriceProposalOut": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "tool": {
+            "title": "Tool",
+            "type": "string"
+          },
+          "plan": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plan"
+          },
+          "amount": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          },
+          "billing_period": {
+            "title": "Billing Period",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "tool",
+          "plan",
+          "amount",
+          "currency",
+          "unit",
+          "billing_period",
+          "status",
+          "created_at"
+        ],
+        "title": "PriceProposalOut",
+        "type": "object"
+      },
+      "PriceProposalIn": {
+        "description": "A proposed figure. `plan` is the plan code, or null for a missing plan.",
+        "properties": {
+          "plan": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plan"
+          },
+          "proposed_plan_name": {
+            "default": "",
+            "title": "Proposed Plan Name",
+            "type": "string"
+          },
+          "amount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount"
+          },
+          "currency": {
+            "default": "USD",
+            "title": "Currency",
+            "type": "string"
+          },
+          "unit": {
+            "default": "",
+            "title": "Unit",
+            "type": "string"
+          },
+          "billing_period": {
+            "default": "",
+            "title": "Billing Period",
+            "type": "string"
+          },
+          "is_free_tier": {
+            "default": false,
+            "title": "Is Free Tier",
+            "type": "boolean"
+          },
+          "is_trial": {
+            "default": false,
+            "title": "Is Trial",
+            "type": "boolean"
+          },
+          "trial_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trial Days"
+          },
+          "is_enterprise_quote": {
+            "default": false,
+            "title": "Is Enterprise Quote",
+            "type": "boolean"
+          },
+          "rationale": {
+            "default": "",
+            "title": "Rationale",
+            "type": "string"
+          },
+          "evidence_url": {
+            "default": "",
+            "title": "Evidence Url",
+            "type": "string"
+          }
+        },
+        "title": "PriceProposalIn",
         "type": "object"
       }
     },

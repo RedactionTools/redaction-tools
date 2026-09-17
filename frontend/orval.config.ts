@@ -31,7 +31,11 @@ export default defineConfig({
           includeHttpResponseReturnType: false,
         },
         query: {
-          useQuery: true,
+          // `useQuery` and `useMutation` are deliberately unset. They are not
+          // verb filters - each one applies to EVERY operation, so setting
+          // either makes POSTs into queries (firing a write on render) or GETs
+          // into mutations. Left alone, orval splits by HTTP verb, which is what
+          // we want.
           signal: true,
           shouldExportKeys: true,
         },

@@ -8,6 +8,7 @@ from ninja import NinjaAPI
 from ninja.operation import Operation
 
 from apps.accounts.api import router as accounts_router
+from apps.catalog.api import router as catalog_router
 from apps.core.api import router as core_router
 
 
@@ -35,3 +36,4 @@ api = RedactionAPI(
 
 api.add_router("/", core_router)
 api.add_router("/auth/", accounts_router)
+api.add_router("/catalog/", catalog_router)

@@ -12,6 +12,9 @@ def test_operation_ids_are_view_names():
 
     assert schema["paths"]["/api/v1/health"]["get"]["operationId"] == "health"
     assert schema["paths"]["/api/v1/auth/me"]["get"]["operationId"] == "get_me"
+    assert schema["paths"]["/api/v1/catalog/tools"]["get"]["operationId"] == "list_tools"
+    assert schema["paths"]["/api/v1/catalog/tools/{slug}"]["get"]["operationId"] == "get_tool"
+    assert schema["paths"]["/api/v1/catalog/stats"]["get"]["operationId"] == "get_catalog_stats"
 
 
 def test_operation_ids_are_unique():
