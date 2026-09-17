@@ -17,29 +17,31 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      # Server targets come from repository variables rather than a file in the
+      # repo, so a public checkout never carries a hostname. Set them under
+      # Settings > Secrets and variables > Actions. deploy/servers/*.conf is the
+      # local equivalent, used by the make deploy-* targets.
       - id: cfg
+        run: echo "server=${{ github.event.inputs.server || github.ref_name }}" >>"$GITHUB_OUTPUT"
+
+      - name: Check the target is configured
+        env:
+          HOST: ${{ vars[format('DEPLOY_{0}_HOST', steps.cfg.outputs.server)] }}
         run: |
-          server="${{ github.event.inputs.server || github.ref_name }}"
-          # shellcheck disable=SC1090
-          source "deploy/servers/${server}.conf"
-          {
-            echo "server=${server}"
-            echo "host=${DEPLOY_HOST}"
-            echo "user=${DEPLOY_USER}"
-            echo "port=${DEPLOY_PORT:-22}"
-            echo "dir=${DEPLOY_DIR}"
-            echo "compose_file=${DEPLOY_COMPOSE_FILE}"
-          } >>"$GITHUB_OUTPUT"
+          if [ -z "$HOST" ]; then
+            echo "::error::Set the DEPLOY_${{ steps.cfg.outputs.server }}_HOST repository variable (see DEPLOY.md)."
+            exit 1
+          fi
 
       - uses: appleboy/ssh-action@master
         with:
-          host: ${{ steps.cfg.outputs.host }}
-          username: ${{ steps.cfg.outputs.user }}
-          port: ${{ steps.cfg.outputs.port }}
+          host: ${{ vars[format('DEPLOY_{0}_HOST', steps.cfg.outputs.server)] }}
+          username: ${{ vars[format('DEPLOY_{0}_USER', steps.cfg.outputs.server)] || 'deploy' }}
+          port: ${{ vars[format('DEPLOY_{0}_PORT', steps.cfg.outputs.server)] || 22 }}
           key: ${{ secrets[format('DEPLOY_{0}_SSH_KEY', steps.cfg.outputs.server)] }}
           script: |
-            cd ${{ steps.cfg.outputs.dir }}
+            cd ${{ vars[format('DEPLOY_{0}_DIR', steps.cfg.outputs.server)] || '/srv/redaction-tools' }}
             git fetch origin
             git checkout ${{ steps.cfg.outputs.server }}
             git reset --hard origin/${{ steps.cfg.outputs.server }}
-            docker compose -f ${{ steps.cfg.outputs.compose_file }} up -d --build
+            docker compose -f ${{ vars[format('DEPLOY_{0}_COMPOSE_FILE', steps.cfg.outputs.server)] || 'docker-compose-prod.yml' }} up -d --build

@@ -8,23 +8,41 @@ Docker Compose installed.
 
 ## Servers
 
-| Name   | Branch | Config                       | Compose file             |
-| ------ | ------ | ----------------------------- | ------------------------- |
-| `prod` | `prod` | `deploy/servers/prod.conf`     | `docker-compose-prod.yml` |
+| Name   | Branch | Local config               | Compose file              |
+| ------ | ------ | -------------------------- | ------------------------- |
+| `prod` | `prod` | `deploy/servers/prod.conf` | `docker-compose-prod.yml` |
 
-`deploy/servers/prod.conf` is committed and non-secret — it only names the
-host, user, port, deploy directory, and compose file. Adding a second server
-(e.g. `staging`) means copying that file to `deploy/servers/staging.conf`,
-adding `staging` to the `branches:`/`options:` lists in
-`.github/workflows/deploy.yml`, and running `make deploy-setup SERVER=staging`
-once. Nothing else in this design changes per server.
+A server target is named in two places, because two different things need it.
+
+**GitHub Actions reads repository variables**, not a file. This repository is
+public, so the hostname is not committed. Set these under *Settings → Secrets
+and variables → Actions → Variables*, named for the server:
+
+| Variable | Required | Default |
+| --- | --- | --- |
+| `DEPLOY_PROD_HOST` | yes | — (the workflow fails with a clear error if unset) |
+| `DEPLOY_PROD_USER` | no | `deploy` |
+| `DEPLOY_PROD_PORT` | no | `22` |
+| `DEPLOY_PROD_DIR` | no | `/srv/redaction-tools` |
+| `DEPLOY_PROD_COMPOSE_FILE` | no | `docker-compose-prod.yml` |
+
+**The `make deploy-*` targets read `deploy/servers/<server>.conf`** on your own
+machine. That file is gitignored; copy `prod.conf.example` and fill it in. It
+holds the same values, so the two stay in step by hand — a small cost for
+keeping the host out of a public repo.
+
+Adding a second server (e.g. `staging`) means a `deploy/servers/staging.conf`
+locally, a matching `DEPLOY_STAGING_*` variable set, adding `staging` to the
+`branches:`/`options:` lists in `.github/workflows/deploy.yml`, and running
+`make deploy-setup SERVER=staging` once.
 
 ## How a deploy runs
 
 1. `git push origin prod` (or `make deploy SERVER=prod` to re-trigger without
    a new commit).
-2. `.github/workflows/deploy.yml` sources `deploy/servers/prod.conf`, then
-   SSHes into the VM using the `DEPLOY_PROD_SSH_KEY` GitHub secret and runs:
+2. `.github/workflows/deploy.yml` reads the `DEPLOY_PROD_*` repository
+   variables, then SSHes into the VM using the `DEPLOY_PROD_SSH_KEY` GitHub
+   secret and runs:
    ```
    cd $DEPLOY_DIR
    git fetch origin
@@ -114,8 +132,10 @@ which exist yet for `prod`:
 
 1. Provision an Ubuntu VM with Docker + the Compose plugin installed, and a
    `deploy` user with SSH access.
-2. Fill in the real `DEPLOY_HOST` in `deploy/servers/prod.conf` (currently a
-   placeholder) and commit it.
+2. Set the `DEPLOY_PROD_HOST` repository variable to the VM's hostname, and
+   copy `deploy/servers/prod.conf.example` to `prod.conf` with the same value
+   for the local `make deploy-*` targets. The `.conf` is gitignored - do not
+   commit it.
 3. Run `make deploy-setup SERVER=prod` from a machine with SSH access to the
    VM and an authenticated `gh` CLI. This generates the trigger keypair,
    installs it on the VM, registers the `DEPLOY_PROD_SSH_KEY` GitHub secret,

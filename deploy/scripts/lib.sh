@@ -8,7 +8,10 @@ require_server() {
 	local server="$1"
 	local conf="$DEPLOY_ROOT/servers/${server}.conf"
 	if [[ ! -f "$conf" ]]; then
+		# Server configs are gitignored, so this is the expected state in a
+		# fresh clone rather than a mistake.
 		echo "error: no such server config: $conf" >&2
+		echo "       copy $DEPLOY_ROOT/servers/prod.conf.example and fill it in" >&2
 		exit 1
 	fi
 	# shellcheck disable=SC1090

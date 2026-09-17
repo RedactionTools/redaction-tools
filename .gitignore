@@ -227,6 +227,10 @@ backend/media/
 .env.*
 !.env.example
 /deploy/keys/
+# Server targets are per-deployment, not repo content. The .example is the
+# documented contract, same pattern as .env / .env.example.
+/deploy/servers/*
+!/deploy/servers/*.example
 
 # Frontend (Next.js / bun)
 # Not ignored on purpose: frontend/bun.lock and the Orval output under
