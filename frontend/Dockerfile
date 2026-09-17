@@ -22,6 +22,10 @@ FROM base AS builder
 # origin has to be known here rather than at container start.
 ARG NEXT_PUBLIC_API_URL=http://localhost:8007
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+# The canonical public origin. It ends up in metadataBase, every sitemap <loc>,
+# robots.txt and every JSON-LD @id, so a wrong value here is published SEO.
+ARG NEXT_PUBLIC_SITE_URL=http://localhost:3007
+ENV NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL}
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN bun run build
