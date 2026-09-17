@@ -1,0 +1,52 @@
+@import 'tailwindcss';
+
+/* Tailwind v4 dropped `darkMode: 'class'`; the variant is declared here instead.
+   next-themes puts `.dark` on <html>. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Design is deliberately deferred: these are neutral placeholders. The @theme
+   block only generates the utility names - the :root / .dark blocks below are
+   what actually carry the values, so a later redesign edits one place. */
+@theme {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-ring: var(--ring);
+  --color-ok: var(--ok);
+  --color-ok-subtle: var(--ok-subtle);
+  --color-warn: var(--warn);
+  --color-warn-subtle: var(--warn-subtle);
+
+  --radius-card: 0.75rem;
+}
+
+:root {
+  --background: oklch(0.99 0 0);
+  --foreground: oklch(0.21 0 0);
+  --surface: oklch(1 0 0);
+  --muted: oklch(0.95 0 0);
+  --muted-foreground: oklch(0.52 0 0);
+  --border: oklch(0.91 0 0);
+  --ring: oklch(0.55 0 0);
+  --ok: oklch(0.52 0.13 155);
+  --ok-subtle: oklch(0.95 0.03 155);
+  --warn: oklch(0.55 0.15 55);
+  --warn-subtle: oklch(0.96 0.04 75);
+}
+
+.dark {
+  --background: oklch(0.16 0 0);
+  --foreground: oklch(0.97 0 0);
+  --surface: oklch(0.2 0 0);
+  --muted: oklch(0.26 0 0);
+  --muted-foreground: oklch(0.71 0 0);
+  --border: oklch(0.31 0 0);
+  --ring: oklch(0.7 0 0);
+  --ok: oklch(0.76 0.14 155);
+  --ok-subtle: oklch(0.28 0.05 155);
+  --warn: oklch(0.79 0.14 70);
+  --warn-subtle: oklch(0.3 0.06 70);
+}

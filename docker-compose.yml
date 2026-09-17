@@ -1,0 +1,87 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-redaction}
+      POSTGRES_USER: ${POSTGRES_USER:-redaction}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-redaction}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-redaction} -d ${POSTGRES_DB:-redaction}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py runserver 0.0.0.0:8007"
+    environment: &backend_env
+      DJANGO_SETTINGS_MODULE: ${DJANGO_SETTINGS_MODULE:-config.settings.local}
+      SECRET_KEY: ${SECRET_KEY:?set SECRET_KEY in .env}
+      DEBUG: ${DEBUG:-true}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1,backend}
+      CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:-http://localhost:8007}
+      DATABASE_URL: postgres://${POSTGRES_USER:-redaction}:${POSTGRES_PASSWORD:-redaction}@db:5432/${POSTGRES_DB:-redaction}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3007}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3007}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+    volumes:
+      - ./backend:/app
+    ports:
+      - "${BACKEND_PORT:-8007}:8007"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  qcluster:
+    build:
+      context: ./backend
+    command: python manage.py qcluster
+    environment: *backend_env
+    volumes:
+      - ./backend:/app
+    depends_on:
+      db:
+        condition: service_healthy
+      backend:
+        condition: service_started
+
+  frontend:
+    build:
+      context: ./frontend
+      # `deps` has node_modules but no build output: the dev server compiles
+      # from the bind-mounted source, mirroring how the backend service runs.
+      target: deps
+    command: bun run dev --port ${FRONTEND_PORT:-3007} --hostname 0.0.0.0
+    environment:
+      NODE_ENV: development
+      # The browser reaches Django on the host; this container reaches it by
+      # service name. Both are needed - see src/lib/api/base-url.ts.
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8007}
+      API_INTERNAL_URL: ${API_INTERNAL_URL:-http://backend:8007}
+      AUTH_URL: ${AUTH_URL:-http://localhost:3007}
+      AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET in .env}
+      AUTH_TRUST_HOST: "true"
+      # Must match the backend's GOOGLE_CLIENT_ID: allauth checks the audience.
+      AUTH_GOOGLE_ID: ${GOOGLE_CLIENT_ID:-}
+      AUTH_GOOGLE_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+    volumes:
+      - ./frontend:/app
+      # Keep the image's node_modules; the host's are the wrong platform.
+      - /app/node_modules
+      - /app/.next
+    ports:
+      - "${FRONTEND_PORT:-3007}:${FRONTEND_PORT:-3007}"
+    depends_on:
+      backend:
+        condition: service_started
+
+volumes:
+  postgres_data:

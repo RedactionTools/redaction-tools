@@ -1,0 +1,76 @@
+[project]
+name = "redaction-tools-backend"
+version = "0.1.0"
+description = "Backend API for redaction-tools.com - catalog of redaction tools with benchmarks"
+requires-python = ">=3.13"
+dependencies = [
+    "django>=6.1,<6.2",
+    "django-ninja>=1.7",
+    "django-allauth[headless,headless-spec,socialaccount]>=65.19",
+    "pyjwt[crypto]>=2.10",
+    "django-q2>=1.11",
+    "ninja-api-key>=2.0",
+    "django-unfold>=0.106",
+    "django-environ>=0.14",
+    "psycopg[binary]>=3.3",
+    "whitenoise>=6.12",
+    "gunicorn>=26.0",
+    "django-cors-headers>=4.9.0",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.16",
+    "pytest>=8.4",
+    "pytest-django>=4.14",
+    "pytest-cov>=7.0",
+    "pre-commit>=4.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+extend-exclude = ["*/migrations/*"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "C4",   # flake8-comprehensions
+    "DJ",   # flake8-django
+    "S",    # flake8-bandit
+    "BLE",  # flake8-blind-except
+    "SIM",  # flake8-simplify
+    "RUF",  # ruff-specific
+]
+ignore = [
+    "RUF012",  # mutable class attrs need ClassVar - noisy with Django/admin classes
+    "S105",    # "hardcoded password" - fires on every token-type constant
+    "S106",    # same, for keyword arguments named `password`
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["apps", "config"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101"]           # asserts are the point of a test
+"conftest.py" = ["S101"]
+"config/settings/*" = ["F405"]  # star-imported base settings
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.test"
+python_files = ["test_*.py"]
+addopts = "--strict-markers --strict-config --reuse-db"
+testpaths = ["tests"]
+
+[tool.coverage.run]
+source = ["apps", "config"]
+omit = ["*/migrations/*", "*/tests/*"]
+
+[tool.coverage.report]
+skip_covered = true
+show_missing = true
