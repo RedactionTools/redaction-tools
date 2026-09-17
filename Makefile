@@ -121,6 +121,32 @@ down:  ## Stop the stack
 logs:  ## Tail the stack logs
 	docker compose logs -f
 
+# --- Deploy ------------------------------------------------------------
+
+.PHONY: deploy-setup
+deploy-setup:  ## One-time bootstrap for SERVER (keys, secrets, branch, VM clone)
+	deploy/scripts/setup.sh $(SERVER)
+
+.PHONY: deploy-env-put
+deploy-env-put:  ## Push local .env.$(SERVER) to the VM
+	deploy/scripts/env.sh put $(SERVER)
+
+.PHONY: deploy-env-get
+deploy-env-get:  ## Pull the VM's .env down to .env.$(SERVER)
+	deploy/scripts/env.sh get $(SERVER)
+
+.PHONY: deploy
+deploy:  ## Re-trigger the deploy workflow for SERVER
+	deploy/scripts/deploy.sh $(SERVER)
+
+.PHONY: deploy-logs
+deploy-logs:  ## Tail SERVER's remote container logs
+	deploy/scripts/logs.sh $(SERVER)
+
+.PHONY: deploy-restart
+deploy-restart:  ## Recreate SERVER's containers without rebuilding
+	deploy/scripts/restart.sh $(SERVER)
+
 # --- Aggregates ------------------------------------------------------------
 
 .PHONY: install
