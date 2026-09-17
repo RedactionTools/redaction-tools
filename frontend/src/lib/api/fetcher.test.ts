@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { ApiError } from '@/lib/api/api-error'
 import { customFetch } from '@/lib/api/fetcher'
@@ -15,6 +15,10 @@ function jsonResponse(body: unknown, status = 200): Response {
 
 beforeEach(() => {
   fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(jsonResponse({ status: 'ok' }))
+})
+
+afterEach(() => {
+  vi.unstubAllGlobals()
 })
 
 describe('customFetch', () => {
@@ -65,6 +69,26 @@ describe('customFetch', () => {
     fetchSpy.mockResolvedValue(new Response(null, { status: 204 }))
 
     await expect(customFetch('/api/v1/thing', { method: 'DELETE' })).resolves.toBeUndefined()
+  })
+
+  it('tells Django the edge already terminated TLS on a server-side call', async () => {
+    // Server-rendered calls go straight to gunicorn over the compose network as
+    // plain HTTP. production.py sets SECURE_SSL_REDIRECT, so without this header
+    // Django answers 301 to https://backend:8007 - a port speaking no TLS - and
+    // the render hangs until it times out.
+    vi.stubGlobal('window', undefined)
+
+    await customFetch('/api/v1/catalog/tools', { method: 'GET' })
+
+    const headers = new Headers(fetchSpy.mock.calls[0][1]?.headers)
+    expect(headers.get('X-Forwarded-Proto')).toBe('https')
+  })
+
+  it('never sends that header from the browser, where it would force a preflight', async () => {
+    await customFetch('/api/v1/catalog/tools', { method: 'GET' })
+
+    const headers = new Headers(fetchSpy.mock.calls[0][1]?.headers)
+    expect(headers.has('X-Forwarded-Proto')).toBe(false)
   })
 
   it('exposes the failing url on the error', async () => {

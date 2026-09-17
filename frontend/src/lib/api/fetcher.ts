@@ -18,6 +18,15 @@ export const customFetch = async <T>(url: string, options: RequestInit = {}): Pr
   const token = await getAccessToken()
   if (token) headers.set('Authorization', `Bearer ${token}`)
 
+  // Server-rendered calls reach gunicorn directly over the compose network, as
+  // plain HTTP - Caddy, which sets this header for browser traffic, is not in
+  // that path. production.py pairs SECURE_SSL_REDIRECT with
+  // SECURE_PROXY_SSL_HEADER, so without it Django 301s to https://backend:8007,
+  // a port that speaks no TLS, and the render hangs until it times out. Never
+  // from the browser: a custom header there forces a CORS preflight the API
+  // does not allow.
+  if (typeof window === 'undefined') headers.set('X-Forwarded-Proto', 'https')
+
   const response = await fetch(`${apiOrigin()}${url}`, {
     ...options,
     headers,
