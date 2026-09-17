@@ -1,0 +1,11 @@
+# Copy to prod.conf and fill in. Real server targets are gitignored: this file
+# is the documented shape, not a working config.
+#
+# The GitHub Actions deploy workflow does NOT read this file - it takes the same
+# values from repository variables, so a public repo never carries the hostname.
+# See DEPLOY.md.
+DEPLOY_HOST=deploy.example.com
+DEPLOY_USER=deploy
+DEPLOY_PORT=22
+DEPLOY_DIR=/srv/redaction-tools
+DEPLOY_COMPOSE_FILE=docker-compose-prod.yml
