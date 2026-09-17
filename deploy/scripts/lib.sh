@@ -27,11 +27,14 @@ require_server() {
 }
 
 remote_ssh() {
+	# Guarded expansion: bash 3.2 (still /bin/bash on macOS) treats an empty
+	# array as unbound under `set -u`, so a bare "${tty_flag[@]}" aborts every
+	# call that does not pass -t.
 	local tty_flag=()
 	if [[ "${1:-}" == "-t" ]]; then
 		tty_flag=("-t")
 		shift
 	fi
 	ssh -i "$KEY_FILE" -p "$DEPLOY_PORT" -o StrictHostKeyChecking=accept-new \
-		"${tty_flag[@]}" "${DEPLOY_USER}@${DEPLOY_HOST}" "$@"
+		${tty_flag[@]+"${tty_flag[@]}"} "${DEPLOY_USER}@${DEPLOY_HOST}" "$@"
 }
