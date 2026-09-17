@@ -121,10 +121,18 @@ GitHub secret names are case-insensitive, so `DEPLOY_PROD_SSH_KEY` and
   `credentials: 'omit'`. Server-rendered requests never traverse Caddy at all,
   going straight to `backend:8007` over the compose network.
 
-  `db`, `migrate` and `qcluster` stay off `redactionnet` on purpose. The
-  pdf-redaction stack also has a service called `db`, and putting ours on the
-  same network would make the `db` in `DATABASE_URL` ambiguous between two
-  different Postgres instances.
+  `db`, `migrate` and `qcluster` stay off `redactionnet` on purpose: the
+  pdf-redaction stack has a service called `db` too, and ours has no reason to
+  be reachable from it.
+
+  Keeping them off is not enough on its own, though. `backend` is on both
+  networks, so the bare name `db` resolved to **pdf-redaction's** Postgres
+  (`172.22.0.3`) and every request 500'd with `password authentication failed
+  for user "redaction"` - while `migrate` and `qcluster`, off redactionnet,
+  connected to ours and worked, which is what makes the symptom so confusing.
+  `DATABASE_URL` therefore names `redaction-tools-db`, an alias our `db`
+  carries only on the compose default network, so it can resolve to exactly
+  one Postgres.
 
 ## Postgres persistence
 

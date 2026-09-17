@@ -7,8 +7,9 @@
 # `redactionnet` network, where they carry the aliases used below. The bare
 # service names are not used on purpose - `backend` and `frontend` are too
 # generic for a network several stacks share. For the same reason `db`,
-# `migrate` and `qcluster` stay off it entirely: pdf-redaction has a `db` too,
-# and sharing a network would make that name ambiguous in DATABASE_URL.
+# `migrate` and `qcluster` stay off it entirely: pdf-redaction has a `db` too.
+# `backend` is on both networks regardless, so DATABASE_URL names the alias
+# `redaction-tools-db` rather than `db`, which would resolve to either one.
 #
 # The global block (acme_ca, email) already exists in that Caddyfile - do not
 # add a second one.
