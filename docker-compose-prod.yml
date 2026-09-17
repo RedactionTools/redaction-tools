@@ -49,6 +49,13 @@ services:
     environment: *backend_env
     ports:
       - "${BACKEND_PORT:-8007}:8007"
+    networks:
+      default:
+      # A prefixed alias on the shared network: `backend` alone is too generic
+      # for a network other stacks also use, and it is what Caddy targets.
+      redactionnet:
+        aliases:
+          - redaction-tools-backend
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -79,6 +86,13 @@ services:
       AUTH_GOOGLE_SECRET: ${GOOGLE_CLIENT_SECRET:-}
     ports:
       - "${FRONTEND_PORT:-3007}:3007"
+    networks:
+      default:
+      # A prefixed alias on the shared network: `frontend` alone is too generic
+      # for a network other stacks also use, and it is what Caddy targets.
+      redactionnet:
+        aliases:
+          - redaction-tools-frontend
     depends_on:
       backend:
         condition: service_started
@@ -86,3 +100,10 @@ services:
 
 volumes:
   postgres_data:
+
+networks:
+  # Shared with the pdf-redaction stack, whose Caddy terminates TLS and reverse
+  # proxies to these containers by name. Created by that project, not this one.
+  redactionnet:
+    external: true
+    name: pdf-redaction_redactionnet

@@ -38,7 +38,27 @@ WORKDIR /app
 COPY --from=builder --chown=app:app /opt/venv /opt/venv
 COPY --chown=app:app . .
 
+# WORKDIR created /app as root, so the app user cannot write anything directly
+# inside it - that breaks collectstatic's STATIC_ROOT and gunicorn's control
+# socket at /app/.gunicorn. Non-recursive on purpose: this touches one inode,
+# where `chown -R` would make overlayfs copy up the whole tree into a second
+# layer and roughly double the image.
+RUN chown app:app /app
+
 USER app
+
+# Collected at build time: production uses whitenoise's manifest storage, which
+# raises on a missing manifest entry, so without this the admin 500s on its own
+# CSS. No database is touched - the placeholders only satisfy settings that are
+# required at import. Runs after USER so the files come out app-owned.
+RUN SECRET_KEY=build-time-placeholder \
+    ALLOWED_HOSTS=localhost \
+    CSRF_TRUSTED_ORIGINS=https://localhost \
+    CORS_ALLOWED_ORIGINS=https://localhost \
+    FRONTEND_URL=https://localhost \
+    DATABASE_URL=postgres://build:build@localhost:5432/build \
+    DJANGO_SETTINGS_MODULE=config.settings.production \
+    python manage.py collectstatic --noinput
 
 EXPOSE 8007
 

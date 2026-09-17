@@ -26,6 +26,15 @@ ssh-copy-id -i "${KEY_FILE}.pub" -p "$DEPLOY_PORT" "${DEPLOY_USER}@${DEPLOY_HOST
 echo "==> Registering GitHub secret DEPLOY_$(echo "$server" | tr '[:lower:]' '[:upper:]')_SSH_KEY"
 gh secret set "DEPLOY_$(echo "$server" | tr '[:lower:]' '[:upper:]')_SSH_KEY" <"$KEY_FILE"
 
+upper="$(echo "$server" | tr '[:lower:]' '[:upper:]')"
+echo "==> Registering GitHub variables DEPLOY_${upper}_* (the workflow reads these,"
+echo "    not deploy/servers/${server}.conf, which is gitignored)"
+gh variable set "DEPLOY_${upper}_HOST" --body "$DEPLOY_HOST"
+gh variable set "DEPLOY_${upper}_USER" --body "$DEPLOY_USER"
+gh variable set "DEPLOY_${upper}_PORT" --body "$DEPLOY_PORT"
+gh variable set "DEPLOY_${upper}_DIR" --body "$DEPLOY_DIR"
+gh variable set "DEPLOY_${upper}_COMPOSE_FILE" --body "$DEPLOY_COMPOSE_FILE"
+
 if ! git show-ref --verify --quiet "refs/heads/${server}"; then
 	echo "==> Creating local branch '${server}' from main"
 	git branch "$server" main
@@ -34,7 +43,14 @@ echo "==> Pushing branch '${server}' to origin"
 git push origin "$server"
 
 echo "==> Cloning the repo into ${DEPLOY_DIR} on the VM (public repo, plain HTTPS)"
+# Our own origin is an SSH URL, but the VM has no GitHub SSH key and does not
+# need one: the repo is public, so rewrite git@host:owner/repo(.git) to HTTPS.
 repo_url="$(git config --get remote.origin.url)"
+repo_url="$(printf '%s' "$repo_url" | sed -E 's#^git@([^:]+):#https://\1/#')"
+case "$repo_url" in
+	https://*) ;;
+	*) echo "error: cannot derive an HTTPS clone URL from '$repo_url'" >&2; exit 1 ;;
+esac
 remote_ssh "test -d '${DEPLOY_DIR}/.git' || git clone --branch '${server}' '${repo_url}' '${DEPLOY_DIR}'"
 
 env_file="$DEPLOY_ROOT/../.env.${server}"
@@ -49,6 +65,11 @@ else
 fi
 
 echo "==> Done. Next steps:"
-echo "    1. Edit ${env_file} with real production values"
+echo "    1. Check ${env_file} has real production values"
 echo "    2. make deploy-env-put SERVER=${server}"
 echo "    3. git push origin ${server} (or make deploy SERVER=${server}) to trigger a deploy"
+echo
+echo "    The VM serves the backend on :${BACKEND_PORT:-8007} and the frontend on"
+echo "    :${FRONTEND_PORT:-3007}. Put a TLS-terminating reverse proxy in front of"
+echo "    them - nothing here issues certificates, and production Django sets"
+echo "    SECURE_SSL_REDIRECT, so plain HTTP will redirect-loop without one."

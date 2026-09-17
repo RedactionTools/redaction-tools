@@ -94,9 +94,37 @@ GitHub secret names are case-insensitive, so `DEPLOY_PROD_SSH_KEY` and
   no rebuild).
 - No reverse proxy / TLS termination is set up here. `backend` and `frontend`
   publish their ports directly to the host. `config/settings/production.py`
-  already expects a reverse proxy in front setting `X-Forwarded-Proto` for
-  `SECURE_PROXY_SSL_HEADER` — setting up nginx/Caddy + TLS on the VM is a
-  separate, later effort.
+  expects a reverse proxy in front setting `X-Forwarded-Proto` for
+  `SECURE_PROXY_SSL_HEADER`; without one, `SECURE_SSL_REDIRECT` makes every
+  request redirect forever.
+
+  TLS is terminated by the Caddy that belongs to the **pdf-redaction** stack on
+  the same VM. `backend` and `frontend` join its `redactionnet` network so Caddy
+  can reach them by service name; `deploy/Caddyfile.example` holds the site
+  blocks to append to that Caddyfile.
+
+  Two hosts, matching the pdf-redaction convention:
+
+  | Host | Serves | Container |
+  | --- | --- | --- |
+  | `redaction-tools.com` | the catalog | `frontend:3007` |
+  | `backend.redaction-tools.com` | API and admin | `backend:8007` |
+
+  Both need a DNS A record. Splitting by host rather than by path avoids the one
+  real trap of sharing an origin: `/api/v1/*` is Django but `/api/auth/*` is
+  NextAuth, so a `/api/*` rule would break Google sign-in with a 404 that reads
+  like an OAuth fault.
+
+  The cost is that browser calls to the API are cross-origin, so
+  `CORS_ALLOWED_ORIGINS` must list the site's origin — it does. Nothing depends
+  on cookies crossing hosts: the API takes a bearer token and `fetcher.ts` sends
+  `credentials: 'omit'`. Server-rendered requests never traverse Caddy at all,
+  going straight to `backend:8007` over the compose network.
+
+  `db`, `migrate` and `qcluster` stay off `redactionnet` on purpose. The
+  pdf-redaction stack also has a service called `db`, and putting ours on the
+  same network would make the `db` in `DATABASE_URL` ambiguous between two
+  different Postgres instances.
 
 ## Postgres persistence
 
