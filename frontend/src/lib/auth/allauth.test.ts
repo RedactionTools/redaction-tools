@@ -48,6 +48,17 @@ describe('exchangeGoogleIdToken', () => {
     })
   })
 
+  it('marks the call TLS-terminated, or SECURE_SSL_REDIRECT 301s the POST into a bodyless GET', async () => {
+    fetchSpy.mockResolvedValue(
+      jsonResponse({ meta: { access_token: jwtWithExp(EXP_SECONDS), refresh_token: 'r1' } }),
+    )
+
+    await exchangeGoogleIdToken('gid')
+
+    const headers = new Headers(fetchSpy.mock.calls[0][1]?.headers)
+    expect(headers.get('X-Forwarded-Proto')).toBe('https')
+  })
+
   it('takes the expiry from the access token rather than assuming a lifetime', async () => {
     fetchSpy.mockResolvedValue(
       jsonResponse({ meta: { access_token: jwtWithExp(EXP_SECONDS), refresh_token: 'r1' } }),
@@ -96,6 +107,17 @@ describe('refreshTokenPair', () => {
     const [url, init] = fetchSpy.mock.calls[0]
     expect(url).toBe('http://localhost:8007/_allauth/app/v1/tokens/refresh')
     expect(JSON.parse(init?.body as string)).toEqual({ refresh_token: 'r1' })
+  })
+
+  it('marks the rotation call TLS-terminated too', async () => {
+    fetchSpy.mockResolvedValue(
+      jsonResponse({ data: { access_token: jwtWithExp(EXP_SECONDS), refresh_token: 'r2' } }),
+    )
+
+    await refreshTokenPair('r1')
+
+    const headers = new Headers(fetchSpy.mock.calls[0][1]?.headers)
+    expect(headers.get('X-Forwarded-Proto')).toBe('https')
   })
 
   it('returns the ROTATED refresh token, not the one it was given', async () => {

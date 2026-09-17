@@ -49,7 +49,17 @@ function toPair(accessToken: string, refreshToken: string): TokenPair {
 async function postJson(path: string, body: unknown): Promise<unknown> {
   const response = await fetch(`${serverApiOrigin()}${ALLAUTH}${path}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      // This module only ever runs on the server, so it reaches gunicorn over
+      // the compose network as plain HTTP, with no Caddy in the path to set
+      // this. production.py pairs SECURE_SSL_REDIRECT with
+      // SECURE_PROXY_SSL_HEADER, and on a POST the resulting 301 is fatal
+      // rather than slow: the redirect drops the body and becomes a GET, so
+      // sign-in fails outright. Same reasoning as fetcher.ts.
+      'X-Forwarded-Proto': 'https',
+    },
     body: JSON.stringify(body),
     cache: 'no-store',
   })
