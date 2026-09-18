@@ -62,3 +62,4 @@ client generated from the committed OpenAPI schema, and Google sign-in issuing o
 ## More
 
 - [`DEVELOPMENT.md`](DEVELOPMENT.md) — running it locally, the auth flow, adding an endpoint
+- [`CHANGELOG.md`](CHANGELOG.md) — what has landed so far
