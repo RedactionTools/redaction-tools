@@ -2,6 +2,7 @@
 
 import { type ReactNode, useState } from 'react'
 
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -227,7 +228,10 @@ export function CostTable({
             key={plan.code}
             data-testid={`cost-row-${plan.code}`}
             data-cheapest={cheapest.includes(plan.code) || undefined}
-            className={cheapest.includes(plan.code) ? 'bg-primary/5' : undefined}
+            // The whole row, so the tint reads as "this line is the answer"
+            // rather than decorating one cell. `ok-subtle` because the catalog
+            // already spends that tone on a verified, favourable finding.
+            className={cheapest.includes(plan.code) ? 'bg-ok-subtle' : undefined}
           >
             <TableCell className="font-medium">
               <span className="flex flex-wrap items-center gap-2">
@@ -236,9 +240,9 @@ export function CostTable({
                     reader, a monochrome print and a reader who cannot tell the
                     tint from the stripe. */}
                 {cheapest.includes(plan.code) ? (
-                  <span className="bg-primary/10 text-primary rounded-full px-2 py-0.5 text-xs font-medium">
+                  <Badge tone="ok">
                     {cheapest.length > 1 ? 'Joint cheapest' : 'Cheapest'} for this volume
-                  </span>
+                  </Badge>
                 ) : null}
               </span>
             </TableCell>

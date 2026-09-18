@@ -254,3 +254,6 @@ frontend/.env.*.local
 !frontend/public/
 !frontend/public/**
 docs/plan.md
+
+# tdd-guard scratch: a per-session record of edits, not project content.
+.claude/tdd-guard/data/modifications.json

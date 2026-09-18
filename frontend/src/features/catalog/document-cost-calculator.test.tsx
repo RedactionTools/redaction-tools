@@ -246,4 +246,15 @@ describe('DocumentCostCalculator, the cheapest plan', () => {
     const mark = row('free').getByText(/cheapest/i)
     expect(mark).toHaveTextContent(/cheapest for this volume/i)
   })
+
+  it('tints the whole row, in a colour the theme actually defines', () => {
+    render()
+
+    // Tailwind v4 generates utilities only for tokens in the @theme block and
+    // drops the rest without a word, so `bg-brand-500` would typecheck, lint,
+    // pass a text assertion and render nothing. Pinning the class to a token
+    // in globals.css is what makes "highlighted" mean highlighted.
+    expect(screen.getByTestId('cost-row-free')).toHaveClass('bg-ok-subtle')
+    expect(screen.getByTestId('cost-row-payg')).not.toHaveClass('bg-ok-subtle')
+  })
 })
