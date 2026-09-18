@@ -10,6 +10,7 @@ import pytest
 from apps.catalog.models import (
     BillingPeriod,
     Plan,
+    PlanLimit,
     PlanPrice,
     PriceSource,
     PriceUnit,
@@ -18,7 +19,14 @@ from apps.catalog.models import (
     ToolRevisionOrigin,
     ToolRevisionStatus,
 )
-from apps.catalog.staff import StaffError, set_plan_price, update_plan, update_tool
+from apps.catalog.staff import (
+    StaffError,
+    create_plan,
+    set_plan_limit,
+    set_plan_price,
+    update_plan,
+    update_tool,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -256,4 +264,134 @@ def test_set_plan_price_refuses_evidence_pointing_inward(staff_user):
             billing_period=BillingPeriod.MONTHLY,
             source_note="x",
             source_evidence_url=METADATA_URL,
+        )
+
+
+def test_create_plan_adds_it_to_the_tool(staff_user, tool):
+    result = create_plan(
+        user=staff_user,
+        slug=SEEDED,
+        code="pro-plus",
+        name="Pro Plus",
+        changes={"tier_order": 3, "highlights": ["4,500 pages a month"]},
+    )
+
+    plan = Plan.objects.get(tool=tool, code="pro-plus")
+    assert plan.name == "Pro Plus"
+    assert plan.tier_order == 3
+    assert result["code"] == "pro-plus"
+    # A plan with no price, free-tier flag or quote flag holds no pricing
+    # position, and saying so is what stops it shipping half-made.
+    assert result["has_pricing_position"] is False
+
+
+def test_create_plan_refuses_a_code_the_tool_already_uses(staff_user):
+    with pytest.raises(StaffError) as exc:
+        create_plan(user=staff_user, slug=SEEDED, code="pro", name="Pro again")
+
+    assert "pro" in str(exc.value)
+    assert Plan.objects.filter(tool__slug=SEEDED, code="pro").count() == 1
+
+
+def test_create_plan_refuses_a_code_that_is_not_a_slug(staff_user):
+    with pytest.raises(StaffError) as exc:
+        create_plan(user=staff_user, slug=SEEDED, code="Pro Plus!", name="Pro Plus")
+
+    assert "code" in str(exc.value)
+
+
+def test_create_plan_refuses_a_field_that_is_not_staff_editable(staff_user):
+    with pytest.raises(StaffError) as exc:
+        create_plan(
+            user=staff_user,
+            slug=SEEDED,
+            code="pro-plus",
+            name="Pro Plus",
+            changes={"consecutive_absences": 3},
+        )
+
+    assert "consecutive_absences" in str(exc.value)
+    assert not Plan.objects.filter(tool__slug=SEEDED, code="pro-plus").exists()
+
+
+def test_create_plan_refuses_a_source_url_pointing_inward(staff_user):
+    with pytest.raises(StaffError):
+        create_plan(
+            user=staff_user,
+            slug=SEEDED,
+            code="pro-plus",
+            name="Pro Plus",
+            changes={"source_url": METADATA_URL},
+        )
+
+    assert not Plan.objects.filter(tool__slug=SEEDED, code="pro-plus").exists()
+
+
+def test_create_plan_on_an_unknown_tool_is_refused(staff_user):
+    with pytest.raises(StaffError):
+        create_plan(user=staff_user, slug="nope", code="x", name="X")
+
+
+def test_set_plan_limit_records_a_published_cap(staff_user):
+    set_plan_limit(
+        user=staff_user,
+        slug=SEEDED,
+        code="pro",
+        kind="pages_per_month",
+        label="Pages per month",
+        value=4500,
+        unit="pages",
+    )
+
+    limit = PlanLimit.objects.get(plan__tool__slug=SEEDED, plan__code="pro", kind="pages_per_month")
+    assert limit.value == 4500
+    assert limit.display_value == "4500 pages"
+
+
+def test_set_plan_limit_updates_the_cap_it_already_recorded(staff_user):
+    """Unique on (plan, kind, label), so a second call must move the row, not add one."""
+    for value in (4500, 5000):
+        set_plan_limit(
+            user=staff_user,
+            slug=SEEDED,
+            code="pro",
+            kind="pages_per_month",
+            label="Pages per month",
+            value=value,
+            unit="pages",
+        )
+
+    limits = PlanLimit.objects.filter(
+        plan__tool__slug=SEEDED, plan__code="pro", kind="pages_per_month"
+    )
+    assert [limit.value for limit in limits] == [5000]
+
+
+def test_set_plan_limit_takes_unlimited_without_a_number(staff_user):
+    set_plan_limit(
+        user=staff_user,
+        slug=SEEDED,
+        code="pro",
+        kind="seats",
+        label="Seats",
+        is_unlimited=True,
+    )
+
+    assert PlanLimit.objects.get(plan__code="pro", kind="seats").display_value == "Unlimited"
+
+
+def test_set_plan_limit_refuses_an_unknown_kind(staff_user):
+    with pytest.raises(StaffError) as exc:
+        set_plan_limit(
+            user=staff_user, slug=SEEDED, code="pro", kind="vibes", label="Vibes", value=1
+        )
+
+    assert "kind" in str(exc.value)
+
+
+def test_set_plan_limit_refuses_a_cap_with_neither_number_nor_note(staff_user):
+    """An unpublished cap is recorded as a note, never as a guessed number."""
+    with pytest.raises(StaffError):
+        set_plan_limit(
+            user=staff_user, slug=SEEDED, code="pro", kind="file_size_mb", label="Max file size"
         )

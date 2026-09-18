@@ -18,6 +18,13 @@ given in brackets.
   get no answer at all. A joint-cheapest pair is named as such rather than broken arbitrarily.
 - **A 25-page preset** on pages per document — the free tier's per-document cap across the
   catalog, and the point where the ranking starts to move.
+- **Creating plans over MCP** — `catalog_create_plan` and `catalog_set_plan_limit` join the
+  staff tools, so a whole new tier can be built without the admin. A tier is three or four
+  calls rather than one: the plan, each published cap, the fee, and the metered rate. Kept
+  apart so a single fat call cannot half-succeed and so every figure keeps its own
+  provenance. `catalog_create_plan` returns `has_pricing_position`, which stays false until
+  the plan has a price, a free-tier flag or the quote-only flag — a tier left there is
+  invisible to the public catalog, and the result says so.
 - **Staff MCP server** at `/mcp` — reads and edits the catalog from Claude: list listings,
   read one with the reasons it is not yet a public page, edit it, edit its plans, publish a
   price. A plain synchronous Django view (django-mcpz), so it runs inside the existing

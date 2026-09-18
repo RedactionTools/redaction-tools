@@ -12,6 +12,7 @@ who did it.
 
 from decimal import Decimal, InvalidOperation
 
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.utils import timezone
@@ -25,6 +26,8 @@ from apps.catalog.constants import (
 from apps.catalog.models import (
     BillingPeriod,
     Plan,
+    PlanLimit,
+    PlanLimitKind,
     PlanPrice,
     PriceProposalStatus,
     PriceSource,
@@ -37,6 +40,7 @@ from apps.catalog.models import (
     listability_blockers,
 )
 from apps.catalog.services import external_url_errors
+from apps.catalog.slugs import validate_catalog_slug as validate_slug
 
 
 class StaffError(Exception):
@@ -263,6 +267,119 @@ def update_plan(*, user, slug, code, changes):
         raise StaffError(f"That edit conflicts with an existing row: {exc}") from exc
 
     return {"tool": slug, "code": plan.code, "changed": sorted(applied)}
+
+
+def _has_pricing_position(plan):
+    """Whether this plan contributes to the tool's pricing position.
+
+    The same three ways `Tool.has_pricing_position()` counts, narrowed to one
+    plan - a current price, an explicit free tier, or quote-only - and public,
+    because a plan the catalog does not show cannot carry the tool past the
+    listability bar.
+    """
+    return bool(
+        plan.is_public
+        and (
+            plan.is_free_tier
+            or plan.is_enterprise_quote
+            or plan.prices.filter(is_current=True).exists()
+        )
+    )
+
+
+def create_plan(*, user, slug, code, name, changes=None):
+    """Add a plan to a tool.
+
+    Deliberately a separate tool from the price. A plan is a shell - what it is
+    called, who it is for, what it caps - and the figure it charges is a row
+    with its own provenance, entered by `set_plan_price`. Folding the two
+    together would mean one call that half-succeeds.
+
+    The result reports `has_pricing_position`, which is False until the plan has
+    a current price, a free-tier flag or the enterprise-quote flag. A plan
+    without one is invisible to the public catalog, so a caller that stops here
+    has not finished.
+    """
+    changes = dict(changes or {})
+    _reject_unknown_fields(changes, STAFF_EDITABLE_PLAN_FIELDS, "plan")
+    _reject_bad_urls(changes, PLAN_URL_FIELDS)
+    # The crawler matches plans on `code` and it is half of the tool/code
+    # uniqueness, so it is validated as the identifier it is rather than as
+    # free text.
+    try:
+        validate_slug(code)
+    except DjangoValidationError as exc:
+        raise StaffError(f"code {code!r}: {exc.messages[0]}") from exc
+
+    try:
+        with transaction.atomic():
+            tool = Tool.objects.filter(slug=slug).first()
+            if tool is None:
+                raise StaffError(f"No tool with slug {slug!r}.")
+            if Plan.objects.filter(tool=tool, code=code).exists():
+                raise StaffError(
+                    f"{slug!r} already has a plan coded {code!r}. Edit it with "
+                    "catalog_update_plan, or pick another code."
+                )
+            plan = Plan.objects.create(tool=tool, code=code, name=name, **changes)
+    except IntegrityError as exc:
+        raise StaffError(f"That plan conflicts with an existing row: {exc}") from exc
+
+    return {
+        "tool": slug,
+        "code": plan.code,
+        "name": plan.name,
+        "has_pricing_position": _has_pricing_position(plan),
+    }
+
+
+def set_plan_limit(
+    *, user, slug, code, kind, label, value=None, unit="", is_unlimited=False, note=""
+):
+    """Record a published cap, replacing the one it already holds of that kind.
+
+    An upsert, because the table is unique on (plan, kind, label) and a caller
+    correcting a figure means to move it rather than to add a second row.
+
+    A cap with no number and no note is refused: `PlanLimit.display_value`
+    would render "Not published", which is a claim about the vendor, not about
+    the caller having left the field blank.
+    """
+    if kind not in PlanLimitKind.values:
+        raise StaffError(f"kind must be one of: {', '.join(PlanLimitKind.values)}.")
+    if value is None and not is_unlimited and not note:
+        raise StaffError(
+            "Give a value, or is_unlimited, or a note saying what the vendor "
+            "publishes instead. A cap is never guessed."
+        )
+
+    try:
+        with transaction.atomic():
+            plan = Plan.objects.select_for_update().filter(tool__slug=slug, code=code).first()
+            if plan is None:
+                raise StaffError(f"No plan {code!r} on tool {slug!r}.")
+            limit, created = PlanLimit.objects.update_or_create(
+                plan=plan,
+                kind=kind,
+                label=label,
+                defaults={
+                    "value": value,
+                    "unit": unit,
+                    "is_unlimited": is_unlimited,
+                    "note": note,
+                },
+            )
+    except IntegrityError as exc:
+        raise StaffError(f"That limit conflicts with an existing row: {exc}") from exc
+
+    return {
+        "tool": slug,
+        "code": code,
+        "kind": limit.kind,
+        "label": limit.label,
+        "display": limit.display_value,
+        "created": created,
+    }
 
 
 def set_plan_price(

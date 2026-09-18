@@ -203,6 +203,79 @@ class UpdateToolResult(Struct):
     listability_reasons: list[str]
 
 
+class CreatePlanParams(Struct):
+    slug: SLUG
+    code: Annotated[
+        str,
+        Meta(
+            description=(
+                "A new stable code, lowercase and hyphenated, e.g. 'pro-plus'. "
+                "The price crawler matches on it and it cannot be changed later."
+            )
+        ),
+    ]
+    name: Annotated[str, Meta(description="What the vendor calls the tier, e.g. 'Pro Plus'.")]
+    tier_order: Annotated[int, Meta(ge=0)] | UnsetType = UNSET
+    is_public: bool | UnsetType = UNSET
+    is_free_tier: bool | UnsetType = UNSET
+    is_trial: Annotated[bool | UnsetType, Meta(description="A trial is not a free tier.")] = UNSET
+    trial_days: Annotated[int, Meta(ge=0)] | UnsetType = UNSET
+    is_enterprise_quote: bool | UnsetType = UNSET
+    min_seats: Annotated[int, Meta(ge=1)] | UnsetType = UNSET
+    included_quota: Annotated[int, Meta(ge=0)] | UnsetType = UNSET
+    quota_unit: str | UnsetType = UNSET
+    highlights: list[str] | UnsetType = UNSET
+    source_url: str | UnsetType = UNSET
+
+
+class CreatePlanResult(Struct):
+    tool: str
+    code: str
+    name: str
+    has_pricing_position: Annotated[
+        bool,
+        Meta(
+            description=(
+                "False until the plan has a current price, a free-tier flag or "
+                "the quote-only flag. While it is False the plan is invisible "
+                "to the public catalog."
+            )
+        ),
+    ]
+
+
+class SetPlanLimitParams(Struct):
+    slug: SLUG
+    code: PLAN_CODE
+    kind: Annotated[
+        str,
+        Meta(
+            description=(
+                "pages_per_document, pages_per_month, documents_per_month, "
+                "minutes_per_month, file_size_mb, seats, retention_days, "
+                "api_calls_per_month or other."
+            )
+        ),
+    ]
+    label: Annotated[str, Meta(description="How the vendor words it, e.g. 'Pages per month'.")]
+    value: Annotated[int, Meta(ge=0)] | UnsetType = UNSET
+    unit: Annotated[str, Meta(description="pages | MB | files | days")] = ""
+    is_unlimited: bool = False
+    note: Annotated[
+        str,
+        Meta(description="What the vendor publishes instead of a number. Never a guess."),
+    ] = ""
+
+
+class SetPlanLimitResult(Struct):
+    tool: str
+    code: str
+    kind: str
+    label: str
+    display: str
+    created: bool
+
+
 class UpdatePlanParams(Struct):
     """Only the fields you pass are written. Omit a field to leave it alone."""
 
@@ -331,6 +404,57 @@ def register(server):
                     user=request.user, slug=params.slug, changes=_changes(params, "slug")
                 ),
                 UpdateToolResult,
+            )
+
+    @server.tool(
+        description=(
+            "Add a plan to a tool. The price is a separate call - "
+            "catalog_set_plan_price - so a figure keeps its own provenance, and "
+            "a published cap is catalog_set_plan_limit. A plan with no price, "
+            "free-tier flag or quote-only flag holds no pricing position and "
+            "stays invisible to the public catalog, so do not stop here."
+        ),
+        read_only=False,
+        destructive=False,
+        idempotent=False,
+        open_world=False,
+        permission=is_staff,
+    )
+    def catalog_create_plan(request, params: CreatePlanParams) -> CreatePlanResult:
+        with _as_tool_error():
+            return msgspec.convert(
+                staff.create_plan(
+                    user=request.user,
+                    slug=params.slug,
+                    code=params.code,
+                    name=params.name,
+                    changes=_changes(params, "slug", "code", "name"),
+                ),
+                CreatePlanResult,
+            )
+
+    @server.tool(
+        description=(
+            "Record a plan's published cap - a page allowance, a seat count, a "
+            "file-size limit. Replaces the cap of that kind rather than adding "
+            "a second. A cap with no number needs is_unlimited or a note: the "
+            "catalog records what the vendor published, never a guess. "
+            "pages_per_month is what makes an overage rate apply."
+        ),
+        read_only=False,
+        destructive=True,
+        idempotent=True,
+        open_world=False,
+        permission=is_staff,
+    )
+    def catalog_set_plan_limit(request, params: SetPlanLimitParams) -> SetPlanLimitResult:
+        with _as_tool_error():
+            fields = _changes(params, "slug", "code")
+            return msgspec.convert(
+                staff.set_plan_limit(
+                    user=request.user, slug=params.slug, code=params.code, **fields
+                ),
+                SetPlanLimitResult,
             )
 
     @server.tool(

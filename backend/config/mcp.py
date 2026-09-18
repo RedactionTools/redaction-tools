@@ -23,6 +23,18 @@ Work slug-first: catalog_list_tools to find a listing, catalog_get_tool to read
 it, then catalog_update_tool, catalog_update_plan or catalog_set_plan_price to
 change it.
 
+A new tier is three or four calls, not one, because a plan, its caps and each
+of its figures are separate records with separate provenance:
+
+  1. catalog_create_plan       - the tier itself
+  2. catalog_set_plan_limit    - each published cap (a page allowance is what
+                                 makes an overage rate apply)
+  3. catalog_set_plan_price    - the fee
+  4. catalog_set_plan_price    - again with is_overage, for a metered rate
+
+catalog_create_plan returns has_pricing_position. While it is false the plan is
+invisible to the public catalog, so a tier left there is unfinished work.
+
 Every write is live and audited. There is no draft or review step. A listing
 edit is recorded as an already-applied revision; a price opens a new row and
 closes the one it supersedes, so the published history stays intact.

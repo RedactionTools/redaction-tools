@@ -93,6 +93,10 @@ The parts that bite if you miss them:
   plan's overage rate along with its monthly fee - copy the service, not the admin.
 - Optional MCP parameters are `msgspec.UNSET`, and a numeric constraint goes on the inner
   type: `Annotated[int, Meta(ge=0)] | UnsetType`.
+- **One MCP tool per table.** A plan, its caps and each of its prices are written by
+  separate tools, because a single call that creates all four can half-succeed and because
+  a price carries provenance a plan does not. `create_plan` reports
+  `has_pricing_position` so a caller can tell it has not finished.
 
 ## Conventions
 

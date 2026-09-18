@@ -23,7 +23,9 @@ TOOLS = {
     "catalog_get_tool",
     "catalog_list_plans",
     "catalog_update_tool",
+    "catalog_create_plan",
     "catalog_update_plan",
+    "catalog_set_plan_limit",
     "catalog_set_plan_price",
 }
 
@@ -165,3 +167,83 @@ def test_the_write_tools_are_annotated_as_writes(mcp):
 def test_a_non_staff_caller_is_offered_no_tools(mcp, user_token):
     """If the door check is ever loosened, the per-tool permission still holds."""
     assert mcp("tools/list", token=user_token).status_code == 403
+
+
+def test_a_whole_new_plan_can_be_built_over_three_calls(call_tool):
+    """The shape the surface is actually asked for: a tier, its cap, its price.
+
+    Kept as three tools rather than one so a caller can never half-succeed at a
+    single fat call - and so a price keeps its own provenance.
+    """
+    created = payload(
+        call_tool(
+            "catalog_create_plan",
+            {
+                "slug": SEEDED,
+                "code": "pro-plus",
+                "name": "Pro Plus",
+                "tier_order": 3,
+                "highlights": ["4,500 pages a month, then $0.01 a page"],
+            },
+        )
+    )
+    # Nothing to show the public yet, and the result says so.
+    assert created["has_pricing_position"] is False
+
+    payload(
+        call_tool(
+            "catalog_set_plan_limit",
+            {
+                "slug": SEEDED,
+                "code": "pro-plus",
+                "kind": "pages_per_month",
+                "label": "Pages per month",
+                "value": 4500,
+                "unit": "pages",
+            },
+        )
+    )
+    payload(
+        call_tool(
+            "catalog_set_plan_price",
+            {
+                "slug": SEEDED,
+                "code": "pro-plus",
+                "amount": "45.00",
+                "unit": "month",
+                "billing_period": "monthly",
+                "source_note": "Vendor pricing page.",
+            },
+        )
+    )
+    payload(
+        call_tool(
+            "catalog_set_plan_price",
+            {
+                "slug": SEEDED,
+                "code": "pro-plus",
+                "amount": "0.01",
+                "unit": "page",
+                "billing_period": "usage",
+                "is_overage": True,
+                "source_note": "Vendor pricing page.",
+            },
+        )
+    )
+
+    plans = payload(call_tool("catalog_list_plans", {"slug": SEEDED}))["plans"]
+    plan = next(p for p in plans if p["code"] == "pro-plus")
+    # Keyed, not ordered: prices come back newest-first, which is the trap
+    # `basePrice()` exists to absorb.
+    by_overage = {price["is_overage"]: price["amount"] for price in plan["prices"]}
+    assert by_overage == {False: "45.0000", True: "0.0100"}
+    assert [limit["value"] for limit in plan["limits"]] == ["4500 pages"]
+
+
+def test_creating_a_plan_twice_is_a_correctable_error(call_tool):
+    args = {"slug": SEEDED, "code": "pro", "name": "Pro again"}
+
+    result = call_tool("catalog_create_plan", args)
+
+    assert result["isError"] is True
+    assert "catalog_update_plan" in result["content"][0]["text"]
