@@ -70,6 +70,21 @@ export function hasActiveFilters(filters: CatalogFilters): boolean {
 }
 
 /**
+ * How many boxes are ticked.
+ *
+ * Counted per value rather than per dimension, because that is what the reader
+ * ticked. The search term is left out: it has its own visible box beside the
+ * filters, so counting it here would report it twice.
+ */
+export function activeFacetCount(filters: CatalogFilters): number {
+  const facets = FACET_DIMENSIONS.reduce(
+    (total, dimension) => total + (filters[dimension] ?? '').split(',').filter(Boolean).length,
+    0,
+  )
+  return facets + (filters.has_free_tier ? 1 : 0)
+}
+
+/**
  * Drop the page number.
  *
  * Any change to what is being filtered invalidates where you were in the

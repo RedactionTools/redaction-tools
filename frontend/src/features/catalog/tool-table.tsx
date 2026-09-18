@@ -67,11 +67,11 @@ export function ToolTable({ filters }: { filters: CatalogFilters }) {
                 </div>
               </div>
             </TableCell>
-            <TableCell className="text-muted-foreground">
+            <TableCell className="text-muted-foreground" label="Media">
               {tool.facet_slugs.filter((slug) => MEDIA.has(slug)).join(', ') || '—'}
             </TableCell>
-            <TableCell>
-              <span className="flex items-center gap-2">
+            <TableCell label="From">
+              <span className="flex flex-wrap items-center gap-2">
                 {priceHeadline(tool.price_summary)}
                 <PriceProvenanceBadge summary={tool.price_summary} slug={tool.slug} />
               </span>

@@ -40,4 +40,35 @@ describe('SiteHeader', () => {
       '/price-calculator',
     )
   })
+
+  /**
+   * CSS-only, so the classes are the behaviour. Below `md` these destinations
+   * live in the drawer instead - and because the drawer mounts its contents
+   * only while open, there is still exactly one of each in the document.
+   */
+  it('folds its destinations away on a phone', () => {
+    render(<SiteHeader />)
+
+    const nav = screen.getByRole('navigation', { name: 'Main' })
+    expect(nav.className).toContain('hidden')
+    expect(nav.className).toContain('md:flex')
+  })
+
+  /**
+   * Signing in and changing the theme stay one tap away at every width, rather
+   * than going behind the hamburger with the destinations.
+   */
+  it('keeps the theme and account controls out of the folding nav', () => {
+    render(<SiteHeader />)
+
+    const nav = screen.getByRole('navigation', { name: 'Main' })
+    expect(nav).not.toContainElement(screen.getByRole('button', { name: 'Theme' }))
+    expect(nav).not.toContainElement(screen.getByRole('button', { name: 'Sign in' }))
+  })
+
+  it('offers the menu the folded destinations went into', () => {
+    render(<SiteHeader />)
+
+    expect(screen.getByRole('button', { name: 'Menu' })).toBeInTheDocument()
+  })
 })

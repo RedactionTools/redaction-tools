@@ -159,7 +159,7 @@ function CostCells({ plan, input }: { plan: PlanOut; input: DocumentInput }) {
   if (cost.kind === 'amount') {
     return (
       <>
-        <TableCell className="font-medium tabular-nums">
+        <TableCell className="font-medium tabular-nums" label="Total">
           {formatCost(cost.total, cost.currency)}
           {cost.overage ? (
             // The sum is shown, not just its answer: a bill that jumped because
@@ -171,7 +171,9 @@ function CostCells({ plan, input }: { plan: PlanOut; input: DocumentInput }) {
             </span>
           ) : null}
         </TableCell>
-        <TableCell className="tabular-nums">{formatCost(cost.perPage, cost.currency)}</TableCell>
+        <TableCell className="tabular-nums" label="Per page">
+          {formatCost(cost.perPage, cost.currency)}
+        </TableCell>
       </>
     )
   }
@@ -180,7 +182,7 @@ function CostCells({ plan, input }: { plan: PlanOut; input: DocumentInput }) {
     // Never the monthly fee divided by a volume: the plan covers the work, and
     // that is the whole of what we can honestly say.
     return (
-      <TableCell className="text-muted-foreground" colSpan={2}>
+      <TableCell className="text-muted-foreground" colSpan={2} label="Cost">
         Included in the plan
       </TableCell>
     )
@@ -188,7 +190,7 @@ function CostCells({ plan, input }: { plan: PlanOut; input: DocumentInput }) {
 
   if (cost.kind === 'over-limit') {
     return (
-      <TableCell className="text-muted-foreground" colSpan={2}>
+      <TableCell className="text-muted-foreground" colSpan={2} label="Cost">
         {cost.per === 'month'
           ? `Over this plan's ${cost.max.toLocaleString('en-US')} ${cost.counts} a month`
           : `Over this plan's ${cost.max}-page document limit`}
@@ -197,7 +199,7 @@ function CostCells({ plan, input }: { plan: PlanOut; input: DocumentInput }) {
   }
 
   return (
-    <TableCell className="text-muted-foreground" colSpan={2}>
+    <TableCell className="text-muted-foreground" colSpan={2} label="Cost">
       —
     </TableCell>
   )
@@ -271,7 +273,9 @@ export function CostTable({
                 scans to the cheapest line should not have to track back up the
                 column to find out whose plan it is. */}
             {showTool ? <TableCell className="font-medium">{tool?.name}</TableCell> : null}
-            <TableCell className="font-medium">
+            {/* Whichever cell comes first is the card's heading, so the plan
+                names itself only when the tool is there to precede it. */}
+            <TableCell className="font-medium" label={showTool ? 'Plan' : undefined}>
               <span className="flex flex-wrap items-center gap-2">
                 {plan.name}
                 {/* Named, not just tinted: the answer has to survive a screen
@@ -284,8 +288,8 @@ export function CostTable({
                 ) : null}
               </span>
             </TableCell>
-            <TableCell className="text-muted-foreground">
-              <span className="flex items-center gap-2">
+            <TableCell className="text-muted-foreground" label="Published price">
+              <span className="flex flex-wrap items-center gap-2">
                 {planPrice(plan)}
                 {tool && basePrice(plan) ? (
                   <PriceProvenanceBadge

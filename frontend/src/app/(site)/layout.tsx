@@ -6,7 +6,7 @@ export default function SiteLayout({ children }: LayoutProps<'/'>) {
   return (
     <div className="flex min-h-dvh flex-col">
       <SiteHeader />
-      <main className="flex-1 py-12">
+      <main className="flex-1 py-8 md:py-12">
         <Container>{children}</Container>
       </main>
       <SiteFooter />

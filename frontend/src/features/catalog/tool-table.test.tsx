@@ -87,4 +87,44 @@ describe('ToolTable', () => {
     const row = screen.getByTestId('tool-row-acme')
     expect(within(row).getByTestId('tool-monogram')).toHaveTextContent('AR')
   })
+
+  /**
+   * Below `md` the header row is gone and every row is a card, so the field
+   * name has to travel with the value. It is generated content rather than a
+   * node on purpose: a real <span> would land in `textContent` and change what
+   * every other cell assertion in the suite reads back.
+   */
+  it('names each field on the row, where there is no header to read up to', () => {
+    render()
+
+    const cells = within(screen.getByTestId('tool-row-adobe-acrobat')).getAllByRole('cell')
+    expect(cells[1]).toHaveAttribute('data-label', 'Media')
+    expect(cells[2]).toHaveAttribute('data-label', 'From')
+  })
+
+  /**
+   * The first cell is the card's heading - labelling it would read as
+   * "Tool ---- Adobe Acrobat" above the name it already shows.
+   */
+  it('leaves the heading cell unlabelled', () => {
+    render()
+
+    const cells = within(screen.getByTestId('tool-row-adobe-acrobat')).getAllByRole('cell')
+    expect(cells[0]).not.toHaveAttribute('data-label')
+  })
+
+  /**
+   * Changing `display` on a table strips its semantics in every browser
+   * engine, so the roles are spelled out rather than left implicit. jsdom
+   * applies no CSS, which makes the attribute the only testable proxy for
+   * something that would otherwise break only in a real browser.
+   */
+  it('stays a table once CSS stops it looking like one', () => {
+    render()
+
+    expect(screen.getByRole('table')).toHaveAttribute('role', 'table')
+
+    const cells = within(screen.getByTestId('tool-row-adobe-acrobat')).getAllByRole('cell')
+    expect(cells[0]).toHaveAttribute('role', 'cell')
+  })
 })

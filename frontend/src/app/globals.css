@@ -19,6 +19,7 @@
   --color-ok-subtle: var(--ok-subtle);
   --color-warn: var(--warn);
   --color-warn-subtle: var(--warn-subtle);
+  --color-overlay: var(--overlay);
 
   --radius-card: 0.75rem;
 }
@@ -35,6 +36,7 @@
   --ok-subtle: oklch(0.95 0.03 155);
   --warn: oklch(0.55 0.15 55);
   --warn-subtle: oklch(0.96 0.04 75);
+  --overlay: oklch(0 0 0 / 0.45);
 }
 
 .dark {
@@ -49,4 +51,5 @@
   --ok-subtle: oklch(0.28 0.05 155);
   --warn: oklch(0.79 0.14 70);
   --warn-subtle: oklch(0.3 0.06 70);
+  --overlay: oklch(0 0 0 / 0.6);
 }
