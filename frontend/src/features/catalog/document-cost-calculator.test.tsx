@@ -258,3 +258,40 @@ describe('DocumentCostCalculator, the cheapest plan', () => {
     expect(screen.getByTestId('cost-row-payg')).not.toHaveClass('bg-ok-subtle')
   })
 })
+
+describe('DocumentCostCalculator, the volume it is pricing', () => {
+  it('states the total pages the two fields multiply out to', () => {
+    render()
+
+    // The figure every row is computed from. Leaving the reader to do
+    // 10 x 10 in their head is how a misread field goes unnoticed.
+    expect(screen.getByTestId('volume-total')).toHaveTextContent('100 pages a month')
+  })
+
+  it('follows the fields', async () => {
+    render()
+
+    await setField(/documents a month/i, '250')
+
+    expect(screen.getByTestId('volume-total')).toHaveTextContent('2,500 pages a month')
+  })
+
+  it('counts a half-typed field the way the table prices it', async () => {
+    render()
+
+    // An empty field prices as one rather than as nothing, so the readout has
+    // to say one too - otherwise it contradicts the totals beside it.
+    await userEvent.setup().clear(screen.getByLabelText(/pages per document/i))
+
+    expect(screen.getByTestId('volume-total')).toHaveTextContent('10 pages a month')
+  })
+
+  it('says page, not pages, when there is one', async () => {
+    render()
+
+    await setField(/documents a month/i, '1')
+    await setField(/pages per document/i, '1')
+
+    expect(screen.getByTestId('volume-total')).toHaveTextContent('1 page a month')
+  })
+})

@@ -132,8 +132,24 @@ export function VolumeFields({
         value={volume.pages}
         onChange={(pages) => onChange({ ...volume, pages })}
       />
+      {/* The product of the two fields, which is the quantity every row below
+          is actually priced on, and the unit the published rates are compared
+          through. Leaving the reader to multiply it themselves is how a
+          mistyped field goes unnoticed until the total looks wrong. */}
+      <p aria-live="polite" data-testid="volume-total" className="text-muted-foreground text-sm">
+        <strong className="text-foreground font-medium">{totalPages(volume)}</strong> a month
+      </p>
     </div>
   )
+}
+
+/** The volume in pages, read off `volumeInput` rather than the raw fields so a
+ *  half-typed one reads as the 1 it is being priced as, instead of
+ *  contradicting the totals beside it. */
+function totalPages(volume: Volume): string {
+  const { documents, pagesPerDocument } = volumeInput(volume)
+  const pages = documents * pagesPerDocument
+  return `${pages.toLocaleString('en-US')} ${pages === 1 ? 'page' : 'pages'}`
 }
 
 function CostCells({ plan, input }: { plan: PlanOut; input: DocumentInput }) {

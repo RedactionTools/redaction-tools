@@ -16,6 +16,10 @@ given in brackets.
   fee that covers the work counts at that fee; an annual or per-seat fee does not, because
   turning one into this month's bill needs a divisor no vendor published. Mixed currencies
   get no answer at all. A joint-cheapest pair is named as such rather than broken arbitrarily.
+- **The volume in pages**, stated under the calculator's two fields — 10 documents of 10
+  pages reads "100 pages a month". That product is what every row is actually priced on and
+  the unit the published rates are compared through, so leaving the reader to multiply it
+  was how a mistyped field went unnoticed until a total looked wrong.
 - **A 25-page preset** on pages per document — the free tier's per-document cap across the
   catalog, and the point where the ranking starts to move.
 - **Creating plans over MCP** — `catalog_create_plan` and `catalog_set_plan_limit` join the
