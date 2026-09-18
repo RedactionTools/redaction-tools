@@ -33,8 +33,11 @@ def drop_schedules(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-    initial = True
-
-    dependencies = [("django_q", "0001_initial")]
+    # `__latest__`, not `0001_initial`: a data migration gets the historical
+    # model as of its dependencies, and `Schedule.name` arrives in a later
+    # django_q migration. Pinned to the initial one this runs against a table
+    # that has no `name` column yet, and every later migration in the run dies
+    # with it.
+    dependencies = [("django_q", "__latest__")]
 
     operations = [migrations.RunPython(add_schedules, drop_schedules)]
