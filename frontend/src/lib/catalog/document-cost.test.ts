@@ -173,7 +173,8 @@ describe('documentCost, published caps', () => {
 
     expect(documentCost(capped, { documents: 1, pagesPerDocument: 100 })).toEqual({
       kind: 'over-limit',
-      maxPages: 25,
+      max: 25,
+      counts: 'pages',
       per: 'document',
     })
   })
@@ -223,7 +224,8 @@ describe('documentCost, published caps', () => {
     })
     expect(documentCost(free, { documents: 11, pagesPerDocument: 10 })).toEqual({
       kind: 'over-limit',
-      maxPages: 100,
+      max: 100,
+      counts: 'pages',
       per: 'month',
     })
   })
@@ -254,6 +256,25 @@ describe('documentCost, published caps', () => {
     })
   })
 
+  // Redactable's free tier takes two documents a month. Priced without that cap
+  // a hundred of them cost $0, and the plan was named cheapest in the catalog.
+  it('counts a monthly allowance published in documents, not just in pages', () => {
+    const free = plan({
+      prices: [price({ amount: '0.0000', unit: 'month', billing_period: 'monthly' })],
+      limits: [limit({ kind: 'documents_per_month', label: 'Documents per month', value: 2 })],
+    })
+
+    expect(documentCost(free, { documents: 2, pagesPerDocument: 10 })).toMatchObject({
+      kind: 'amount',
+    })
+    expect(documentCost(free, { documents: 3, pagesPerDocument: 10 })).toEqual({
+      kind: 'over-limit',
+      max: 2,
+      counts: 'documents',
+      per: 'month',
+    })
+  })
+
   it('reports the document-length cap ahead of the monthly one', () => {
     // A reader whose document is simply too long cannot fix that by sending
     // fewer of them, so that is the cap worth naming.
@@ -267,14 +288,16 @@ describe('documentCost, published caps', () => {
 
     expect(documentCost(free, { documents: 1, pagesPerDocument: 100 })).toEqual({
       kind: 'over-limit',
-      maxPages: 25,
+      max: 25,
+      counts: 'pages',
       per: 'document',
     })
 
     // Short enough documents, too many of them: now the monthly cap is the one.
     expect(documentCost(free, { documents: 20, pagesPerDocument: 10 })).toEqual({
       kind: 'over-limit',
-      maxPages: 100,
+      max: 100,
+      counts: 'pages',
       per: 'month',
     })
   })
@@ -316,7 +339,7 @@ describe('documentCost, metered plans', () => {
       total: '140.0000',
       perPage: '0.0467',
       currency: 'USD',
-      overage: { base: '15.0000', pages: 2500, rate: '0.0500' },
+      overage: { base: '15.0000', over: 2500, counts: 'pages', rate: '0.0500' },
     })
   })
 
@@ -329,7 +352,7 @@ describe('documentCost, metered plans', () => {
   it('charges from the first page past the line, not the whole volume', () => {
     expect(documentCost(metered(), { documents: 1, pagesPerDocument: 501 })).toMatchObject({
       total: '15.0500',
-      overage: { pages: 1 },
+      overage: { over: 1 },
     })
   })
 
@@ -341,7 +364,8 @@ describe('documentCost, metered plans', () => {
 
     expect(documentCost(capped, { documents: 1, pagesPerDocument: 501 })).toEqual({
       kind: 'over-limit',
-      maxPages: 500,
+      max: 500,
+      counts: 'pages',
       per: 'month',
     })
   })
@@ -357,7 +381,7 @@ describe('documentCost, metered plans', () => {
 
     expect(documentCost(twice, { documents: 1, pagesPerDocument: 400 })).toMatchObject({
       kind: 'over-limit',
-      maxPages: 300,
+      max: 300,
     })
   })
 })

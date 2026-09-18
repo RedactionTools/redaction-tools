@@ -8,10 +8,12 @@ export type DocumentCost =
       perPage: string
       currency: string
       /** Present only when the volume ran past the plan's allowance. */
-      overage?: { base: string; pages: number; rate: string }
+      overage?: { base: string; over: number; counts: 'pages' | 'documents'; rate: string }
     }
   | { kind: 'included' }
-  | { kind: 'over-limit'; maxPages: number; per: 'document' | 'month' }
+  /** `counts` is the unit the cap is published in: a plan may cap pages, or
+   *  documents, and saying "pages" of a document cap misreads the vendor. */
+  | { kind: 'over-limit'; max: number; counts: 'pages' | 'documents'; per: 'document' | 'month' }
   | { kind: 'not-comparable' }
 
 export type DocumentInput = { documents: number; pagesPerDocument: number }
@@ -96,37 +98,77 @@ export function documentCost(plan: PlanOut, input: DocumentInput): DocumentCost 
   // overage rate sells its way past a per-document cap.
   const perDocument = cap(plan, 'pages_per_document')
   if (perDocument !== null && input.pagesPerDocument > perDocument) {
-    return { kind: 'over-limit', maxPages: perDocument, per: 'document' }
+    return { kind: 'over-limit', max: perDocument, counts: 'pages', per: 'document' }
   }
 
   const totalPages = input.documents * input.pagesPerDocument
-  const allowance = cap(plan, 'pages_per_month')
-  const excess = allowance === null ? 0 : Math.max(0, totalPages - allowance)
 
-  // Only a per-page overage is supported, because a monthly page allowance is
-  // the only allowance the catalog records.
+  // A vendor publishes a monthly allowance in whichever unit it meters, and the
+  // catalog records both. Reading only the page one priced a plan that takes
+  // two documents a month as if it took any number of them.
+  const monthly = [
+    {
+      counts: 'documents' as const,
+      allowance: cap(plan, 'documents_per_month'),
+      used: input.documents,
+      rate: 'document',
+    },
+    {
+      counts: 'pages' as const,
+      allowance: cap(plan, 'pages_per_month'),
+      used: totalPages,
+      rate: 'page',
+    },
+  ]
+
   const overage = overagePrice(plan)
-  const metered = overage && overage.unit === 'page' ? overage : null
+  const breached = monthly
+    .map((allowance) => ({
+      ...allowance,
+      excess: allowance.allowance === null ? 0 : Math.max(0, allowance.used - allowance.allowance),
+      // A cap sells its way past only at a rate published in the same unit: a
+      // per-page overage says nothing about a third document.
+      metered: overage && overage.unit === allowance.rate ? overage : null,
+    }))
+    .filter((allowance) => allowance.excess > 0)
 
-  if (excess > 0 && !metered) {
-    return { kind: 'over-limit', maxPages: allowance as number, per: 'month' }
+  const unpriced = breached.find((allowance) => !allowance.metered)
+  if (unpriced) {
+    return {
+      kind: 'over-limit',
+      max: unpriced.allowance as number,
+      counts: unpriced.counts,
+      per: 'month',
+    }
   }
+
+  const billed = breached[0] ?? null
+  const allowance = monthly.find((entry) => entry.allowance !== null)?.allowance ?? null
 
   if (SUBSCRIPTION.has(base.unit)) {
     // Without an allowance the bill does not move with the volume, and saying
     // so beats printing a fee the reader pays either way.
     if (allowance === null) return { kind: 'included' }
 
-    const billed = excess > 0 && metered ? metered : null
     const total =
-      toTenThousandths(base.amount) + (billed ? excess * toTenThousandths(billed.amount) : 0)
+      toTenThousandths(base.amount) +
+      (billed?.metered ? billed.excess * toTenThousandths(billed.metered.amount) : 0)
 
     return {
       kind: 'amount',
       total: fromTenThousandths(total),
       perPage: fromTenThousandths(Math.round(total / totalPages)),
       currency: base.currency,
-      ...(billed ? { overage: { base: base.amount, pages: excess, rate: billed.amount } } : {}),
+      ...(billed?.metered
+        ? {
+            overage: {
+              base: base.amount,
+              over: billed.excess,
+              counts: billed.counts,
+              rate: billed.metered.amount,
+            },
+          }
+        : {}),
     }
   }
 

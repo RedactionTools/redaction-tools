@@ -41,7 +41,7 @@ describe('ExampleCostPreview', () => {
     // $49 covers 1,000 pages; the other 9,000 bill at the $0.05 example rate.
     const team = screen.getByTestId('cost-row-example-team')
     expect(within(team).getByText('$499.00')).toBeInTheDocument()
-    expect(team).toHaveTextContent('9,000 over')
+    expect(team).toHaveTextContent('9,000 pages over')
   })
 
   // Example or not, the arithmetic must keep the catalog's rule: a flat monthly

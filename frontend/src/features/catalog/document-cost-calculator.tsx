@@ -165,7 +165,7 @@ function CostCells({ plan, input }: { plan: PlanOut; input: DocumentInput }) {
             // the allowance ran out should say so on the row that jumped.
             <span className="text-muted-foreground block text-xs font-normal">
               {formatCost(cost.overage.base, cost.currency)} +{' '}
-              {cost.overage.pages.toLocaleString('en-US')} over ×{' '}
+              {cost.overage.over.toLocaleString('en-US')} {cost.overage.counts} over ×{' '}
               {formatCost(cost.overage.rate, cost.currency)}
             </span>
           ) : null}
@@ -189,8 +189,8 @@ function CostCells({ plan, input }: { plan: PlanOut; input: DocumentInput }) {
     return (
       <TableCell className="text-muted-foreground" colSpan={2}>
         {cost.per === 'month'
-          ? `Over this plan's ${cost.maxPages} pages a month`
-          : `Over this plan's ${cost.maxPages}-page document limit`}
+          ? `Over this plan's ${cost.max.toLocaleString('en-US')} ${cost.counts} a month`
+          : `Over this plan's ${cost.max}-page document limit`}
       </TableCell>
     )
   }
