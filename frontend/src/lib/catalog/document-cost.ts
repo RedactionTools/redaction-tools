@@ -142,3 +142,56 @@ export function documentCost(plan: PlanOut, input: DocumentInput): DocumentCost 
     currency: base.currency,
   }
 }
+
+/**
+ * The codes of the plans that cost least for `input`, cheapest-first thinking
+ * made explicit so the table can point at an answer instead of leaving the
+ * reader to scan a column.
+ *
+ * A plan is a candidate only if the catalog has a figure for this month's work
+ * that it is willing to state:
+ *
+ * - a costed total, or
+ * - a flat monthly fee that covers the work, which is that fee.
+ *
+ * Everything else is left out rather than guessed at. An annual or per-seat fee
+ * is not this month's bill, and turning one into a monthly figure needs a
+ * divisor no vendor published - the same division `apps/catalog/pricing.py`
+ * refuses. A plan that cannot take the volume has no price at all.
+ *
+ * Mixed currencies return nothing: ranking them needs an exchange rate the
+ * catalog does not publish, and picking one anyway would be a number we made up.
+ *
+ * Returns every plan tied at the lowest. A joint-cheapest pair is the true
+ * answer, and breaking the tie on row order would invent a winner.
+ */
+export function cheapestPlan(plans: PlanOut[], input: DocumentInput): string[] {
+  const candidates: { code: string; total: number; currency: string }[] = []
+
+  for (const plan of plans) {
+    const cost = documentCost(plan, input)
+    const base = basePrice(plan)
+
+    if (cost.kind === 'amount') {
+      candidates.push({
+        code: plan.code,
+        total: toTenThousandths(cost.total),
+        currency: cost.currency,
+      })
+    } else if (cost.kind === 'included' && base && base.unit === 'month') {
+      candidates.push({
+        code: plan.code,
+        total: toTenThousandths(base.amount),
+        currency: base.currency,
+      })
+    }
+  }
+
+  if (!candidates.length) return []
+  if (new Set(candidates.map((candidate) => candidate.currency)).size > 1) return []
+
+  const lowest = Math.min(...candidates.map((candidate) => candidate.total))
+  return candidates
+    .filter((candidate) => candidate.total === lowest)
+    .map((candidate) => candidate.code)
+}

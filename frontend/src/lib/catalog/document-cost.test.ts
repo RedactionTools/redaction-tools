@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import type { PlanLimitOut, PlanOut, PriceOut } from '@/lib/api/generated/model'
 
-import { basePrice, documentCost, overagePrice } from './document-cost'
+import { basePrice, cheapestPlan, documentCost, overagePrice } from './document-cost'
 
 function price(overrides: Partial<PriceOut> = {}): PriceOut {
   return {
@@ -359,5 +359,75 @@ describe('documentCost, metered plans', () => {
       kind: 'over-limit',
       maxPages: 300,
     })
+  })
+})
+
+describe('cheapestPlan', () => {
+  const metered = plan({ code: 'payg', prices: [price({ amount: '0.0500' })] })
+  const flat = plan({
+    code: 'pro',
+    prices: [price({ amount: '15.0000', unit: 'month', billing_period: 'monthly' })],
+  })
+
+  it('picks the lowest total for the volume asked about', () => {
+    // 100 pages of pay-as-you-go is $5, against $15 flat.
+    expect(cheapestPlan([metered, flat], { documents: 10, pagesPerDocument: 10 })).toEqual(['payg'])
+  })
+
+  it('changes its mind as the volume grows', () => {
+    // 1,000 pages is $50 metered, so the flat fee wins.
+    expect(cheapestPlan([metered, flat], { documents: 100, pagesPerDocument: 10 })).toEqual(['pro'])
+  })
+
+  it('counts a flat monthly fee that covers the work at that fee', () => {
+    // "Included in the plan" is still $15 a month, and leaving it out would
+    // crown a metered plan that costs more.
+    const dear = plan({ code: 'dear', prices: [price({ amount: '1.0000' })] })
+
+    expect(cheapestPlan([dear, flat], { documents: 10, pagesPerDocument: 10 })).toEqual(['pro'])
+  })
+
+  it('names every plan tied at the lowest rather than picking one', () => {
+    const twin = plan({ code: 'twin', prices: [price({ amount: '0.0500' })] })
+
+    expect(cheapestPlan([metered, twin], { documents: 1, pagesPerDocument: 10 })).toEqual([
+      'payg',
+      'twin',
+    ])
+  })
+
+  it('ignores a plan that cannot price the volume at all', () => {
+    const capped = plan({
+      code: 'free',
+      prices: [price({ amount: '0.0000' })],
+      limits: [limit({ value: 5 })],
+    })
+
+    // Free would win on price, but it will not take a 10-page document.
+    expect(cheapestPlan([capped, metered], { documents: 1, pagesPerDocument: 10 })).toEqual([
+      'payg',
+    ])
+  })
+
+  it('refuses to compare across currencies', () => {
+    // No published exchange rate, so no honest "cheapest".
+    const euros = plan({ code: 'eur', prices: [price({ amount: '0.0100', currency: 'EUR' })] })
+
+    expect(cheapestPlan([metered, euros], { documents: 1, pagesPerDocument: 10 })).toEqual([])
+  })
+
+  it('refuses a fee that does not buy a month', () => {
+    // An annual fee is not this month's bill, and dividing it by twelve invents
+    // a figure the vendor never published.
+    const yearly = plan({
+      code: 'yearly',
+      prices: [price({ amount: '1.0000', unit: 'year', billing_period: 'annual' })],
+    })
+
+    expect(cheapestPlan([yearly], { documents: 1, pagesPerDocument: 10 })).toEqual([])
+  })
+
+  it('has no answer when nothing can be priced', () => {
+    expect(cheapestPlan([], { documents: 1, pagesPerDocument: 10 })).toEqual([])
   })
 })

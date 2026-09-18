@@ -11,6 +11,13 @@ given in brackets.
 
 ### Added
 
+- **Cheapest plan marked in the cost calculator** — the table now names the plan that costs
+  least for the volume in the fields, and says so in words rather than by tint alone. A flat
+  fee that covers the work counts at that fee; an annual or per-seat fee does not, because
+  turning one into this month's bill needs a divisor no vendor published. Mixed currencies
+  get no answer at all. A joint-cheapest pair is named as such rather than broken arbitrarily.
+- **A 25-page preset** on pages per document — the free tier's per-document cap across the
+  catalog, and the point where the ranking starts to move.
 - **Staff MCP server** at `/mcp` — reads and edits the catalog from Claude: list listings,
   read one with the reasons it is not yet a public page, edit it, edit its plans, publish a
   price. A plain synchronous Django view (django-mcpz), so it runs inside the existing

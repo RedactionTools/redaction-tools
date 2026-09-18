@@ -217,3 +217,33 @@ describe('DocumentCostCalculator', () => {
     )
   })
 })
+
+describe('DocumentCostCalculator, the cheapest plan', () => {
+  it('marks the cheapest row for the volume asked about', () => {
+    render()
+
+    // The default month is 100 pages: free covers it, at nothing.
+    expect(row('free').getByText(/cheapest/i)).toBeInTheDocument()
+    expect(screen.getByTestId('cost-row-free')).toHaveAttribute('data-cheapest', 'true')
+  })
+
+  it('moves the mark as the volume grows past a plan', async () => {
+    render()
+
+    // 100 documents of 10 pages: free is over its 100-page monthly allowance,
+    // pay-as-you-go is $50, pay-per-document is $100, and Pro's flat $15
+    // covers the lot - so the flat fee that read "Included" now wins.
+    await setField(/documents a month/i, '100')
+
+    expect(row('pro').getByText(/cheapest/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/cheapest/i)).toHaveLength(1)
+  })
+
+  it('says cheapest rather than best, and not with colour alone', () => {
+    render()
+
+    // A screen reader has to get the same answer the eye does.
+    const mark = row('free').getByText(/cheapest/i)
+    expect(mark).toHaveTextContent(/cheapest for this volume/i)
+  })
+})

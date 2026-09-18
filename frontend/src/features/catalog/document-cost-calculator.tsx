@@ -14,7 +14,12 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import type { PlanOut, ToolDetailOut } from '@/lib/api/generated/model'
-import { basePrice, documentCost, type DocumentInput } from '@/lib/catalog/document-cost'
+import {
+  basePrice,
+  cheapestPlan,
+  documentCost,
+  type DocumentInput,
+} from '@/lib/catalog/document-cost'
 import { formatCost } from '@/lib/catalog/format'
 
 import { PriceProvenanceBadge } from './price-provenance-badge'
@@ -23,7 +28,7 @@ import { planPrice } from './tool-profile'
 /** The volumes the catalog gets asked about, kept to one click each. Typing a
  *  number the presets do not cover stays the point of the field beside them. */
 const DOCUMENT_PRESETS = [10, 100, 1000]
-const PAGE_PRESETS = [1, 10, 100]
+const PAGE_PRESETS = [1, 10, 25, 100]
 
 const MAX = 10_000
 
@@ -201,6 +206,10 @@ export function CostTable({
   tool?: ToolDetailOut
   caption: ReactNode
 }) {
+  // Recomputed per render rather than memoised: it is one pass over a handful
+  // of plans, and the volume it depends on changes on every keystroke anyway.
+  const cheapest = cheapestPlan(plans, input)
+
   return (
     <Table>
       <TableCaption>{caption}</TableCaption>
@@ -214,8 +223,25 @@ export function CostTable({
       </TableHead>
       <TableBody>
         {plans.map((plan) => (
-          <TableRow key={plan.code} data-testid={`cost-row-${plan.code}`}>
-            <TableCell className="font-medium">{plan.name}</TableCell>
+          <TableRow
+            key={plan.code}
+            data-testid={`cost-row-${plan.code}`}
+            data-cheapest={cheapest.includes(plan.code) || undefined}
+            className={cheapest.includes(plan.code) ? 'bg-primary/5' : undefined}
+          >
+            <TableCell className="font-medium">
+              <span className="flex flex-wrap items-center gap-2">
+                {plan.name}
+                {/* Named, not just tinted: the answer has to survive a screen
+                    reader, a monochrome print and a reader who cannot tell the
+                    tint from the stripe. */}
+                {cheapest.includes(plan.code) ? (
+                  <span className="bg-primary/10 text-primary rounded-full px-2 py-0.5 text-xs font-medium">
+                    {cheapest.length > 1 ? 'Joint cheapest' : 'Cheapest'} for this volume
+                  </span>
+                ) : null}
+              </span>
+            </TableCell>
             <TableCell className="text-muted-foreground">
               <span className="flex items-center gap-2">
                 {planPrice(plan)}
