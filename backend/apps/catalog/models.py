@@ -39,6 +39,35 @@ MIN_EDITORIAL_CHARS = 400
 REQUIRED_FACET_DIMENSIONS = frozenset({"media", "deployment", "method"})
 
 
+def listability_blockers(tool):
+    """Every reason `tool` is a row rather than a page, cheapest check first.
+
+    A generator on purpose. `is_listable()` takes only the first item, so a
+    draft still costs no query - and the public list runs the bar over every
+    published tool on every request. Staff tooling drains the whole thing to
+    show what is missing. One statement of the bar, two ways of asking it.
+    """
+    if tool.status != ToolStatus.PUBLISHED:
+        yield f"Status is {tool.status}, not published."
+    if missing := [f for f in ("name", "website_url", "logo_url") if not getattr(tool, f)]:
+        yield f"Missing: {', '.join(missing)}."
+    # Vendor copy never counts: a claimed listing must not clear the bar on
+    # marketing prose alone.
+    if (shortfall := MIN_EDITORIAL_CHARS - len(tool.description_md or "")) > 0:
+        yield (
+            f"description_md is {shortfall} characters short of "
+            f"{MIN_EDITORIAL_CHARS}. Vendor copy does not count toward it."
+        )
+    dimensions = {facet.value.dimension.code for facet in tool.facets.all()}
+    if absent := REQUIRED_FACET_DIMENSIONS - dimensions:
+        yield f"No facet on: {', '.join(sorted(absent))}."
+    if not tool.has_pricing_position():
+        yield (
+            "No pricing position: no public plan has a current price, a "
+            "free-tier flag or the enterprise-quote flag."
+        )
+
+
 class ToolQuerySet(models.QuerySet):
     def published(self):
         return self.filter(status=ToolStatus.PUBLISHED)
@@ -136,18 +165,7 @@ class Tool(TimeStampedModel):
         sitemap and every ItemList. The editorial minimum counts our own
         writing only - vendor copy never satisfies it.
         """
-        if self.status != ToolStatus.PUBLISHED:
-            return False
-        if not (self.name and self.website_url and self.logo_url):
-            return False
-        # Vendor copy never counts: a claimed listing must not clear the bar on
-        # marketing prose alone.
-        if len(self.description_md or "") < MIN_EDITORIAL_CHARS:
-            return False
-        dimensions = {facet.value.dimension.code for facet in self.facets.all()}
-        if not dimensions >= REQUIRED_FACET_DIMENSIONS:
-            return False
-        return self.has_pricing_position()
+        return next(listability_blockers(self), None) is None
 
     def has_pricing_position(self):
         """A current price from any source, or an explicit free / quote-only stance.

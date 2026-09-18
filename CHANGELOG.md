@@ -9,7 +9,19 @@ given in brackets.
 
 ## Unreleased
 
-Nothing yet.
+### Added
+
+- **Staff MCP server** at `/mcp` — reads and edits the catalog from Claude: list listings,
+  read one with the reasons it is not yet a public page, edit it, edit its plans, publish a
+  price. A plain synchronous Django view (django-mcpz), so it runs inside the existing
+  gunicorn process; OAuth at `/oauth/` makes it addable as a claude.ai custom connector, and
+  `make backend-mcp-token` mints a bearer token for a terminal. Staff only, and every edit
+  lands in the revision queue staff already read.
+
+### Changed
+
+- `Tool.is_listable()` now delegates to `listability_blockers()`, which names each reason a
+  tool falls short instead of only answering yes or no. Same verdict, same queries.
 
 ## [2026-09-18]
 

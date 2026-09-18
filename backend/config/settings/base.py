@@ -60,6 +60,9 @@ INSTALLED_APPS = [
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
     "allauth.headless",
+    "django_mcpz",
+    "django_mcpz.oauth",
+    "django_mcpz.bearer_tokens",
     # Local
     "apps.core",
     "apps.accounts",
@@ -119,6 +122,10 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
+# The OAuth consent page sends anonymous users here, so it is load-bearing for
+# the MCP connector flow rather than incidental. Django's default happens to be
+# right - it is allauth's login page, which SOCIALACCOUNT_ONLY makes Google-only.
+LOGIN_URL = "/accounts/login/"
 LOGIN_REDIRECT_URL = "/admin/"
 
 # allauth: email is the identifier, Google is the only provider for now.
@@ -266,6 +273,21 @@ CATALOG_SUBMIT_RATE = env("CATALOG_SUBMIT_RATE", default="5/hour")
 CATALOG_CLAIM_RATE = env("CATALOG_CLAIM_RATE", default="10/day")
 CATALOG_MAX_OPEN_SUBMISSIONS = env.int("CATALOG_MAX_OPEN_SUBMISSIONS", default=5)
 
+# --- Staff MCP server ------------------------------------------------------
+# The MCP endpoint is /mcp; its OAuth authorization server is /oauth/. Claude's
+# connectors register themselves rather than being configured by hand.
+# Registration alone grants nothing: authorising still needs a staff sign-in and
+# consent, and a non-staff token is refused at the door by
+# `apps.accounts.mcp_auth.staff_auth`. Turn it off and every client has to be
+# created in the admin first.
+MCPZ_OAUTH_DYNAMIC_REGISTRATION = env.bool("MCP_OAUTH_DYNAMIC_REGISTRATION", default=True)
+MCPZ_OAUTH_ACCESS_TOKEN_LIFETIME = timedelta(
+    seconds=env.int("MCP_ACCESS_TOKEN_LIFETIME", default=60 * 60)
+)
+MCPZ_OAUTH_REFRESH_TOKEN_LIFETIME = timedelta(
+    seconds=env.int("MCP_REFRESH_TOKEN_LIFETIME", default=30 * 24 * 60 * 60)
+)
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -278,5 +300,8 @@ LOGGING = {
     "root": {"handlers": ["console"], "level": env("LOG_LEVEL", default="INFO")},
     "loggers": {
         "django.db.backends": {"level": "INFO", "handlers": ["console"], "propagate": False},
+        # Every MCP tool call: which tool, its arguments, the outcome and how
+        # long it took. The audit trail for a surface that writes live prices.
+        "django_mcpz.calls": {"level": "INFO", "handlers": ["console"], "propagate": False},
     },
 }

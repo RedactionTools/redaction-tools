@@ -12,6 +12,7 @@ is, see [`README.md`](README.md).
 | Auth | django-allauth headless + Google, issuing our own JWTs |
 | Admin | django-unfold |
 | Background jobs | django-q2 (ORM broker) |
+| Staff MCP server | django-mcpz (`/mcp`), OAuth at `/oauth/` |
 | Database | PostgreSQL 17 |
 | Tooling | uv, ruff, pytest, pre-commit, make |
 | Frontend | Next.js 16 (App Router), React 19, Tailwind v4, TanStack Query, Orval, NextAuth |
@@ -22,10 +23,11 @@ is, see [`README.md`](README.md).
 
 ```
 backend/            Django project
-  config/           settings (base/local/production/test), urls, api, wsgi/asgi
+  config/           settings (base/local/production/test), urls, api, mcp, wsgi/asgi
   apps/core/        shared base models + /health
-  apps/accounts/    user model, JWT, allauth glue, admin
+  apps/accounts/    user model, JWT, allauth glue, admin, MCP auth
   apps/catalog/     the catalog: models, API, filters, admin, seed migrations
+                    staff.py (staff writes) + mcp.py (the MCP tool surface)
   tests/
   openapi.json      committed schema; the Orval input
 frontend/           Next.js app
@@ -127,6 +129,63 @@ auth scheme per route: none, `auth=JWTAuth()` for user tokens, or `auth=APIKeyAu
 (`ninja_apikey.security`) for service-to-service keys managed in the admin.
 
 Then run `make schema` and commit both generated artifacts with the change.
+
+## The staff MCP server
+
+`/mcp` is a Model Context Protocol server that lets a staff user read and edit the catalog from
+Claude: list listings, read one, edit it, edit its plans, publish a price. It is a plain
+synchronous Django view (django-mcpz), so it runs inside the existing gunicorn/WSGI process with
+no extra service.
+
+Three layers, and the split is the point:
+
+| File | Holds |
+| --- | --- |
+| `config/mcp.py` | the server object and its instructions; a manifest, no logic |
+| `apps/catalog/mcp.py` | msgspec parameter and result types, one per tool |
+| `apps/catalog/staff.py` | the rules — no MCP, no ninja, no `request` |
+
+**It is outside the schema pipeline.** `make backend-schema` exports `config.api.api` only, so
+nothing here reaches `openapi.json` or the generated frontend client, and `make schema` must
+produce no diff when you change a tool.
+
+Two credentials, one gate (`apps/accounts/mcp_auth.py`): OAuth is what claude.ai's connector flow
+mints, a static bearer token is what a terminal uses. Both end at `is_staff` — a valid credential
+for a non-staff account gets 403, not 401, so a connector does not loop trying to re-authorise.
+
+### Using it from a terminal
+
+```bash
+make backend-mcp-token EMAIL=you@example.com    # printed once; only the digest is stored
+claude mcp add --transport http --header "Authorization: Bearer mcp_..." \
+  redaction-tools http://localhost:8007/mcp
+```
+
+Or point the MCP Inspector (`npx @modelcontextprotocol/inspector`) at
+`http://localhost:8007/mcp` over Streamable HTTP with the same header.
+
+### Using it from claude.ai
+
+Add a custom connector pointing at `https://backend.redaction-tools.com/mcp`. Claude registers
+itself at `/oauth/register` and sends you to `/oauth/authorize`, which bounces an anonymous browser
+through `/accounts/login/` to Google and back to the consent page. `SOCIALACCOUNT_ONLY = True`, so
+Google is the only way in — the account needs `is_staff` **and** a linked `SocialAccount`.
+
+### Adding a tool
+
+Add the msgspec types and the `@server.tool` in `apps/catalog/mcp.py`, and put the rules in
+`apps/catalog/staff.py`, raising `StaffError` for anything the caller can fix by trying again
+differently — the MCP layer turns that into an in-band `isError` result the model self-corrects
+from. Every write carries `permission=is_staff` and takes `user` explicitly, so nothing writes a
+price or a revision without recording who did it.
+
+Two things that bite:
+
+- Fields a caller may omit are `msgspec.UNSET`, not `None`. A numeric constraint has to sit on the
+  inner type — `Annotated[int, Meta(ge=0)] | UnsetType`, never `Annotated[int | UnsetType, ...]`,
+  which msgspec rejects at import.
+- After installing, the first test run needs `--create-db`: `--reuse-db` is in `addopts` and a
+  cached test database has no `django_mcpz_*` tables.
 
 ## OpenAPI schema for the frontend
 

@@ -74,6 +74,26 @@ The parts that bite if you miss them:
 - `orval.config.ts` sets neither `useQuery` nor `useMutation` on purpose - each applies to every
   operation, so setting either gives POSTs query hooks or GETs mutation hooks.
 
+## The staff MCP server lives at `/mcp`
+
+`DEVELOPMENT.md` has the full picture. What bites:
+
+- **It is outside the generated contract.** `make backend-schema` exports `config.api.api`
+  only, so an MCP change must leave `openapi.json` and the Orval client untouched -
+  `make schema && git diff --exit-code` is the check.
+- **Writes go through `apps/catalog/staff.py`, never straight to the ORM.** That module
+  imports neither ninja nor MCP and takes `user` explicitly, which is what keeps the price
+  rules in one place and every write attributable. Refusals are `StaffError`; the MCP layer
+  turns them into an in-band `isError` a model can correct from.
+- **`Tool.is_listable()` delegates to `listability_blockers()`** in `models.py`. Change the
+  bar there. It is a generator so `is_listable()` still short-circuits, which matters
+  because the public list runs it over every published tool on every request.
+- **`set_plan_price` closes only the matching (currency, billing period, overage) slot.**
+  `PriceProposalAdmin.approve_proposals` closes every current row, which retires a metered
+  plan's overage rate along with its monthly fee - copy the service, not the admin.
+- Optional MCP parameters are `msgspec.UNSET`, and a numeric constraint goes on the inner
+  type: `Annotated[int, Meta(ge=0)] | UnsetType`.
+
 ## Conventions
 
 - Tests come first; the repo carries tdd-guard's rulebook in

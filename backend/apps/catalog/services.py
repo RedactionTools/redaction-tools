@@ -23,24 +23,38 @@ def normalize_host(url: str) -> str:
     return host.removeprefix("www.")
 
 
-def check_external_urls(payload, fields):
-    """Run the SSRF guard over every user-supplied URL, reporting per field.
+def external_url_errors(values, fields):
+    """Every (field, message) the SSRF guard objects to, over a mapping.
 
     Model validators only fire on `full_clean()`, which the ORM does not call on
-    save - so the API boundary has to run them itself.
+    save - so every write boundary has to run them itself. Returned rather than
+    raised, because not every boundary is a ninja view: the staff MCP surface
+    needs the same check and a different exception.
     """
     errors = []
     for field in fields:
-        value = getattr(payload, field, "") or ""
+        value = values.get(field) or ""
         if not value:
             continue
         validator = validate_logo_url if field.endswith("logo_url") else validate_external_url
         try:
             validator(value)
         except DjangoValidationError as exc:
-            errors.append({"type": "value_error", "loc": ["body", field], "msg": exc.messages[0]})
+            errors.append((field, exc.messages[0]))
+    return errors
+
+
+def check_external_urls(payload, fields):
+    """`external_url_errors` over a schema object, as a ninja 422."""
+    values = {field: getattr(payload, field, "") for field in fields}
+    errors = external_url_errors(values, fields)
     if errors:
-        raise ValidationError(errors)
+        raise ValidationError(
+            [
+                {"type": "value_error", "loc": ["body", field], "msg": message}
+                for field, message in errors
+            ]
+        )
 
 
 def conflict(detail):

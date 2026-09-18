@@ -17,6 +17,7 @@ from apps.catalog.models import (
     ToolFacet,
     ToolStatus,
     Vendor,
+    listability_blockers,
 )
 
 EDITORIAL = "Acme Redact is a redaction tool. " * 20  # comfortably over 400 characters
@@ -119,3 +120,44 @@ def test_the_queryset_returns_only_listable_tools(listable_tool):
     slugs = {tool.slug for tool in Tool.objects.listable()}
     assert "acme-redact" in slugs
     assert "bare" not in slugs
+
+
+def test_the_report_names_every_reason_a_tool_falls_short(listable_tool):
+    """`is_listable()` says no; staff need to know what to fix."""
+    listable_tool.status = ToolStatus.DRAFT
+    listable_tool.logo_url = ""
+    listable_tool.description_md = "Short."
+    listable_tool.facets.all().delete()
+    PlanPrice.objects.all().delete()
+
+    reasons = list(listability_blockers(listable_tool))
+
+    assert len(reasons) == 5
+    blob = " ".join(reasons)
+    assert "draft" in blob
+    assert "logo_url" in blob
+    assert "description_md" in blob
+    assert "deployment, media, method" in blob
+    assert "pricing" in blob
+
+
+def test_the_report_is_empty_for_a_listable_tool(listable_tool):
+    assert list(listability_blockers(listable_tool)) == []
+
+
+def test_the_report_counts_the_editorial_shortfall(listable_tool):
+    listable_tool.description_md = "x" * 100
+
+    assert "300 characters short" in " ".join(listability_blockers(listable_tool))
+
+
+def test_asking_only_whether_stops_at_the_first_reason(listable_tool, django_assert_num_queries):
+    """`is_listable()` must not pay for the facet and pricing queries once it knows.
+
+    The public list runs the bar over every published tool on every request, so
+    the generator's laziness is load-bearing rather than stylistic.
+    """
+    listable_tool.status = ToolStatus.DRAFT
+
+    with django_assert_num_queries(0):
+        assert listable_tool.is_listable() is False

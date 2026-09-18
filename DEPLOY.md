@@ -110,6 +110,11 @@ GitHub secret names are case-insensitive, so `DEPLOY_PROD_SSH_KEY` and
   | `redaction-tools.com` | the catalog | `frontend:3007` |
   | `backend.redaction-tools.com` | API and admin | `backend:8007` |
 
+  Caddy proxies **all** of `backend.redaction-tools.com`, so `/mcp`, `/oauth/`
+  and `/.well-known/` are already covered - the staff MCP server needed no
+  Caddyfile change. claude.ai will only add a connector over HTTPS, which that
+  Caddy terminates.
+
   Both need a DNS A record. Splitting by host rather than by path avoids the one
   real trap of sharing an origin: `/api/v1/*` is Django but `/api/auth/*` is
   NextAuth, so a `/api/*` rule would break Google sign-in with a 404 that reads
@@ -181,7 +186,21 @@ which exist yet for `prod`:
    `POSTGRES_PASSWORD`, Google OAuth credentials, `ALLOWED_HOSTS`,
    `CORS_ALLOWED_ORIGINS`, and the real public `NEXT_PUBLIC_API_URL` — not
    `localhost`).
+
+   Register `https://backend.redaction-tools.com/accounts/google/login/callback/`
+   as an authorized redirect URI in the Google Cloud console while you are
+   there. `SOCIALACCOUNT_ONLY = True`, so it is the only way anyone reaches the
+   MCP OAuth consent page - without it the claude.ai connector flow dead-ends in
+   a Google error.
 5. `make deploy-env-put SERVER=prod`.
 6. `git push origin prod` (or `make deploy SERVER=prod`) to run the first
    deploy, then confirm via `make deploy-logs SERVER=prod` and by hitting
    `http://<DEPLOY_HOST>:8007/api/v1/health` and `http://<DEPLOY_HOST>:3007`.
+7. For the staff MCP connector, confirm
+   `https://backend.redaction-tools.com/.well-known/oauth-protected-resource/mcp`
+   and `/.well-known/oauth-authorization-server/oauth` both return JSON, then add
+   a custom connector in claude.ai pointing at
+   `https://backend.redaction-tools.com/mcp`. The account that authorises needs
+   `is_staff` and a linked Google `SocialAccount`; anyone else is refused with a
+   403. Expired tokens and abandoned client registrations are swept daily by the
+   `qcluster` (see `apps/core/migrations/0001_schedule_mcp_token_cleanup.py`).

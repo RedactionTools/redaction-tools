@@ -41,6 +41,10 @@ backend-superuser:  ## Create an admin user
 backend-shell:  ## Open a Django shell
 	cd $(BACKEND) && uv run manage.py shell
 
+.PHONY: backend-mcp-token
+backend-mcp-token:  ## Mint a staff MCP bearer token (EMAIL=you@example.com)
+	cd $(BACKEND) && uv run manage.py mcp_token $(EMAIL)
+
 .PHONY: backend-test
 backend-test:  ## Run the backend test suite
 	cd $(BACKEND) && uv run pytest

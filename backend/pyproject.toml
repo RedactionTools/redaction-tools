@@ -16,6 +16,8 @@ dependencies = [
     "whitenoise>=6.12",
     "gunicorn>=26.0",
     "django-cors-headers>=4.9.0",
+    "django-mcpz>=1.0.3,<2",
+    "msgspec>=0.20",
 ]
 
 [dependency-groups]
