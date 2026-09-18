@@ -22,7 +22,7 @@ export default async function SubmitPage() {
   return (
     <div className="max-w-2xl space-y-8">
       <header className="space-y-3">
-        <h1 className="text-3xl font-semibold tracking-tight text-balance">
+        <h1 className="text-2xl font-semibold tracking-tight text-balance sm:text-3xl">
           Submit a redaction tool
         </h1>
         <p className="text-muted-foreground text-pretty">

@@ -43,8 +43,8 @@ export default async function HubPage({ searchParams }: PageProps<'/'>) {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <header className="mb-10 space-y-4">
-        <h1 className="text-3xl font-semibold tracking-tight text-balance">
+      <header className="mb-8 space-y-4 md:mb-10">
+        <h1 className="text-2xl font-semibold tracking-tight text-balance sm:text-3xl">
           Redaction tools compared
         </h1>
         <CatalogLede />

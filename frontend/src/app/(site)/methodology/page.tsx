@@ -12,7 +12,7 @@ export default function MethodologyPage() {
   return (
     <article className="prose-none max-w-2xl space-y-8">
       <header className="space-y-3">
-        <h1 className="text-3xl font-semibold tracking-tight text-balance">
+        <h1 className="text-2xl font-semibold tracking-tight text-balance sm:text-3xl">
           How we verify prices and decide what gets listed
         </h1>
         <p className="text-muted-foreground text-pretty">

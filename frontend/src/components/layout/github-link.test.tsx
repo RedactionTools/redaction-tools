@@ -29,6 +29,16 @@ describe('GitHubLink', () => {
     expect(link.getAttribute('rel')).toContain('noreferrer')
   })
 
+  /**
+   * In the mobile drawer the mark sits in a column of worded links, where a
+   * lone glyph reads as a stray mark rather than a destination.
+   */
+  it('can show its name where a mark alone would not read', () => {
+    render(<GitHubLink label="Source on GitHub" />)
+
+    expect(screen.getByRole('link')).toHaveTextContent('Source on GitHub')
+  })
+
   // Two names on one link makes a screen reader say it twice.
   it('hides the mark itself from assistive tech', () => {
     const { container } = render(<GitHubLink />)

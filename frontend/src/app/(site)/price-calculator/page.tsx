@@ -33,9 +33,9 @@ export default async function PriceCalculatorPage({
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <div className="max-w-5xl space-y-8">
+      <div className="space-y-8">
         <header className="space-y-3">
-          <h1 className="text-3xl font-semibold tracking-tight text-balance">
+          <h1 className="text-2xl font-semibold tracking-tight text-balance sm:text-3xl">
             Redaction price calculator
           </h1>
           <p className="text-muted-foreground text-pretty">

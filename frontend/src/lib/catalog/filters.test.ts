@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   FACET_DIMENSIONS,
+  activeFacetCount,
   hasActiveFilters,
   parseToolFilters,
   toQueryString,
@@ -81,5 +82,29 @@ describe('toQueryString', () => {
 describe('FACET_DIMENSIONS', () => {
   it('leads with media, the primary filter on this domain', () => {
     expect(FACET_DIMENSIONS[0]).toBe('media')
+  })
+})
+
+describe('activeFacetCount', () => {
+  /**
+   * The count sits on a control that stands in for a folded panel, so it has
+   * to answer "how much is already on?" - which is a number of ticked boxes,
+   * not a number of dimensions they fall under.
+   */
+  it('counts every ticked box, not the dimensions they sit in', () => {
+    expect(activeFacetCount({ media: 'pdf,video', deployment: 'cloud' })).toBe(3)
+  })
+
+  it('counts the free-tier box, which is a filter like any other', () => {
+    expect(activeFacetCount({ media: 'pdf', has_free_tier: true })).toBe(2)
+  })
+
+  /** The search box is visible beside the control, so it counts itself. */
+  it('leaves the search term out', () => {
+    expect(activeFacetCount({ q: 'redact' })).toBe(0)
+  })
+
+  it('is zero on an unfiltered view', () => {
+    expect(activeFacetCount({})).toBe(0)
   })
 })

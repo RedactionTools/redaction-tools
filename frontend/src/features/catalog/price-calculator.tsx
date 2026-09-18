@@ -111,7 +111,7 @@ export function PriceCalculator({ slugs }: { slugs: string[] }) {
                 <button
                   type="button"
                   aria-label={`Remove ${item.name}`}
-                  className="text-muted-foreground hover:bg-muted hover:text-foreground flex size-5 items-center justify-center rounded-full leading-none"
+                  className="text-muted-foreground hover:bg-muted hover:text-foreground flex size-8 items-center justify-center rounded-full leading-none"
                   onClick={() => show(slugs.filter((slug) => slug !== item.slug))}
                 >
                   &times;

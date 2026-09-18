@@ -75,11 +75,11 @@ export function ToolProfile({ slug }: { slug: string }) {
 function ToolHeader({ tool }: { tool: ToolDetailOut }) {
   return (
     <header className="space-y-4">
-      <div className="flex items-center gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
         <ToolLogo name={tool.name} logoUrl={tool.logo_url} size="lg" />
         <div>
           <p className="text-muted-foreground text-sm">{tool.vendor.name}</p>
-          <h1 className="text-3xl font-semibold tracking-tight text-balance">
+          <h1 className="text-2xl font-semibold tracking-tight text-balance sm:text-3xl">
             {tool.name}: pricing, features and limits
           </h1>
         </div>
@@ -181,8 +181,8 @@ function PlanTable({ tool }: { tool: ToolDetailOut }) {
             {tool.plans.map((plan) => (
               <TableRow key={plan.code} data-testid={`plan-row-${plan.code}`}>
                 <TableCell className="font-medium">{plan.name}</TableCell>
-                <TableCell>
-                  <span className="flex items-center gap-2">
+                <TableCell label="Price">
+                  <span className="flex flex-wrap items-center gap-2">
                     {planPrice(plan)}
                     {basePrice(plan) ? (
                       <PriceProvenanceBadge
@@ -195,7 +195,7 @@ function PlanTable({ tool }: { tool: ToolDetailOut }) {
                     <span className="text-muted-foreground block text-xs">{planOverage(plan)}</span>
                   ) : null}
                 </TableCell>
-                <TableCell className="text-muted-foreground">
+                <TableCell className="text-muted-foreground" label="Includes">
                   {plan.highlights.join(' · ') || '—'}
                   {plan.limits.length ? (
                     <ul className="mt-1 list-none space-y-0.5">
