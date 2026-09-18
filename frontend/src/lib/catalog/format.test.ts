@@ -35,6 +35,13 @@ describe('formatAmount', () => {
   it('keeps sub-cent precision, because per-page pricing needs it', () => {
     expect(formatAmount('0.0500', 'USD')).toBe('$0.05')
   })
+
+  // Dropping the trailing zero is right for $15.00; on a dime it produces
+  // "$0.1", which no price is ever written as.
+  it('never leaves money on a single decimal', () => {
+    expect(formatAmount('0.1000', 'USD')).toBe('$0.10')
+    expect(formatAmount('1.5000', 'USD')).toBe('$1.50')
+  })
 })
 
 describe('formatUnit', () => {

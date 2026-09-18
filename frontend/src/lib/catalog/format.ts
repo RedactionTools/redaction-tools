@@ -18,10 +18,14 @@ const UNIT_LABELS: Record<string, string> = {
  * Amounts are stored with four decimal places so per-page pricing survives, but
  * `$15.0000` reads like a machine wrote it - so trailing zeroes go, and $0.05
  * keeps the precision it needs.
+ *
+ * A whole amount loses its decimals entirely; anything with a fraction keeps at
+ * least two, because `$0.1` is not how a tenth of a dollar is ever written.
  */
 export function formatAmount(amount: string, currency: string): string {
   const value = Number(amount)
-  const decimals = Math.min(4, Math.max(0, (amount.split('.')[1] ?? '').replace(/0+$/, '').length))
+  const meaningful = (amount.split('.')[1] ?? '').replace(/0+$/, '').length
+  const decimals = meaningful === 0 ? 0 : Math.min(4, Math.max(2, meaningful))
   // en-US renders USD as $15 rather than en-GB's US$15, while still giving €14.
   return new Intl.NumberFormat('en-US', {
     style: 'currency',

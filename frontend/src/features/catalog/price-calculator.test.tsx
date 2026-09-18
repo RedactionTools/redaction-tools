@@ -59,8 +59,56 @@ describe('PriceCalculator', () => {
     render()
 
     expect(screen.getByLabelText('Tool')).toHaveValue('')
-    expect(screen.getByText(/pick a tool/i)).toBeInTheDocument()
     expect(screen.queryByTestId('document-cost-calculator')).not.toBeInTheDocument()
+  })
+
+  // The volume is the reader's half of the arithmetic, so it is answerable
+  // before they have committed to a tool - and it is what the preview prices.
+  it('takes the volume before a tool is chosen', () => {
+    render()
+
+    expect(screen.getByLabelText('Documents a month')).toHaveValue(10)
+    expect(screen.getByLabelText('Pages per document')).toHaveValue(10)
+  })
+
+  it('previews the answer with example figures until a tool is chosen', () => {
+    render()
+
+    expect(screen.getByTestId('example-cost-preview')).toBeInTheDocument()
+  })
+
+  it('prices the preview off the volume as it is typed', async () => {
+    const user = userEvent.setup()
+    render()
+
+    const documents = screen.getByLabelText('Documents a month')
+    await user.clear(documents)
+    await user.type(documents, '100')
+
+    // 100 documents x 10 pages at the $0.10-per-page example rate.
+    const starter = screen.getByTestId('cost-row-example-starter')
+    expect(within(starter).getByText('$100.00')).toBeInTheDocument()
+  })
+
+  it('drops the example once there are real published figures to show', () => {
+    render('redactable')
+
+    expect(screen.queryByTestId('example-cost-preview')).not.toBeInTheDocument()
+    expect(screen.getByTestId('document-cost-calculator')).toBeInTheDocument()
+  })
+
+  // The fields live on the page now, not inside the per-tool table, so the
+  // volume a reader set while browsing must survive choosing a tool.
+  it('keeps one set of volume fields once a tool is chosen', async () => {
+    const user = userEvent.setup()
+    render('redactable')
+
+    const documents = screen.getByLabelText('Documents a month')
+    await user.clear(documents)
+    await user.type(documents, '5')
+
+    // Five documents on the $1.00-per-document plan.
+    expect(within(screen.getByTestId('cost-row-payg')).getByText('$5.00')).toBeInTheDocument()
   })
 
   it('puts the chosen tool in the URL, so a calculation can be linked to', async () => {
@@ -76,8 +124,8 @@ describe('PriceCalculator', () => {
     render('redactable')
 
     expect(screen.getByTestId('document-cost-calculator')).toBeInTheDocument()
-    // The default ten-page document on a $1.00-per-document plan.
-    expect(within(screen.getByTestId('cost-row-payg')).getByText('$1.00')).toBeInTheDocument()
+    // The default month - ten ten-page documents - on a $1-per-document plan.
+    expect(within(screen.getByTestId('cost-row-payg')).getByText('$10.00')).toBeInTheDocument()
     expect(within(screen.getByTestId('cost-row-payg')).getByText('$0.10')).toBeInTheDocument()
   })
 })

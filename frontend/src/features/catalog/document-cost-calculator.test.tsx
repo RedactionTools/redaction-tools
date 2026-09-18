@@ -66,10 +66,11 @@ async function setField(label: RegExp, value: string) {
 }
 
 describe('DocumentCostCalculator', () => {
-  it('prices a ten-page document on the per-page plan by default', () => {
+  it('prices ten ten-page documents on the per-page plan by default', () => {
     render()
 
-    expect(row('payg').getByText('$0.50')).toBeInTheDocument()
+    // The default month: 10 documents x 10 pages at $0.05 a page.
+    expect(row('payg').getByText('$5.00')).toBeInTheDocument()
     expect(row('payg').getByText('$0.05')).toBeInTheDocument()
   })
 
@@ -78,7 +79,7 @@ describe('DocumentCostCalculator', () => {
 
     await setField(/pages per document/i, '100')
 
-    expect(row('payg').getByText('$5.00')).toBeInTheDocument()
+    expect(row('payg').getByText('$50.00')).toBeInTheDocument()
   })
 
   it('multiplies by the number of documents', async () => {
@@ -96,7 +97,7 @@ describe('DocumentCostCalculator', () => {
     await user.click(screen.getByRole('button', { name: '100 pages' }))
 
     expect(screen.getByLabelText(/pages per document/i)).toHaveValue(100)
-    expect(row('payg').getByText('$5.00')).toBeInTheDocument()
+    expect(row('payg').getByText('$50.00')).toBeInTheDocument()
   })
 
   it('never turns a subscription into a per-document price', async () => {
@@ -116,12 +117,12 @@ describe('DocumentCostCalculator', () => {
   it('holds a per-document total flat while its per-page rate falls', async () => {
     render()
 
-    expect(row('perdoc').getByText('$1.00')).toBeInTheDocument()
+    expect(row('perdoc').getByText('$10.00')).toBeInTheDocument()
     expect(row('perdoc').getByText('$0.10')).toBeInTheDocument()
 
     await setField(/pages per document/i, '100')
 
-    expect(row('perdoc').getByText('$1.00')).toBeInTheDocument()
+    expect(row('perdoc').getByText('$10.00')).toBeInTheDocument()
     expect(row('perdoc').getByText('$0.01')).toBeInTheDocument()
   })
 
