@@ -24,6 +24,7 @@ export * from './toolClaimOut';
 export * from './toolClaimVerifyIn';
 export * from './toolDetailOut';
 export * from './toolDetailOutFaqItem';
+export * from './toolFacetOut';
 export * from './toolFilters';
 export * from './toolListItemOut';
 export * from './toolPageOut';

@@ -16,6 +16,9 @@ OWNER_EDITABLE_FIELDS = frozenset(
         "tagline",
         "summary",
         "vendor_copy_md",
+        # Rows rather than a column, and the one editable thing a reader filters
+        # on: proposed as a whole list and reviewed like everything else.
+        "facet_slugs",
     }
 )
 
@@ -85,8 +88,6 @@ STAFF_EDITABLE_PLAN_FIELDS = frozenset(
         "is_enterprise_quote",
         "is_public",
         "min_seats",
-        "included_quota",
-        "quota_unit",
         "highlights",
         "source_url",
     }

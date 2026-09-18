@@ -24,6 +24,7 @@ from apps.catalog.constants import OWNER_EDITABLE_FIELDS, URL_FIELDS
 from apps.catalog.filters import ToolFilters, apply_filters
 from apps.catalog.models import (
     FacetDimension,
+    FacetValue,
     PriceProposal,
     PriceProposalStatus,
     Tool,
@@ -77,9 +78,32 @@ def _row(tool):
         "logo_url": tool.logo_url,
         "is_first_party": tool.is_first_party,
         "vendor": tool.vendor,
-        "facet_slugs": sorted(facet.value.slug for facet in tool.facets.all()),
+        "facet_slugs": tool.facet_slugs,
         "price_summary": price_summary(tool),
     }
+
+
+def _facets(tool):
+    """The tool's facets in the taxonomy's own order, so a page renders them in
+    the order the editors chose rather than by primary key."""
+    facets = sorted(
+        tool.facets.all(),
+        key=lambda facet: (
+            facet.value.dimension.sort_order,
+            facet.value.dimension.code,
+            facet.value.sort_order,
+            facet.value.code,
+        ),
+    )
+    return [
+        {
+            "dimension": facet.value.dimension.code,
+            "dimension_label": facet.value.dimension.label,
+            "slug": facet.value.slug,
+            "label": facet.value.label,
+        }
+        for facet in facets
+    ]
 
 
 def _listable(queryset):
@@ -185,6 +209,7 @@ def get_tool(request: HttpRequest, slug: str):
             "pros": tool.pros,
             "cons": tool.cons,
             "faq": tool.faq,
+            "facets": _facets(tool),
             "plans": plans,
             "updated_at": tool.updated_at,
         },
@@ -392,7 +417,9 @@ def _owned_tool_or_404(request, slug):
     "/my-listings", response=list[MyListingOut], auth=JWTAuth(), summary="Listings you maintain"
 )
 def list_my_listings(request: HttpRequest):
-    return Tool.objects.owned_by(request.auth)
+    # Prefetched because the payload carries facet slugs, which the owner's
+    # editor prefills from: without it every listing costs its own query.
+    return Tool.objects.owned_by(request.auth).prefetch_related("facets__value")
 
 
 @router.post(
@@ -433,6 +460,9 @@ def propose_tool_revision(request: HttpRequest, slug: str, payload: ToolRevision
     for field in set(payload.changes) & URL_FIELDS:
         check_external_urls(SimpleNamespace(**{field: payload.changes[field]}), (field,))
 
+    if "facet_slugs" in payload.changes:
+        _check_facet_slugs(payload.changes["facet_slugs"])
+
     revision = ToolRevision.objects.create(
         tool=tool,
         author=request.auth,
@@ -440,6 +470,38 @@ def propose_tool_revision(request: HttpRequest, slug: str, payload: ToolRevision
         base_snapshot={field: getattr(tool, field) for field in payload.changes},
     )
     return Status(201, _revision_out(revision))
+
+
+def _check_facet_slugs(slugs):
+    """Every proposed facet has to exist in the taxonomy.
+
+    Refused by name rather than filtered out: a silent drop is how a vendor
+    comes to believe they are filed under something they are not.
+    """
+    if not isinstance(slugs, list) or not all(isinstance(slug, str) for slug in slugs):
+        raise ValidationError(
+            [
+                {
+                    "type": "value_error",
+                    "loc": ["body", "changes", "facet_slugs"],
+                    "msg": "Propose facets as a list of slugs.",
+                }
+            ]
+        )
+
+    known = set(FacetValue.objects.filter(slug__in=slugs).values_list("slug", flat=True))
+    unknown = sorted(set(slugs) - known)
+    if unknown:
+        raise ValidationError(
+            [
+                {
+                    "type": "value_error",
+                    "loc": ["body", "changes", "facet_slugs", slug],
+                    "msg": f"{slug} is not a facet in this catalog.",
+                }
+                for slug in unknown
+            ]
+        )
 
 
 def _revision_out(revision):

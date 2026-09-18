@@ -6,15 +6,10 @@ import type { MyListingOut } from '@/lib/api/generated/model'
 import { makeQueryClient } from '@/lib/query/client'
 import { renderWithProviders } from '@/test/render'
 
+import { makeListing } from './fixtures'
 import { MyListingsPanel } from './my-listings-panel'
 
-const LISTING: MyListingOut = {
-  slug: 'adobe-acrobat',
-  name: 'Adobe Acrobat',
-  status: 'published',
-  tagline: 'The incumbent PDF editor.',
-  pricing_url: 'https://www.adobe.com/acrobat/pricing.html',
-}
+const LISTING = makeListing()
 
 function render(listings: MyListingOut[] = [LISTING]) {
   const queryClient = makeQueryClient()
@@ -44,6 +39,14 @@ describe('MyListingsPanel', () => {
     const readOnly = screen.getByTestId('owner-readonly-note')
     expect(readOnly).toHaveTextContent(/verdict/i)
     expect(readOnly).toHaveTextContent(/benchmark/i)
+  })
+
+  // The panel is the owner area; without this it is a read-only list of pages
+  // the owner already knows about.
+  it('offers an edit on each listing you maintain', () => {
+    render()
+
+    expect(screen.getByRole('button', { name: /propose an edit/i })).toBeInTheDocument()
   })
 
   it('points an unclaimed account at the claim flow instead of showing an empty box', () => {

@@ -7,6 +7,8 @@ import { Card, CardDescription, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useListMyListings } from '@/lib/api/generated/catalog/catalog'
 
+import { ListingEditor } from './listing-editor'
+
 export function MyListingsPanel() {
   const { data, isPending } = useListMyListings()
 
@@ -46,6 +48,10 @@ export function MyListingsPanel() {
                 <Badge tone={listing.status === 'published' ? 'ok' : 'neutral'}>
                   {listing.status}
                 </Badge>
+              </div>
+
+              <div className="mt-4">
+                <ListingEditor listing={listing} />
               </div>
             </Card>
           </li>

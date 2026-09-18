@@ -106,8 +106,6 @@ class PlanOut(Struct):
     trial_days: int | None
     is_enterprise_quote: bool
     min_seats: int
-    included_quota: int | None
-    quota_unit: str
     highlights: list[str]
     source_url: str
     prices: list[PriceOut]
@@ -222,8 +220,6 @@ class CreatePlanParams(Struct):
     trial_days: Annotated[int, Meta(ge=0)] | UnsetType = UNSET
     is_enterprise_quote: bool | UnsetType = UNSET
     min_seats: Annotated[int, Meta(ge=1)] | UnsetType = UNSET
-    included_quota: Annotated[int, Meta(ge=0)] | UnsetType = UNSET
-    quota_unit: str | UnsetType = UNSET
     highlights: list[str] | UnsetType = UNSET
     source_url: str | UnsetType = UNSET
 
@@ -257,9 +253,7 @@ class SetPlanLimitParams(Struct):
             )
         ),
     ]
-    label: Annotated[str, Meta(description="How the vendor words it, e.g. 'Pages per month'.")]
     value: Annotated[int, Meta(ge=0)] | UnsetType = UNSET
-    unit: Annotated[str, Meta(description="pages | MB | files | days")] = ""
     is_unlimited: bool = False
     note: Annotated[
         str,
@@ -289,8 +283,6 @@ class UpdatePlanParams(Struct):
     trial_days: Annotated[int, Meta(ge=0)] | UnsetType = UNSET
     is_enterprise_quote: bool | UnsetType = UNSET
     min_seats: Annotated[int, Meta(ge=1)] | UnsetType = UNSET
-    included_quota: Annotated[int, Meta(ge=0)] | UnsetType = UNSET
-    quota_unit: str | UnsetType = UNSET
     highlights: list[str] | UnsetType = UNSET
     source_url: str | UnsetType = UNSET
 

@@ -1,5 +1,6 @@
 import type {
   CatalogStatsOut,
+  MyListingOut,
   PlanOut,
   PriceOut,
   ToolDetailOut,
@@ -81,6 +82,24 @@ export function makePlan(overrides: Partial<PlanOut> = {}): PlanOut {
   }
 }
 
+/** A listing as its owner sees it: every field they may propose a change to. */
+export function makeListing(overrides: Partial<MyListingOut> = {}): MyListingOut {
+  return {
+    slug: 'adobe-acrobat',
+    status: 'published',
+    name: 'Adobe Acrobat',
+    tagline: 'The incumbent PDF editor.',
+    summary: 'Acrobat Pro includes search-and-redact.',
+    website_url: 'https://www.adobe.com/acrobat.html',
+    pricing_url: 'https://www.adobe.com/acrobat/pricing.html',
+    docs_url: '',
+    logo_url: '/images/tools/adobe-acrobat.svg',
+    vendor_copy_md: '',
+    facet_slugs: ['manual-redaction', 'pdf'],
+    ...overrides,
+  }
+}
+
 export function makePage(items: ToolListItemOut[]): ToolPageOut {
   return { count: items.length, items }
 }
@@ -109,6 +128,22 @@ export function makeToolDetail(overrides: Partial<ToolDetailOut> = {}): ToolDeta
     pros: ['Removes underlying content and metadata properly'],
     cons: ['No free tier'],
     faq: [],
+    // Mirrors the API's own order - the taxonomy's, not the database's.
+    facets: [
+      { dimension: 'media', dimension_label: 'Media', slug: 'pdf', label: 'PDF' },
+      {
+        dimension: 'capability',
+        dimension_label: 'Capability',
+        slug: 'ocr',
+        label: 'OCR',
+      },
+      {
+        dimension: 'capability',
+        dimension_label: 'Capability',
+        slug: 'true-removal',
+        label: 'True content removal',
+      },
+    ],
     updated_at: '2026-09-17T00:00:00Z',
     plans: [
       {

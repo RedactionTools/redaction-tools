@@ -164,6 +164,19 @@ def test_detail_carries_plans_prices_and_editorial(client):
 
 
 @pytest.mark.django_db
+def test_detail_carries_facets_the_page_can_name(client):
+    """A slug is not a label. The detail carries both, plus the dimension each
+    belongs to, so a page can group and name what a tool does without shipping a
+    second copy of the taxonomy."""
+    payload = client.get(f"{LIST_URL}/caseguard").json()
+
+    capabilities = [facet for facet in payload["facets"] if facet["dimension"] == "capability"]
+    assert {"face-detection", "batch"} <= {facet["slug"] for facet in capabilities}
+    assert "Face detection" in {facet["label"] for facet in capabilities}
+    assert capabilities[0]["dimension_label"] == "Capability"
+
+
+@pytest.mark.django_db
 def test_detail_404s_on_an_unknown_slug(client):
     response = client.get(f"{LIST_URL}/does-not-exist")
 

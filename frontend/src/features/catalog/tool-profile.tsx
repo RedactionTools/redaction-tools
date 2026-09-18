@@ -17,6 +17,7 @@ import type { PlanOut, ToolDetailOut } from '@/lib/api/generated/model'
 import { basePrice, overagePrice } from '@/lib/catalog/document-cost'
 import { formatAmount, formatUnit, priceSentence } from '@/lib/catalog/format'
 
+import { ClaimListing } from './claim-listing'
 import { DocumentCostCalculator } from './document-cost-calculator'
 import { PriceProvenanceBadge } from './price-provenance-badge'
 import { ToolLogo } from './tool-logo'
@@ -59,9 +60,14 @@ export function ToolProfile({ slug }: { slug: string }) {
     <article className="space-y-10">
       <ToolHeader tool={tool} />
       <KeyFacts tool={tool} />
+      <Capabilities tool={tool} />
       <PlanTable tool={tool} />
       <DocumentCostCalculator tool={tool} />
       <Editorial tool={tool} />
+      {/* Last, because the page is written for a buyer: the vendor who came to
+          correct it will read to the end, and a buyer should not meet a vendor
+          call to action before the assessment. */}
+      <ClaimListing tool={tool} />
     </article>
   )
 }
@@ -127,6 +133,33 @@ function KeyFacts({ tool }: { tool: ToolDetailOut }) {
         ))}
       </dl>
     </Card>
+  )
+}
+
+/**
+ * What the tool can actually do.
+ *
+ * The capability facets are the part of a listing a buyer is shortlisting on -
+ * whether it OCRs, whether it truly removes content rather than drawing over
+ * it - and they are recorded per tool with an editor behind each one. Rendered
+ * from the API's labels rather than a slug map here, so the taxonomy has one
+ * home.
+ */
+function Capabilities({ tool }: { tool: ToolDetailOut }) {
+  const capabilities = tool.facets.filter((facet) => facet.dimension === 'capability')
+  if (capabilities.length === 0) return null
+
+  return (
+    <section className="space-y-3">
+      <h2 className="text-xl font-semibold">What it does</h2>
+      <ul className="flex flex-wrap gap-2" data-testid="capabilities">
+        {capabilities.map((facet) => (
+          <li key={facet.slug}>
+            <Badge tone="neutral">{facet.label}</Badge>
+          </li>
+        ))}
+      </ul>
+    </section>
   )
 }
 

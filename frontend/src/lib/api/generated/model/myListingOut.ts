@@ -6,10 +6,23 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * An owner's own view of a listing.
+ *
+ * Carries every field in `OWNER_EDITABLE_FIELDS` because the owner's editor
+ * prefills from here rather than from the public profile, which 404s on a
+ * listing that is not listable - the one its owner most needs to correct.
+ */
 export interface MyListingOut {
   slug: string;
-  name: string;
   status: string;
+  name: string;
   tagline: string;
+  summary: string;
+  website_url: string;
   pricing_url: string;
+  docs_url: string;
+  logo_url: string;
+  vendor_copy_md: string;
+  facet_slugs: string[];
 }

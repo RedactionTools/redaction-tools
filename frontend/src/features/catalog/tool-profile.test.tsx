@@ -1,5 +1,5 @@
 import { screen, within } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import { getGetToolQueryKey } from '@/lib/api/generated/catalog/catalog'
 import type { ToolDetailOut } from '@/lib/api/generated/model'
@@ -9,6 +9,11 @@ import { renderWithProviders } from '@/test/render'
 import { makeToolDetail } from './fixtures'
 import { ToolProfile } from './tool-profile'
 
+vi.mock('next-auth/react', () => ({
+  useSession: () => ({ data: null, status: 'unauthenticated' }),
+  signIn: vi.fn(),
+}))
+
 function render(tool: ToolDetailOut = makeToolDetail()) {
   const queryClient = makeQueryClient()
   queryClient.setQueryData(getGetToolQueryKey(tool.slug), tool)
@@ -16,12 +21,40 @@ function render(tool: ToolDetailOut = makeToolDetail()) {
 }
 
 describe('ToolProfile', () => {
+  // The listing is the vendor's page too, and the profile is where they arrive.
+  // Anywhere else and the claim flow is a route only staff know about.
+  it('lets the vendor claim the listing from the page itself', () => {
+    render()
+
+    expect(screen.getByRole('button', { name: /claim this listing/i })).toBeInTheDocument()
+  })
+
   it('states the price as a sentence carrying unit, currency and date', () => {
     render()
 
     expect(
       screen.getByText('Adobe Acrobat costs from $22.99 USD per month, as of 15 September 2026.'),
     ).toBeInTheDocument()
+  })
+
+  // The capability facets are recorded for every tool and were the one part of
+  // that record the page never showed. They are named, not slugged: "true
+  // content removal" is the difference between redaction and a black rectangle.
+  it('names what the tool can do, not the slugs it is filed under', () => {
+    render()
+
+    const capabilities = screen.getByTestId('capabilities')
+    expect(within(capabilities).getByText('OCR')).toBeInTheDocument()
+    expect(within(capabilities).getByText('True content removal')).toBeInTheDocument()
+    expect(within(capabilities).queryByText('true-removal')).not.toBeInTheDocument()
+  })
+
+  // Not every tool has them recorded yet, and a heading over an empty list
+  // reads as "this tool does nothing" rather than "we have not checked".
+  it('drops the section when no capability is recorded', () => {
+    render(makeToolDetail({ facets: [] }))
+
+    expect(screen.queryByTestId('capabilities')).not.toBeInTheDocument()
   })
 
   it('carries a key-facts list a reader or a model can lift', () => {

@@ -3,7 +3,10 @@ import { redirect } from 'next/navigation'
 
 import { auth } from '@/auth'
 import { MyListingsPanel } from '@/features/catalog/my-listings-panel'
-import { getListMyListingsQueryOptions } from '@/lib/api/generated/catalog/catalog'
+import {
+  getListFacetsQueryOptions,
+  getListMyListingsQueryOptions,
+} from '@/lib/api/generated/catalog/catalog'
 import { getQueryClient } from '@/lib/query/client'
 
 export const metadata = {
@@ -17,7 +20,12 @@ export default async function MyListingsPage() {
   if (!session || session.error) redirect('/auth/signin?callbackUrl=/my-listings')
 
   const queryClient = getQueryClient()
-  await queryClient.prefetchQuery(getListMyListingsQueryOptions())
+  // The taxonomy comes with the page: the editor offers it as checkboxes, and
+  // fetching it on open would have them appear a beat after the form does.
+  await Promise.all([
+    queryClient.prefetchQuery(getListMyListingsQueryOptions()),
+    queryClient.prefetchQuery(getListFacetsQueryOptions()),
+  ])
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>

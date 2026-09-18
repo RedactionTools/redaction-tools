@@ -9,6 +9,7 @@ import pytest
 from django.core.cache import cache
 from django.utils import timezone
 
+from apps.catalog.constants import OWNER_EDITABLE_FIELDS
 from apps.catalog.models import (
     PlanPrice,
     PriceProposal,
@@ -66,6 +67,16 @@ def test_my_listings_is_empty_without_an_approved_claim(client, bearer, user):
 
 
 @pytest.mark.django_db
+def test_my_listings_carries_every_field_an_owner_may_edit(client, bearer, owned_tool):
+    """The owner's editor prefills from this payload, and it has to: a listing
+    that is not listable 404s on the public profile, which is exactly the
+    listing its owner most needs to fix."""
+    row = client.get(LISTINGS, **bearer).json()[0]
+
+    assert set(row) >= OWNER_EDITABLE_FIELDS
+
+
+@pytest.mark.django_db
 def test_an_edit_becomes_a_revision_and_does_not_touch_the_listing(client, bearer, owned_tool):
     response = client.post(
         f"{LISTINGS}/adobe-acrobat/revisions",
@@ -93,6 +104,43 @@ def test_a_revision_records_what_it_was_based_on(client, bearer, owned_tool):
     )
 
     assert ToolRevision.objects.get().base_snapshot["tagline"] == owned_tool.tagline
+
+
+@pytest.mark.django_db
+def test_an_owner_proposes_facets_as_a_revision_like_any_other_field(client, bearer, owned_tool):
+    """Facets are what a buyer filters on, so a vendor writing them directly
+    would let them place themselves in searches they do not belong in. They go
+    through the same queue as the rest of the listing."""
+    response = client.post(
+        f"{LISTINGS}/adobe-acrobat/revisions",
+        {"changes": {"facet_slugs": ["pdf", "ocr", "batch"]}},
+        content_type="application/json",
+        **bearer,
+    )
+
+    assert response.status_code == 201
+    revision = ToolRevision.objects.get()
+    assert revision.changes["facet_slugs"] == ["pdf", "ocr", "batch"]
+    # Recorded against what the listing says today, so a staff edit in the
+    # meantime is a conflict rather than a silent overwrite.
+    assert revision.base_snapshot["facet_slugs"] == owned_tool.facet_slugs
+
+
+@pytest.mark.django_db
+def test_a_facet_outside_the_taxonomy_is_refused_by_name(client, bearer, owned_tool):
+    """Named rather than dropped, like every other refusal here: a silent drop
+    is how a vendor comes to believe they are filed under something they are
+    not."""
+    response = client.post(
+        f"{LISTINGS}/adobe-acrobat/revisions",
+        {"changes": {"facet_slugs": ["pdf", "quantum-redaction"]}},
+        content_type="application/json",
+        **bearer,
+    )
+
+    assert response.status_code == 422
+    assert "quantum-redaction" in response.content.decode()
+    assert not ToolRevision.objects.exists()
 
 
 @pytest.mark.django_db
@@ -199,6 +247,30 @@ def test_approving_a_proposal_publishes_it_as_vendor_supplied_and_pinned(
     assert published.is_pinned is True
     # The old figure is closed rather than deleted: the profile shows a history.
     assert PlanPrice.objects.filter(plan=plan, is_current=False).exists()
+
+
+@pytest.mark.django_db
+def test_applying_a_facet_revision_rewrites_the_listing_facets(admin_client, owned_tool, user):
+    """Facets are rows, so applying one cannot go through `setattr` - that would
+    report success to the editor and move nothing."""
+    revision = ToolRevision.objects.create(
+        tool=owned_tool,
+        author=user,
+        changes={"facet_slugs": ["pdf", "ocr"]},
+        base_snapshot={"facet_slugs": owned_tool.facet_slugs},
+        status=ToolRevisionStatus.SUBMITTED,
+    )
+
+    admin_client.post(
+        "/admin/catalog/toolrevision/",
+        {"action": "apply_revisions", "_selected_action": [str(revision.pk)]},
+        follow=True,
+    )
+
+    owned_tool.refresh_from_db()
+    assert owned_tool.facet_slugs == ["ocr", "pdf"]
+    revision.refresh_from_db()
+    assert revision.status == ToolRevisionStatus.APPROVED
 
 
 @pytest.mark.django_db

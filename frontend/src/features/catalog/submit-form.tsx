@@ -4,40 +4,10 @@ import { useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { ApiError } from '@/lib/api/api-error'
+import { errorMessage } from '@/lib/api/error-message'
 import { useSubmitTool } from '@/lib/api/generated/catalog/catalog'
 
-type FieldError = { loc?: unknown[]; msg?: string }
-
-/**
- * Turn whatever the API refused with into something the submitter can act on.
- *
- * Ninja reports validation failures as a list of per-field entries and business
- * conflicts as a `detail` string; flattening both to "something went wrong"
- * would hide the one message that tells a duplicate submitter to claim the
- * listing instead.
- *
- * Takes `unknown`: the Register augmentation types query errors as ApiError, but
- * a mutation's error is not covered by it, so this narrows rather than asserts.
- */
-function errorMessage(error: unknown): string {
-  if (!(error instanceof ApiError)) return 'That could not be submitted. Please try again.'
-
-  const body = error.body as { detail?: string | FieldError[] } | null
-  const detail = body?.detail
-
-  if (typeof detail === 'string') return detail
-  if (Array.isArray(detail)) {
-    return detail
-      .map((entry) => {
-        const field = Array.isArray(entry.loc) ? entry.loc.at(-1) : undefined
-        return field ? `${field}: ${entry.msg}` : entry.msg
-      })
-      .filter(Boolean)
-      .join(' ')
-  }
-  return 'That could not be submitted. Please try again.'
-}
+const FALLBACK = 'That could not be submitted. Please try again.'
 
 export function SubmitForm() {
   const [name, setName] = useState('')
@@ -90,7 +60,7 @@ export function SubmitForm() {
 
       {error ? (
         <p className="text-warn text-sm" role="alert">
-          {errorMessage(error)}
+          {errorMessage(error, FALLBACK)}
         </p>
       ) : null}
 

@@ -197,9 +197,7 @@ def test_a_whole_new_plan_can_be_built_over_three_calls(call_tool):
                 "slug": SEEDED,
                 "code": "pro-plus",
                 "kind": "pages_per_month",
-                "label": "Pages per month",
                 "value": 4500,
-                "unit": "pages",
             },
         )
     )

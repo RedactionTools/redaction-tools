@@ -1417,6 +1417,13 @@
             "title": "Faq",
             "type": "array"
           },
+          "facets": {
+            "items": {
+              "$ref": "#/components/schemas/ToolFacetOut"
+            },
+            "title": "Facets",
+            "type": "array"
+          },
           "plans": {
             "items": {
               "$ref": "#/components/schemas/PlanOut"
@@ -1448,10 +1455,40 @@
           "pros",
           "cons",
           "faq",
+          "facets",
           "plans",
           "updated_at"
         ],
         "title": "ToolDetailOut",
+        "type": "object"
+      },
+      "ToolFacetOut": {
+        "description": "One recorded fact about a tool, carrying its own label.\n\nThe list rows ship bare slugs, which is all a filter needs. A profile names\nwhat it shows, and resolving a slug to a label client-side would mean a\nsecond copy of the taxonomy in the frontend - or a request for the whole of\nit, which `list_facets` counts over every listable tool to answer.",
+        "properties": {
+          "dimension": {
+            "title": "Dimension",
+            "type": "string"
+          },
+          "dimension_label": {
+            "title": "Dimension Label",
+            "type": "string"
+          },
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "dimension",
+          "dimension_label",
+          "slug",
+          "label"
+        ],
+        "title": "ToolFacetOut",
         "type": "object"
       },
       "ErrorSchema": {
@@ -1806,34 +1843,68 @@
         "type": "object"
       },
       "MyListingOut": {
+        "description": "An owner's own view of a listing.\n\nCarries every field in `OWNER_EDITABLE_FIELDS` because the owner's editor\nprefills from here rather than from the public profile, which 404s on a\nlisting that is not listable - the one its owner most needs to correct.",
         "properties": {
           "slug": {
             "title": "Slug",
-            "type": "string"
-          },
-          "name": {
-            "title": "Name",
             "type": "string"
           },
           "status": {
             "title": "Status",
             "type": "string"
           },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
           "tagline": {
             "title": "Tagline",
+            "type": "string"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          },
+          "website_url": {
+            "title": "Website Url",
             "type": "string"
           },
           "pricing_url": {
             "title": "Pricing Url",
             "type": "string"
+          },
+          "docs_url": {
+            "title": "Docs Url",
+            "type": "string"
+          },
+          "logo_url": {
+            "title": "Logo Url",
+            "type": "string"
+          },
+          "vendor_copy_md": {
+            "title": "Vendor Copy Md",
+            "type": "string"
+          },
+          "facet_slugs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Facet Slugs",
+            "type": "array"
           }
         },
         "required": [
           "slug",
-          "name",
           "status",
+          "name",
           "tagline",
-          "pricing_url"
+          "summary",
+          "website_url",
+          "pricing_url",
+          "docs_url",
+          "logo_url",
+          "vendor_copy_md",
+          "facet_slugs"
         ],
         "title": "MyListingOut",
         "type": "object"

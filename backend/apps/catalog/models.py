@@ -158,6 +158,31 @@ class Tool(TimeStampedModel):
     def __str__(self):
         return self.name
 
+    @property
+    def facet_slugs(self) -> list[str]:
+        """The tool's facets, as the slugs the public API and the filters speak.
+
+        A property rather than a serializer helper because `ToolRevision`
+        snapshots, diffs and applies a proposal through `getattr`: without it a
+        proposed facet list could never be compared against the listing, and
+        would read as a conflict every time.
+        """
+        return sorted(facet.value.slug for facet in self.facets.all())
+
+    def set_facet_slugs(self, slugs) -> None:
+        """Replace this tool's facets with exactly `slugs`.
+
+        Rows rather than a column, so it is applied by name rather than by
+        `setattr` - a silent no-op there would tell an editor a proposal landed
+        when nothing had moved.
+        """
+        self.facets.exclude(value__slug__in=slugs).delete()
+        values = {value.slug: value for value in FacetValue.objects.filter(slug__in=slugs)}
+        existing = {facet.value.slug for facet in self.facets.all()}
+        ToolFacet.objects.bulk_create(
+            [ToolFacet(tool=self, value=values[slug]) for slug in slugs if slug not in existing]
+        )
+
     def is_listable(self):
         """Whether this tool is a page rather than a database row.
 
@@ -287,8 +312,9 @@ class Plan(TimeStampedModel):
     is_public = models.BooleanField(default=True, db_index=True)
 
     min_seats = models.PositiveSmallIntegerField(default=1)
-    included_quota = models.PositiveIntegerField(null=True, blank=True)
-    quota_unit = models.CharField(max_length=32, blank=True)
+    # An allowance is a PlanLimit row, not a field here: a plan can cap several
+    # things at once, a cap can be unlimited, and each one carries the label the
+    # vendor publishes it under.
     highlights = models.JSONField(default=list, blank=True)
     source_url = models.URLField(blank=True, validators=[validate_external_url])
 
@@ -394,15 +420,30 @@ class PlanLimitKind(models.TextChoices):
     OTHER = "other", "Other"
 
 
+# What each kind counts. The unit is a property of the kind, not of the row:
+# `pages_per_month` counts pages wherever it appears, and a row free to say
+# otherwise is a row free to be wrong. `other` counts nothing nameable, which is
+# what makes it `other`.
+LIMIT_UNITS = {
+    PlanLimitKind.PAGES_PER_DOCUMENT: "pages",
+    PlanLimitKind.PAGES_PER_MONTH: "pages",
+    PlanLimitKind.DOCUMENTS_PER_MONTH: "documents",
+    PlanLimitKind.MINUTES_PER_MONTH: "minutes",
+    PlanLimitKind.FILE_SIZE_MB: "MB",
+    PlanLimitKind.SEATS: "seats",
+    PlanLimitKind.RETENTION_DAYS: "days",
+    PlanLimitKind.API_CALLS_PER_MONTH: "calls",
+    PlanLimitKind.OTHER: "",
+}
+
+
 class PlanLimit(TimeStampedModel):
     """A published cap on a plan. Absent rather than guessed: a made-up number
     is not a fact, so an unpublished cap is recorded as a note, not a value."""
 
     plan = models.ForeignKey(Plan, on_delete=models.CASCADE, related_name="limits")
     kind = models.CharField(max_length=32, choices=PlanLimitKind.choices)
-    label = models.CharField(max_length=120)
     value = models.PositiveIntegerField(null=True, blank=True)
-    unit = models.CharField(max_length=32, blank=True, help_text="pages | MB | files | days")
     is_unlimited = models.BooleanField(default=False)
     note = models.CharField(max_length=160, blank=True)
     sort_order = models.PositiveIntegerField(default=0)
@@ -410,12 +451,21 @@ class PlanLimit(TimeStampedModel):
     class Meta:
         db_table = "catalog_plan_limit"
         ordering = ["plan", "sort_order", "kind"]
-        constraints = [
-            models.UniqueConstraint(fields=["plan", "kind", "label"], name="uniq_plan_limit")
-        ]
+        # One row per kind: two caps of the same kind on one plan never said
+        # which was the plan's, they said the table had not decided.
+        constraints = [models.UniqueConstraint(fields=["plan", "kind"], name="uniq_plan_limit")]
 
     def __str__(self):
         return f"{self.label}: {self.display_value}"
+
+    @property
+    def label(self):
+        """How the cap is worded, which is what its kind is for."""
+        return self.get_kind_display()
+
+    @property
+    def unit(self):
+        return LIMIT_UNITS.get(self.kind, "")
 
     @property
     def display_value(self):

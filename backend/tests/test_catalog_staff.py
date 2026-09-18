@@ -338,9 +338,7 @@ def test_set_plan_limit_records_a_published_cap(staff_user):
         slug=SEEDED,
         code="pro",
         kind="pages_per_month",
-        label="Pages per month",
         value=4500,
-        unit="pages",
     )
 
     limit = PlanLimit.objects.get(plan__tool__slug=SEEDED, plan__code="pro", kind="pages_per_month")
@@ -349,16 +347,14 @@ def test_set_plan_limit_records_a_published_cap(staff_user):
 
 
 def test_set_plan_limit_updates_the_cap_it_already_recorded(staff_user):
-    """Unique on (plan, kind, label), so a second call must move the row, not add one."""
+    """Unique on (plan, kind), so a second call must move the row, not add one."""
     for value in (4500, 5000):
         set_plan_limit(
             user=staff_user,
             slug=SEEDED,
             code="pro",
             kind="pages_per_month",
-            label="Pages per month",
             value=value,
-            unit="pages",
         )
 
     limits = PlanLimit.objects.filter(
@@ -373,7 +369,6 @@ def test_set_plan_limit_takes_unlimited_without_a_number(staff_user):
         slug=SEEDED,
         code="pro",
         kind="seats",
-        label="Seats",
         is_unlimited=True,
     )
 
@@ -382,9 +377,7 @@ def test_set_plan_limit_takes_unlimited_without_a_number(staff_user):
 
 def test_set_plan_limit_refuses_an_unknown_kind(staff_user):
     with pytest.raises(StaffError) as exc:
-        set_plan_limit(
-            user=staff_user, slug=SEEDED, code="pro", kind="vibes", label="Vibes", value=1
-        )
+        set_plan_limit(user=staff_user, slug=SEEDED, code="pro", kind="vibes", value=1)
 
     assert "kind" in str(exc.value)
 
@@ -392,6 +385,4 @@ def test_set_plan_limit_refuses_an_unknown_kind(staff_user):
 def test_set_plan_limit_refuses_a_cap_with_neither_number_nor_note(staff_user):
     """An unpublished cap is recorded as a note, never as a guessed number."""
     with pytest.raises(StaffError):
-        set_plan_limit(
-            user=staff_user, slug=SEEDED, code="pro", kind="file_size_mb", label="Max file size"
-        )
+        set_plan_limit(user=staff_user, slug=SEEDED, code="pro", kind="file_size_mb")

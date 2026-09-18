@@ -6,6 +6,7 @@ each published figure came from.
 """
 
 from django.contrib import admin
+from django.db import transaction
 from django.utils import timezone
 from django.utils.text import slugify
 from unfold.admin import ModelAdmin, TabularInline
@@ -392,9 +393,16 @@ class ToolRevisionAdmin(ModelAdmin):
                 )
                 skipped += 1
                 continue
-            for field, value in revision.changes.items():
-                setattr(revision.tool, field, value)
-            revision.tool.save()
+            with transaction.atomic():
+                for field, value in revision.changes.items():
+                    # Facets are rows, so they are applied by name. `setattr`
+                    # would set an attribute on the instance, report success and
+                    # move nothing.
+                    if field == "facet_slugs":
+                        revision.tool.set_facet_slugs(value)
+                    else:
+                        setattr(revision.tool, field, value)
+                revision.tool.save()
             ToolRevision.objects.filter(pk=revision.pk).update(
                 status=ToolRevisionStatus.APPROVED,
                 reviewed_by=request.user,

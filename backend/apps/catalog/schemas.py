@@ -97,6 +97,21 @@ class ToolPageOut(Schema):
     items: list[ToolListItemOut]
 
 
+class ToolFacetOut(Schema):
+    """One recorded fact about a tool, carrying its own label.
+
+    The list rows ship bare slugs, which is all a filter needs. A profile names
+    what it shows, and resolving a slug to a label client-side would mean a
+    second copy of the taxonomy in the frontend - or a request for the whole of
+    it, which `list_facets` counts over every listable tool to answer.
+    """
+
+    dimension: str
+    dimension_label: str
+    slug: str
+    label: str
+
+
 class ToolDetailOut(ToolListItemOut):
     website_url: str
     pricing_url: str
@@ -106,6 +121,7 @@ class ToolDetailOut(ToolListItemOut):
     pros: list[str]
     cons: list[str]
     faq: list[dict]
+    facets: list[ToolFacetOut]
     plans: list[PlanOut]
     updated_at: datetime
 
@@ -185,11 +201,24 @@ class ToolClaimOut(Schema):
 
 
 class MyListingOut(Schema):
+    """An owner's own view of a listing.
+
+    Carries every field in `OWNER_EDITABLE_FIELDS` because the owner's editor
+    prefills from here rather than from the public profile, which 404s on a
+    listing that is not listable - the one its owner most needs to correct.
+    """
+
     slug: str
-    name: str
     status: str
+    name: str
     tagline: str
+    summary: str
+    website_url: str
     pricing_url: str
+    docs_url: str
+    logo_url: str
+    vendor_copy_md: str
+    facet_slugs: list[str]
 
 
 class ToolRevisionIn(Schema):

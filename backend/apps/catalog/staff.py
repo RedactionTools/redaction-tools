@@ -178,8 +178,6 @@ def _plan(plan):
         "trial_days": plan.trial_days,
         "is_enterprise_quote": plan.is_enterprise_quote,
         "min_seats": plan.min_seats,
-        "included_quota": plan.included_quota,
-        "quota_unit": plan.quota_unit,
         "highlights": plan.highlights,
         "source_url": plan.source_url,
         # Current rows only. The closed history is what makes a detail payload
@@ -333,12 +331,10 @@ def create_plan(*, user, slug, code, name, changes=None):
     }
 
 
-def set_plan_limit(
-    *, user, slug, code, kind, label, value=None, unit="", is_unlimited=False, note=""
-):
+def set_plan_limit(*, user, slug, code, kind, value=None, is_unlimited=False, note=""):
     """Record a published cap, replacing the one it already holds of that kind.
 
-    An upsert, because the table is unique on (plan, kind, label) and a caller
+    An upsert, because the table is unique on (plan, kind) and a caller
     correcting a figure means to move it rather than to add a second row.
 
     A cap with no number and no note is refused: `PlanLimit.display_value`
@@ -361,13 +357,7 @@ def set_plan_limit(
             limit, created = PlanLimit.objects.update_or_create(
                 plan=plan,
                 kind=kind,
-                label=label,
-                defaults={
-                    "value": value,
-                    "unit": unit,
-                    "is_unlimited": is_unlimited,
-                    "note": note,
-                },
+                defaults={"value": value, "is_unlimited": is_unlimited, "note": note},
             )
     except IntegrityError as exc:
         raise StaffError(f"That limit conflicts with an existing row: {exc}") from exc
