@@ -186,11 +186,18 @@ export function documentCost(plan: PlanOut, input: DocumentInput): DocumentCost 
 }
 
 /**
- * The codes of the plans that cost least for `input`, cheapest-first thinking
- * made explicit so the table can point at an answer instead of leaving the
- * reader to scan a column.
+ * A plan as the caller identifies it.
  *
- * A plan is a candidate only if the catalog has a figure for this month's work
+ * A plan `code` is unique within its tool and nowhere else - two vendors both
+ * publish a `pro` - so once a table holds more than one tool the caller has to
+ * say what a row is called, and gets its answer back in those terms.
+ */
+export type KeyedPlan = { key: string; plan: PlanOut }
+
+/**
+ * The rows the catalog has a figure for, and what that figure is.
+ *
+ * A row is a candidate only if the catalog has a figure for this month's work
  * that it is willing to state:
  *
  * - a costed total, or
@@ -200,40 +207,65 @@ export function documentCost(plan: PlanOut, input: DocumentInput): DocumentCost 
  * is not this month's bill, and turning one into a monthly figure needs a
  * divisor no vendor published - the same division `apps/catalog/pricing.py`
  * refuses. A plan that cannot take the volume has no price at all.
- *
- * Mixed currencies return nothing: ranking them needs an exchange rate the
- * catalog does not publish, and picking one anyway would be a number we made up.
- *
- * Returns every plan tied at the lowest. A joint-cheapest pair is the true
- * answer, and breaking the tie on row order would invent a winner.
  */
-export function cheapestPlan(plans: PlanOut[], input: DocumentInput): string[] {
-  const candidates: { code: string; total: number; currency: string }[] = []
+function candidates(rows: KeyedPlan[], input: DocumentInput) {
+  const priced: { key: string; total: number; currency: string }[] = []
 
-  for (const plan of plans) {
-    const cost = documentCost(plan, input)
-    const base = basePrice(plan)
+  for (const row of rows) {
+    const cost = documentCost(row.plan, input)
+    const base = basePrice(row.plan)
 
     if (cost.kind === 'amount') {
-      candidates.push({
-        code: plan.code,
-        total: toTenThousandths(cost.total),
-        currency: cost.currency,
-      })
+      priced.push({ key: row.key, total: toTenThousandths(cost.total), currency: cost.currency })
     } else if (cost.kind === 'included' && base && base.unit === 'month') {
-      candidates.push({
-        code: plan.code,
+      priced.push({
+        key: row.key,
         total: toTenThousandths(base.amount),
         currency: base.currency,
       })
     }
   }
 
-  if (!candidates.length) return []
-  if (new Set(candidates.map((candidate) => candidate.currency)).size > 1) return []
+  return priced
+}
 
-  const lowest = Math.min(...candidates.map((candidate) => candidate.total))
-  return candidates
-    .filter((candidate) => candidate.total === lowest)
-    .map((candidate) => candidate.code)
+/**
+ * The keys of the rows that cost least for `input`, cheapest-first thinking
+ * made explicit so the table can point at an answer instead of leaving the
+ * reader to scan a column.
+ *
+ * Mixed currencies return nothing: ranking them needs an exchange rate the
+ * catalog does not publish, and picking one anyway would be a number we made
+ * up. Across tools that is no longer a hypothetical, which is why
+ * `comparableCurrencies` exists to let a caller say so.
+ *
+ * Returns every row tied at the lowest. A joint-cheapest pair is the true
+ * answer, and breaking the tie on row order would invent a winner.
+ */
+export function cheapestRows(rows: KeyedPlan[], input: DocumentInput): string[] {
+  const priced = candidates(rows, input)
+
+  if (!priced.length) return []
+  if (new Set(priced.map((candidate) => candidate.currency)).size > 1) return []
+
+  const lowest = Math.min(...priced.map((candidate) => candidate.total))
+  return priced.filter((candidate) => candidate.total === lowest).map((candidate) => candidate.key)
+}
+
+/**
+ * The distinct currencies the priced rows are published in.
+ *
+ * More than one and there is no ranking to be had, so a table can say that
+ * rather than leave an unbadged column reading like a tie.
+ */
+export function comparableCurrencies(rows: KeyedPlan[], input: DocumentInput): string[] {
+  return [...new Set(candidates(rows, input).map((candidate) => candidate.currency))]
+}
+
+/** The same, for one tool's plans, where the plan code is the row's name. */
+export function cheapestPlan(plans: PlanOut[], input: DocumentInput): string[] {
+  return cheapestRows(
+    plans.map((plan) => ({ key: plan.code, plan })),
+    input,
+  )
 }

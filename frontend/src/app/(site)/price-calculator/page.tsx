@@ -6,6 +6,7 @@ import {
   getGetToolQueryOptions,
   getListToolsQueryOptions,
 } from '@/lib/api/generated/catalog/catalog'
+import { toolSlugs } from '@/lib/catalog/calculator-tools'
 import { getQueryClient } from '@/lib/query/client'
 
 // Per-request, like the hub and the profiles: `next build` runs with no backend
@@ -15,30 +16,24 @@ export const dynamic = 'force-dynamic'
 export const metadata: Metadata = {
   title: 'Redaction price calculator — what your documents actually cost',
   description:
-    'Set how many documents you redact and how long they are, and see what that costs on every plan of any tool in the catalog, including the per-page rate it works out to.',
+    'Set how many documents you redact and how long they are, and see what that costs on every plan of any tool in the catalog — several at once, side by side, including the per-page rate each works out to.',
   alternates: { canonical: '/price-calculator' },
-}
-
-function selectedTool(params: Record<string, string | string[] | undefined>): string | undefined {
-  const value = params.tool
-  const slug = Array.isArray(value) ? value[0] : value
-  return slug || undefined
 }
 
 export default async function PriceCalculatorPage({
   searchParams,
 }: PageProps<'/price-calculator'>) {
-  const slug = selectedTool(await searchParams)
+  const slugs = toolSlugs(await searchParams)
   const queryClient = getQueryClient()
 
   await Promise.all([
     queryClient.prefetchQuery(getListToolsQueryOptions({ page_size: 100 })),
-    ...(slug ? [queryClient.prefetchQuery(getGetToolQueryOptions(slug))] : []),
+    ...slugs.map((slug) => queryClient.prefetchQuery(getGetToolQueryOptions(slug))),
   ])
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <div className="max-w-3xl space-y-8">
+      <div className="max-w-5xl space-y-8">
         <header className="space-y-3">
           <h1 className="text-3xl font-semibold tracking-tight text-balance">
             Redaction price calculator
@@ -46,11 +41,12 @@ export default async function PriceCalculatorPage({
           <p className="text-muted-foreground text-pretty">
             Vendors price redaction in units that do not compare — per page, per document, per seat
             per month. Tell us your volume and the arithmetic is done against each plan&apos;s
-            published rate, so the number rests on your figures rather than an assumed one.
+            published rate, so the number rests on your figures rather than an assumed one. Add as
+            many tools as you are weighing up and they are costed in one table, against each other.
           </p>
         </header>
 
-        <PriceCalculator slug={slug} />
+        <PriceCalculator slugs={slugs} />
       </div>
     </HydrationBoundary>
   )

@@ -17,9 +17,10 @@ import {
 import type { PlanOut, ToolDetailOut } from '@/lib/api/generated/model'
 import {
   basePrice,
-  cheapestPlan,
+  cheapestRows,
   documentCost,
   type DocumentInput,
+  type KeyedPlan,
 } from '@/lib/catalog/document-cost'
 import { formatCost } from '@/lib/catalog/format'
 
@@ -203,35 +204,52 @@ function CostCells({ plan, input }: { plan: PlanOut; input: DocumentInput }) {
 }
 
 /**
- * The costed plans, as a table.
- *
- * Shared with the example preview on the calculator page, which is the point:
- * a preview of the answer is only worth showing if it is the same table the
- * real figures land in.
+ * A plan as it appears in a table, under a name the table can key on.
  *
  * `tool` is what makes a row's published price quotable - without it there is
  * no provenance to badge, which is exactly the case for invented example rates.
+ * It sits on the row rather than on the table because a comparison holds plans
+ * from several tools at once.
+ */
+export type CostRow = KeyedPlan & { tool?: ToolDetailOut }
+
+/** One tool's plans, each keyed by its own code. */
+export function planRows(tool: ToolDetailOut): CostRow[] {
+  return tool.plans.map((plan) => ({ key: plan.code, plan, tool }))
+}
+
+/**
+ * The costed plans, as a table.
+ *
+ * Shared with the example preview on the calculator page and with the
+ * comparison across tools, which is the point: a preview of the answer is only
+ * worth showing if it is the same table the real figures land in.
+ *
+ * `showTool` adds the column that says which tool a row belongs to. Off by
+ * default, because with one tool it would repeat a name the heading already
+ * carries on every row.
  */
 export function CostTable({
-  plans,
+  rows,
   input,
-  tool,
   caption,
+  showTool,
 }: {
-  plans: PlanOut[]
+  rows: CostRow[]
   input: DocumentInput
-  tool?: ToolDetailOut
   caption: ReactNode
+  showTool?: boolean
 }) {
   // Recomputed per render rather than memoised: it is one pass over a handful
   // of plans, and the volume it depends on changes on every keystroke anyway.
-  const cheapest = cheapestPlan(plans, input)
+  const cheapest = cheapestRows(rows, input)
 
   return (
     <Table>
       <TableCaption>{caption}</TableCaption>
       <TableHead>
         <TableRow>
+          {showTool ? <TableHeader>Tool</TableHeader> : null}
           <TableHeader>Plan</TableHeader>
           <TableHeader>Published price</TableHeader>
           <TableHeader>Total</TableHeader>
@@ -239,23 +257,27 @@ export function CostTable({
         </TableRow>
       </TableHead>
       <TableBody>
-        {plans.map((plan) => (
+        {rows.map(({ key, plan, tool }) => (
           <TableRow
-            key={plan.code}
-            data-testid={`cost-row-${plan.code}`}
-            data-cheapest={cheapest.includes(plan.code) || undefined}
+            key={key}
+            data-testid={`cost-row-${key}`}
+            data-cheapest={cheapest.includes(key) || undefined}
             // The whole row, so the tint reads as "this line is the answer"
             // rather than decorating one cell. `ok-subtle` because the catalog
             // already spends that tone on a verified, favourable finding.
-            className={cheapest.includes(plan.code) ? 'bg-ok-subtle' : undefined}
+            className={cheapest.includes(key) ? 'bg-ok-subtle' : undefined}
           >
+            {/* Repeated per row rather than spanning the group: a reader who
+                scans to the cheapest line should not have to track back up the
+                column to find out whose plan it is. */}
+            {showTool ? <TableCell className="font-medium">{tool?.name}</TableCell> : null}
             <TableCell className="font-medium">
               <span className="flex flex-wrap items-center gap-2">
                 {plan.name}
                 {/* Named, not just tinted: the answer has to survive a screen
                     reader, a monochrome print and a reader who cannot tell the
                     tint from the stripe. */}
-                {cheapest.includes(plan.code) ? (
+                {cheapest.includes(key) ? (
                   <Badge tone="ok">
                     {cheapest.length > 1 ? 'Joint cheapest' : 'Cheapest'} for this volume
                   </Badge>
@@ -320,7 +342,7 @@ export function DocumentCostCalculator({
           so the fields would be a second set of the same controls there. */}
       {controlled ? null : <VolumeFields volume={volume} onChange={setVolume} />}
 
-      <CostTable plans={tool.plans} input={input} tool={tool} caption={COST_CAPTION} />
+      <CostTable rows={planRows(tool)} input={input} caption={COST_CAPTION} />
     </section>
   )
 }

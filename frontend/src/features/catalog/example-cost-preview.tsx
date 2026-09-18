@@ -113,7 +113,7 @@ export function ExampleCostPreview({ input }: { input: DocumentInput }) {
           a screenshot. */}
       <div className="opacity-70">
         <CostTable
-          plans={EXAMPLE_PLANS}
+          rows={EXAMPLE_PLANS.map((plan) => ({ key: plan.code, plan }))}
           input={input}
           caption="An illustration, worked with the real arithmetic: Starter bills every page, Team meters once its 1,000-page allowance runs out, and Enterprise covers the job for a flat fee — which is why it quotes no per-page figure."
         />

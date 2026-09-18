@@ -2,7 +2,14 @@ import { describe, expect, it } from 'vitest'
 
 import type { PlanLimitOut, PlanOut, PriceOut } from '@/lib/api/generated/model'
 
-import { basePrice, cheapestPlan, documentCost, overagePrice } from './document-cost'
+import {
+  basePrice,
+  cheapestPlan,
+  cheapestRows,
+  comparableCurrencies,
+  documentCost,
+  overagePrice,
+} from './document-cost'
 
 function price(overrides: Partial<PriceOut> = {}): PriceOut {
   return {
@@ -453,5 +460,43 @@ describe('cheapestPlan', () => {
 
   it('has no answer when nothing can be priced', () => {
     expect(cheapestPlan([], { documents: 1, pagesPerDocument: 10 })).toEqual([])
+  })
+})
+
+describe('cheapestRows', () => {
+  const metered = plan({ code: 'payg', prices: [price({ amount: '0.0500' })] })
+  const flat = plan({
+    code: 'pro',
+    prices: [price({ amount: '15.0000', unit: 'month', billing_period: 'monthly' })],
+  })
+
+  // Two vendors both publish a `pro`, so the caller says what a row is called
+  // and the answer comes back in those terms.
+  it('names the winner by the key it was given, not by the plan code', () => {
+    const rows = [
+      { key: 'redactable-pro', plan: flat },
+      { key: 'acrobat-payg', plan: metered },
+    ]
+
+    expect(cheapestRows(rows, { documents: 10, pagesPerDocument: 10 })).toEqual(['acrobat-payg'])
+  })
+})
+
+describe('comparableCurrencies', () => {
+  const metered = plan({ code: 'payg', prices: [price({ amount: '0.0500' })] })
+
+  // `cheapestRows` goes quiet across currencies. Without this the table would
+  // just stop badging a winner, and the reader would read that as a tie.
+  it('reports the currencies the priced rows are published in', () => {
+    const euros = plan({ code: 'eur', prices: [price({ amount: '0.0100', currency: 'EUR' })] })
+    const rows = [
+      { key: 'a-payg', plan: metered },
+      { key: 'b-eur', plan: euros },
+    ]
+
+    expect(comparableCurrencies(rows, { documents: 1, pagesPerDocument: 10 })).toEqual([
+      'USD',
+      'EUR',
+    ])
   })
 })
