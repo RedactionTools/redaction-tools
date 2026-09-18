@@ -12,6 +12,7 @@ export interface PriceOut {
   currency: string;
   unit: string;
   billing_period: string;
+  is_overage: boolean;
   source: string;
   is_pinned: boolean;
   source_note: string;

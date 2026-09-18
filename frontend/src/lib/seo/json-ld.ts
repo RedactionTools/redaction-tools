@@ -19,7 +19,10 @@ export function toolId(site: string, slug: string): string {
 }
 
 function aggregateOffer(tool: ToolDetailOut) {
-  const prices = tool.plans.flatMap((plan) => plan.prices)
+  // Overage rates are excluded: a surcharge past an allowance is not something
+  // anyone can buy, so counting it would inflate `offerCount` and could hand
+  // `lowPrice` a figure that is not an offer at all.
+  const prices = tool.plans.flatMap((plan) => plan.prices.filter((price) => !price.is_overage))
   if (prices.length === 0) return undefined
 
   const amounts = prices.map((price) => Number(price.amount))

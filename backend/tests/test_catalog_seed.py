@@ -4,6 +4,8 @@ These are assertions about published facts, so they are worth pinning: a seed
 that silently stops running leaves the catalog empty rather than broken.
 """
 
+from decimal import Decimal
+
 import pytest
 from django.conf import settings
 
@@ -11,6 +13,7 @@ from apps.catalog.models import (
     FacetDimension,
     FacetValue,
     Plan,
+    PlanLimit,
     PlanPrice,
     PriceSource,
     PriceUnit,
@@ -18,6 +21,14 @@ from apps.catalog.models import (
 )
 
 MEDIA_VALUES = {"pdf", "image", "video", "audio", "text"}
+
+DETECTION_CAPABILITIES = {
+    "handwritten-recognition",
+    "signature-detection",
+    "logo-detection",
+    "stamp-detection",
+    "qr-barcode-detection",
+}
 
 
 @pytest.mark.django_db
@@ -41,6 +52,16 @@ def test_every_designed_dimension_is_seeded():
         "capability",
         "audience",
     }
+
+
+@pytest.mark.django_db
+def test_the_detection_capabilities_are_seeded():
+    """Added after launch, so they arrive in their own migration: 0004 is guarded
+    by an existence check and never runs again on a populated database."""
+    capability = FacetDimension.objects.get(code="capability")
+    codes = set(capability.values.values_list("code", flat=True))
+
+    assert codes >= DETECTION_CAPABILITIES
 
 
 @pytest.mark.django_db
@@ -147,3 +168,46 @@ def test_every_seeded_logo_points_at_a_file_we_actually_host():
     ]
 
     assert missing == []
+
+
+@pytest.mark.django_db
+def test_the_free_tier_records_its_allowances_as_numbers():
+    """A cap written only into `highlights` is prose: it cannot be compared or
+    calculated against, so the cost calculator would price a volume the free
+    plan does not actually cover.
+
+    Both caps are recorded because they bite differently - 25 pages is the
+    longest document the plan takes, 100 pages is all it takes in a month."""
+    limits = PlanLimit.objects.filter(plan__tool__slug="pdf-redaction", plan__code="free")
+
+    assert {limit.kind: limit.display_value for limit in limits} == {
+        "pages_per_document": "25 pages",
+        "pages_per_month": "100 pages",
+    }
+
+
+@pytest.mark.django_db
+def test_a_metered_plan_publishes_both_its_fee_and_its_overage():
+    """A metered plan is two figures. Recording only the fee implies the price
+    is the whole story, which is the misreading this catalog exists to prevent.
+    """
+    plan = Plan.objects.get(tool__slug="pdf-redaction", code="pro")
+
+    fee = plan.prices.get(is_current=True, is_overage=False)
+    overage = plan.prices.get(is_current=True, is_overage=True)
+    allowance = plan.limits.get(kind="pages_per_month")
+
+    assert (fee.amount, fee.unit) == (Decimal("15.0000"), PriceUnit.MONTH)
+    assert (overage.amount, overage.unit) == (Decimal("0.0500"), PriceUnit.PAGE)
+    assert allowance.value == 500
+    # The overage rate is a published price like any other, so it is pinned
+    # against the crawler exactly as the fee is.
+    assert overage.is_pinned is True
+    assert overage.source == PriceSource.MANUAL
+
+
+@pytest.mark.django_db
+def test_a_metered_plan_does_not_also_claim_to_be_unlimited():
+    plan = Plan.objects.get(tool__slug="pdf-redaction", code="pro")
+
+    assert not any("nlimited" in highlight for highlight in plan.highlights)

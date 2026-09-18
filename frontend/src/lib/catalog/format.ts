@@ -31,6 +31,25 @@ export function formatAmount(amount: string, currency: string): string {
   }).format(value)
 }
 
+/**
+ * Money in a column of computed figures.
+ *
+ * `formatAmount` drops trailing zeroes, which is right for a headline - `$15`
+ * reads better than `$15.00` - but wrong down a cost column, where it turns
+ * `0.5000` into `$0.5` beside `$0.05`. So the floor is two decimals, and the
+ * cap stays at four so a sub-cent per-page rate survives.
+ */
+export function formatCost(amount: string, currency: string): string {
+  const meaningful = (amount.split('.')[1] ?? '').replace(/0+$/, '').length
+  const decimals = Math.min(4, Math.max(2, meaningful))
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  }).format(Number(amount))
+}
+
 export function formatUnit(unit: string): string {
   return UNIT_LABELS[unit] ?? `per ${unit.replace(/_/g, ' ')}`
 }

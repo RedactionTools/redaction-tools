@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import type { PriceSummaryOut } from '@/lib/api/generated/model'
 
-import { formatAmount, formatUnit, priceHeadline, priceSentence } from './format'
+import { formatAmount, formatCost, formatUnit, priceHeadline, priceSentence } from './format'
 
 function summary(overrides: Partial<PriceSummaryOut> = {}): PriceSummaryOut {
   return {
@@ -94,5 +94,22 @@ describe('priceSentence', () => {
     expect(priceSentence('Acme', summary({ last_verified_at: null }))).toBe(
       'Acme costs from $15 USD per month.',
     )
+  })
+})
+
+describe('formatCost', () => {
+  it('holds two decimals so a column of computed figures lines up', () => {
+    expect(formatCost('0.5000', 'USD')).toBe('$0.50')
+    expect(formatCost('5.0000', 'USD')).toBe('$5.00')
+    expect(formatCost('0.0500', 'USD')).toBe('$0.05')
+  })
+
+  it('still keeps a sub-cent per-page rate', () => {
+    expect(formatCost('0.0050', 'USD')).toBe('$0.005')
+    expect(formatCost('0.3333', 'USD')).toBe('$0.3333')
+  })
+
+  it('formats in whatever currency the plan publishes', () => {
+    expect(formatCost('14.0000', 'EUR')).toBe('€14.00')
   })
 })

@@ -1295,6 +1295,10 @@
             "title": "Billing Period",
             "type": "string"
           },
+          "is_overage": {
+            "title": "Is Overage",
+            "type": "boolean"
+          },
           "source": {
             "title": "Source",
             "type": "string"
@@ -1322,6 +1326,7 @@
           "currency",
           "unit",
           "billing_period",
+          "is_overage",
           "source",
           "is_pinned",
           "source_note",

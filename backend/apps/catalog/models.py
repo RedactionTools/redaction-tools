@@ -293,8 +293,14 @@ class Plan(TimeStampedModel):
 
 class PlanPrice(TimeStampedModel):
     """Current and historical published prices - one current row per
-    (plan, currency, billing period). Superseding opens a new row rather than
-    editing this one, so the profile can show a price history."""
+    (plan, currency, billing period, overage). Superseding opens a new row rather
+    than editing this one, so the profile can show a price history.
+
+    A metered plan holds two current rows: what it costs, and what it charges
+    per unit once its allowance runs out. The overage rate is a published price
+    like any other, so it lives here and inherits the whole provenance
+    apparatus - source, pinning, evidence, history - rather than becoming a
+    bare number hung off the plan."""
 
     plan = models.ForeignKey(Plan, on_delete=models.CASCADE, related_name="prices")
     currency = models.CharField(max_length=3, default="USD")
@@ -303,6 +309,10 @@ class PlanPrice(TimeStampedModel):
     billing_period = models.CharField(max_length=16, choices=BillingPeriod.choices)
 
     is_current = models.BooleanField(default=True)
+    is_overage = models.BooleanField(
+        default=False,
+        help_text="The rate charged BEYOND the plan's allowance, not the plan's own price.",
+    )
     effective_from = models.DateTimeField(default=timezone.now)
     effective_to = models.DateTimeField(null=True, blank=True)
 
@@ -336,14 +346,15 @@ class PlanPrice(TimeStampedModel):
         ordering = ["-effective_from"]
         constraints = [
             models.UniqueConstraint(
-                fields=["plan", "currency", "billing_period"],
+                fields=["plan", "currency", "billing_period", "is_overage"],
                 condition=models.Q(is_current=True),
                 name="uniq_current_plan_price",
             )
         ]
 
     def __str__(self):
-        return f"{self.amount} {self.currency}/{self.unit}"
+        suffix = " over plan" if self.is_overage else ""
+        return f"{self.amount} {self.currency}/{self.unit}{suffix}"
 
     def save(self, *args, **kwargs):
         # A staff or vendor figure is authoritative by default. Forgetting to

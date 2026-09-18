@@ -44,4 +44,10 @@ describe('buildSitemapEntries', () => {
 
     expect(urls.some((url) => url.includes('?'))).toBe(false)
   })
+
+  it('lists the calculator among the static routes', () => {
+    const entries = buildSitemapEntries('https://example.com', [])
+
+    expect(entries.map((entry) => entry.url)).toContain('https://example.com/price-calculator')
+  })
 })

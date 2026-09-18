@@ -14,8 +14,10 @@ import {
 } from '@/components/ui/table'
 import { useGetTool } from '@/lib/api/generated/catalog/catalog'
 import type { PlanOut, ToolDetailOut } from '@/lib/api/generated/model'
+import { basePrice, overagePrice } from '@/lib/catalog/document-cost'
 import { formatAmount, formatUnit, priceSentence } from '@/lib/catalog/format'
 
+import { DocumentCostCalculator } from './document-cost-calculator'
 import { PriceProvenanceBadge } from './price-provenance-badge'
 import { ToolLogo } from './tool-logo'
 
@@ -23,13 +25,27 @@ const MEDIA = new Set(['pdf', 'image', 'video', 'audio', 'text'])
 const DEPLOYMENT = new Set(['online', 'desktop', 'self-hosted', 'api-tools', 'browser-extension'])
 const METHOD = new Set(['manual-redaction', 'ai', 'hybrid', 'rule-based'])
 
-function planPrice(plan: PlanOut): string {
-  const price = plan.prices[0]
+/** The plan's own published figure, shared with the cost calculator so the two
+ *  tables can never quote the same plan differently. */
+export function planPrice(plan: PlanOut): string {
+  const price = basePrice(plan)
   if (price) return `${formatAmount(price.amount, price.currency)} ${formatUnit(price.unit)}`
   if (plan.is_trial && plan.trial_days) return `${plan.trial_days}-day trial`
   if (plan.is_enterprise_quote) return 'Contact sales'
   if (plan.is_free_tier) return 'Free'
   return 'Not published'
+}
+
+/**
+ * What the plan charges past its allowance, when it meters.
+ *
+ * Shown wherever the plan's own price is: a metered plan is two published
+ * figures, and quoting only the fee is how a comparison table understates it.
+ */
+export function planOverage(plan: PlanOut): string | null {
+  const price = overagePrice(plan)
+  if (!price) return null
+  return `then ${formatAmount(price.amount, price.currency)} ${formatUnit(price.unit)}`
 }
 
 export function ToolProfile({ slug }: { slug: string }) {
@@ -44,6 +60,7 @@ export function ToolProfile({ slug }: { slug: string }) {
       <ToolHeader tool={tool} />
       <KeyFacts tool={tool} />
       <PlanTable tool={tool} />
+      <DocumentCostCalculator tool={tool} />
       <Editorial tool={tool} />
     </article>
   )
@@ -134,13 +151,16 @@ function PlanTable({ tool }: { tool: ToolDetailOut }) {
                 <TableCell>
                   <span className="flex items-center gap-2">
                     {planPrice(plan)}
-                    {plan.prices[0] ? (
+                    {basePrice(plan) ? (
                       <PriceProvenanceBadge
-                        summary={{ ...tool.price_summary, source: plan.prices[0].source }}
+                        summary={{ ...tool.price_summary, source: basePrice(plan)!.source }}
                         slug={`${tool.slug}-${plan.code}`}
                       />
                     ) : null}
                   </span>
+                  {planOverage(plan) ? (
+                    <span className="text-muted-foreground block text-xs">{planOverage(plan)}</span>
+                  ) : null}
                 </TableCell>
                 <TableCell className="text-muted-foreground">
                   {plan.highlights.join(' · ') || '—'}

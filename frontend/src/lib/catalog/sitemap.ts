@@ -14,6 +14,7 @@ import type { ToolListItemOut } from '@/lib/api/generated/model'
 export function buildSitemapEntries(site: string, tools: ToolListItemOut[]): MetadataRoute.Sitemap {
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: `${site}/`, changeFrequency: 'weekly', priority: 1 },
+    { url: `${site}/price-calculator`, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${site}/methodology`, changeFrequency: 'monthly', priority: 0.5 },
     { url: `${site}/submit`, changeFrequency: 'monthly', priority: 0.5 },
   ]

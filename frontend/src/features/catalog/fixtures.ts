@@ -1,5 +1,7 @@
 import type {
   CatalogStatsOut,
+  PlanOut,
+  PriceOut,
   ToolDetailOut,
   ToolListItemOut,
   ToolPageOut,
@@ -33,6 +35,48 @@ export function makeTool(overrides: Partial<ToolListItemOut> = {}): ToolListItem
       last_changed_at: null,
       is_stale: false,
     },
+    ...overrides,
+  }
+}
+
+/** One published price, defaulting to a plain monthly subscription fee. */
+export function makePrice(overrides: Partial<PriceOut> = {}): PriceOut {
+  return {
+    amount: '15.0000',
+    currency: 'USD',
+    unit: 'month',
+    billing_period: 'monthly',
+    is_overage: false,
+    source: 'manual',
+    is_pinned: true,
+    source_note: '',
+    source_evidence_url: '',
+    effective_from: '2026-09-15T00:00:00Z',
+    ...overrides,
+  }
+}
+
+/**
+ * One plan, defaulting to a plain paid subscription.
+ *
+ * Kept out of `makeToolDetail`'s defaults on purpose: tests assert against the
+ * two plans that fixture already returns, so a third would break them silently.
+ */
+export function makePlan(overrides: Partial<PlanOut> = {}): PlanOut {
+  return {
+    code: 'pro',
+    name: 'Pro',
+    tier_order: 1,
+    is_free_tier: false,
+    is_trial: false,
+    trial_days: null,
+    is_enterprise_quote: false,
+    min_seats: 1,
+    highlights: [],
+    source_url: '',
+    verified_at: null,
+    prices: [makePrice()],
+    limits: [],
     ...overrides,
   }
 }
@@ -95,17 +139,10 @@ export function makeToolDetail(overrides: Partial<ToolDetailOut> = {}): ToolDeta
         source_url: 'https://www.adobe.com/acrobat/pricing.html',
         verified_at: null,
         prices: [
-          {
+          makePrice({
             amount: '22.9900',
-            currency: 'USD',
-            unit: 'month',
-            billing_period: 'monthly',
-            source: 'manual',
-            is_pinned: true,
             source_note: 'Seeded from an editor-vetted comparison table.',
-            source_evidence_url: '',
-            effective_from: '2026-09-15T00:00:00Z',
-          },
+          }),
         ],
         limits: [],
       },

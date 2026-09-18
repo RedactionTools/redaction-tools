@@ -22,6 +22,9 @@ class PriceOut(Schema):
     currency: str
     unit: str
     billing_period: str
+    # True marks the rate charged beyond the plan's allowance, so a reader never
+    # mistakes a metered plan's overage for what the plan itself costs.
+    is_overage: bool
     source: str
     is_pinned: bool
     source_note: str

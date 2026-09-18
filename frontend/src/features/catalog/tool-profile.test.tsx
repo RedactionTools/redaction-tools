@@ -105,4 +105,10 @@ describe('ToolProfile', () => {
 
     expect(screen.getByTestId('tool-monogram')).toHaveTextContent('AA')
   })
+
+  it('carries the cost calculator alongside the plan table', () => {
+    render()
+
+    expect(screen.getByTestId('document-cost-calculator')).toBeInTheDocument()
+  })
 })
