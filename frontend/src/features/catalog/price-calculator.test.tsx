@@ -64,6 +64,17 @@ describe('PriceCalculator', () => {
     expect(within(picker).getByRole('option', { name: 'Redactable' })).toBeInTheDocument()
   })
 
+  /**
+   * A bare <label> is inline and a <select> inline-block, so the two share a
+   * line and the wrapper's vertical rhythm lands on neither - the label ends up
+   * welded to the left edge of the dropdown.
+   */
+  it('sets the tool picker below its label rather than beside it', () => {
+    render()
+
+    expect(screen.getByText('Tools').className).toContain('block')
+  })
+
   it('preselects nothing, so the first-party listing gets no free placement', () => {
     render()
 

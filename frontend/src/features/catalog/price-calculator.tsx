@@ -65,7 +65,10 @@ export function PriceCalculator({ slugs }: { slugs: string[] }) {
       </section>
 
       <div className="space-y-3">
-        <label className="text-muted-foreground text-sm" htmlFor="calculator-tool">
+        {/* `block`: a <label> is inline and the <select> inline-block, so
+            without it the two share a line, the wrapper's spacing lands on
+            neither, and the label is welded to the edge of the dropdown. */}
+        <label className="text-muted-foreground block text-sm" htmlFor="calculator-tool">
           Tools
         </label>
         {/* An adder rather than a picker: it never holds a value, because the
