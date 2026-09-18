@@ -120,6 +120,18 @@ describe('PriceCalculator', () => {
     expect(replace).toHaveBeenCalledWith('/price-calculator?tool=redactable', { scroll: false })
   })
 
+  // The calculator answers one question about a tool; everything else the
+  // reader now wants - what it redacts, how it was verified - is a page away,
+  // and they should not have to go back through the catalog to find it.
+  it('links to the chosen tool profile', () => {
+    render('redactable')
+
+    expect(screen.getByRole('link', { name: /go to tool profile/i })).toHaveAttribute(
+      'href',
+      '/tool/redactable',
+    )
+  })
+
   it('calculates against the chosen tool plans', () => {
     render('redactable')
 

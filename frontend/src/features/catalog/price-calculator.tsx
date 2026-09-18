@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useState } from 'react'
 
@@ -42,6 +43,11 @@ export function PriceCalculator({ slug }: { slug?: string }) {
     return <Skeleton className="h-64 w-full" data-testid="price-calculator-skeleton" />
   }
 
+  // Read off the picker's own list rather than the tool query, so the link is
+  // there the moment the choice is - and so it can only point at a tool the
+  // picker actually offered.
+  const selected = page.items.find((item) => item.slug === slug)
+
   return (
     <div className="space-y-8" data-testid="price-calculator">
       <section className="space-y-4">
@@ -49,25 +55,41 @@ export function PriceCalculator({ slug }: { slug?: string }) {
         <VolumeFields volume={volume} onChange={setVolume} />
       </section>
 
-      <div className="max-w-sm space-y-1">
+      <div className="space-y-1">
         <label className="text-muted-foreground text-sm" htmlFor="calculator-tool">
           Tool
         </label>
-        <Select
-          id="calculator-tool"
-          value={slug ?? ''}
-          onChange={(event) => {
-            const next = event.target.value
-            router.replace(next ? `${pathname}?tool=${next}` : pathname, { scroll: false })
-          }}
-        >
-          <option value="">Choose a tool…</option>
-          {page.items.map((item) => (
-            <option key={item.slug} value={item.slug}>
-              {item.name}
-            </option>
-          ))}
-        </Select>
+        <div className="flex flex-wrap items-center gap-3">
+          <Select
+            id="calculator-tool"
+            className="max-w-sm flex-1"
+            value={slug ?? ''}
+            onChange={(event) => {
+              const next = event.target.value
+              router.replace(next ? `${pathname}?tool=${next}` : pathname, { scroll: false })
+            }}
+          >
+            <option value="">Choose a tool…</option>
+            {page.items.map((item) => (
+              <option key={item.slug} value={item.slug}>
+                {item.name}
+              </option>
+            ))}
+          </Select>
+          {/* The cost is one question about a tool; what it redacts and how that
+              was verified are on its profile, and a reader who has just chosen
+              it here should not have to go back through the catalog to get
+              there. Beside the picker rather than under it: the name is already
+              in the control it sits next to. */}
+          {selected ? (
+            <Link
+              href={`/tool/${selected.slug}`}
+              className="text-sm font-medium whitespace-nowrap hover:underline"
+            >
+              Go to tool profile
+            </Link>
+          ) : null}
+        </div>
       </div>
 
       {!slug ? (
