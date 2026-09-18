@@ -73,3 +73,34 @@ export function DropdownMenuSeparator({
     />
   )
 }
+
+export const DropdownMenuRadioGroup = DropdownMenuPrimitive.RadioGroup
+
+/**
+ * A menu entry that carries which option is chosen, so the menu announces the
+ * current selection instead of only listing the alternatives. Radix renders it
+ * as `menuitemradio` with `aria-checked`; the dot is drawn from `ItemIndicator`
+ * so it only exists for the selected one.
+ */
+export function DropdownMenuRadioItem({
+  className,
+  children,
+  ...props
+}: ComponentProps<typeof DropdownMenuPrimitive.RadioItem>) {
+  return (
+    <DropdownMenuPrimitive.RadioItem
+      className={cn(
+        'focus:bg-muted relative flex cursor-pointer items-center gap-2 rounded-md py-1.5 pr-2 pl-7 text-sm outline-none select-none',
+        className,
+      )}
+      {...props}
+    >
+      <span className="absolute left-2 flex size-3 items-center justify-center">
+        <DropdownMenuPrimitive.ItemIndicator>
+          <span className="bg-foreground size-1.5 rounded-full" />
+        </DropdownMenuPrimitive.ItemIndicator>
+      </span>
+      {children}
+    </DropdownMenuPrimitive.RadioItem>
+  )
+}

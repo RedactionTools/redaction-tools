@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { Container } from '@/components/layout/container'
 import { GitHubLink } from '@/components/layout/github-link'
 import { Logo } from '@/components/layout/logo'
+import { ThemeToggle } from '@/components/layout/theme-toggle'
 import { UserMenu } from '@/features/account/user-menu'
 
 export function SiteHeader() {
@@ -28,6 +29,7 @@ export function SiteHeader() {
             Submit a tool
           </Link>
           <GitHubLink />
+          <ThemeToggle />
           <UserMenu />
         </nav>
       </Container>

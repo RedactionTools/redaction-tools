@@ -26,6 +26,12 @@ describe('SiteHeader', () => {
     expect(header.className).toContain('z-40')
   })
 
+  it('carries the theme control', () => {
+    render(<SiteHeader />)
+
+    expect(screen.getByRole('button', { name: 'Theme' })).toBeInTheDocument()
+  })
+
   it('links to the price calculator', () => {
     render(<SiteHeader />)
 
