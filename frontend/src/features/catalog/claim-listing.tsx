@@ -2,6 +2,7 @@
 
 import { signIn, useSession } from 'next-auth/react'
 import Link from 'next/link'
+import posthog from 'posthog-js'
 import { type ReactNode, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
@@ -81,7 +82,16 @@ export function ClaimListing({ tool }: { tool: ToolDetailOut }) {
   if (!started) {
     return (
       <ClaimPrompt vendor={tool.vendor.name}>
-        <Button onClick={() => setStarted(true)}>Claim this listing</Button>
+        <Button
+          onClick={() => {
+            if (process.env.NEXT_PUBLIC_POSTHOG_KEY && process.env.NEXT_PUBLIC_POSTHOG_HOST) {
+              posthog.capture('listing_claim_started', { tool_slug: tool.slug })
+            }
+            setStarted(true)
+          }}
+        >
+          Claim this listing
+        </Button>
       </ClaimPrompt>
     )
   }
@@ -151,6 +161,9 @@ export function ClaimListing({ tool }: { tool: ToolDetailOut }) {
         className="mt-4 max-w-xl space-y-4"
         onSubmit={(event) => {
           event.preventDefault()
+          if (process.env.NEXT_PUBLIC_POSTHOG_KEY && process.env.NEXT_PUBLIC_POSTHOG_HOST) {
+            posthog.capture('listing_claim_requested', { tool_slug: tool.slug })
+          }
           create.mutate({ data: { tool: tool.slug, work_email: email, role, evidence } })
         }}
       >

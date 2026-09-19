@@ -1,5 +1,6 @@
 'use client'
 
+import posthog from 'posthog-js'
 import { useState } from 'react'
 
 import { Button } from '@/components/ui/button'
@@ -29,6 +30,9 @@ export function SubmitForm() {
       className="max-w-xl space-y-4"
       onSubmit={(event) => {
         event.preventDefault()
+        if (process.env.NEXT_PUBLIC_POSTHOG_KEY && process.env.NEXT_PUBLIC_POSTHOG_HOST) {
+          posthog.capture('tool_submission_requested')
+        }
         mutate({ data: { name, homepage_url: homepage, description } })
       }}
     >

@@ -1,5 +1,6 @@
 'use client'
 
+import posthog from 'posthog-js'
 import { useState } from 'react'
 
 import { Button } from '@/components/ui/button'
@@ -96,6 +97,12 @@ export function ListingEditor({ listing }: { listing: MyListingOut }) {
       aria-label={`Propose an edit to ${listing.name}`}
       onSubmit={(event) => {
         event.preventDefault()
+        if (process.env.NEXT_PUBLIC_POSTHOG_KEY && process.env.NEXT_PUBLIC_POSTHOG_HOST) {
+          posthog.capture('listing_revision_proposed', {
+            tool_slug: listing.slug,
+            changed_field_count: Object.keys(changes).length,
+          })
+        }
         propose.mutate({ slug: listing.slug, data: { changes } })
       }}
     >

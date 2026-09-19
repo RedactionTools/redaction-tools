@@ -2,6 +2,7 @@
 
 import { signIn, signOut, useSession } from 'next-auth/react'
 import Link from 'next/link'
+import posthog from 'posthog-js'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -25,6 +26,13 @@ function initials(name?: string | null, email?: string | null): string {
 
 export function UserMenu() {
   const { data: session, status } = useSession()
+
+  const handleSignOut = () => {
+    if (process.env.NEXT_PUBLIC_POSTHOG_KEY && process.env.NEXT_PUBLIC_POSTHOG_HOST) {
+      posthog.reset()
+    }
+    void signOut()
+  }
 
   if (status === 'loading') return <Skeleton className="size-8 rounded-full" />
 
@@ -65,7 +73,7 @@ export function UserMenu() {
         <DropdownMenuItem asChild>
           <Link href="/account">Account</Link>
         </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => void signOut()}>Sign out</DropdownMenuItem>
+        <DropdownMenuItem onSelect={handleSignOut}>Sign out</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )

@@ -3,6 +3,7 @@
 import { useQueries } from '@tanstack/react-query'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
+import posthog from 'posthog-js'
 import { useState } from 'react'
 
 import { Select } from '@/components/ui/select'
@@ -78,7 +79,13 @@ export function PriceCalculator({ slugs }: { slugs: string[] }) {
           className="max-w-sm"
           value=""
           disabled={full}
-          onChange={(event) => show([...slugs, event.target.value])}
+          onChange={(event) => {
+            const toolSlug = event.target.value
+            if (process.env.NEXT_PUBLIC_POSTHOG_KEY && process.env.NEXT_PUBLIC_POSTHOG_HOST) {
+              posthog.capture('price_comparison_tool_added', { tool_slug: toolSlug })
+            }
+            show([...slugs, toolSlug])
+          }}
         >
           <option value="">{full ? `Up to ${MAX_TOOLS} tools at a time` : 'Add a tool…'}</option>
           {page.items
@@ -112,7 +119,12 @@ export function PriceCalculator({ slugs }: { slugs: string[] }) {
                   type="button"
                   aria-label={`Remove ${item.name}`}
                   className="text-muted-foreground hover:bg-muted hover:text-foreground flex size-8 items-center justify-center rounded-full leading-none"
-                  onClick={() => show(slugs.filter((slug) => slug !== item.slug))}
+                  onClick={() => {
+                    if (process.env.NEXT_PUBLIC_POSTHOG_KEY && process.env.NEXT_PUBLIC_POSTHOG_HOST) {
+                      posthog.capture('price_comparison_tool_removed', { tool_slug: item.slug })
+                    }
+                    show(slugs.filter((slug) => slug !== item.slug))
+                  }}
                 >
                   &times;
                 </button>
