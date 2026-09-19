@@ -5,7 +5,8 @@
 
 # Redaction Tools
 
-A catalog of redaction tools, with prices we verify.
+A catalog of redaction tools, with prices we verify — live at
+**[redaction-tools.com](https://redaction-tools.com/)**.
 
 Redaction software is bought under pressure — a disclosure deadline, an audit, a breach — and the
 market is hard to compare. Vendors publish prices in different units, some publish none at all,
@@ -15,15 +16,27 @@ This catalog covers tools that redact PDFs, images, video, audio and text. Every
 what the tool costs, in what unit, and how we know — read from the vendor's page, typed in by an
 editor, or supplied by the vendor and labelled as such.
 
+[![The catalog listing seven redaction tools sorted by entry price, beside filters for media,
+deployment, redaction method and pricing model](.github/screenshot-catalog.png)](https://redaction-tools.com/)
+
 ## The catalog
 
 | Route | What it is |
 | --- | --- |
 | `/` | The hub: every listed tool, filterable by media, deployment, method and pricing |
 | `/tool/<slug>/` | A tool's page — plans, prices, provenance and our own assessment |
+| `/price-calculator/` | Your volume, costed against every plan's published rate |
 | `/submit/` | Tell us about a tool we are missing |
 | `/methodology/` | Where prices come from, and what we will not do |
 | `/my-listings/` | Owner area for vendors with an approved claim |
+
+The calculator is the answer to prices published in units that do not compare. Give it a volume
+and it works each plan out from the vendor's own rate — a metered plan past its allowance at its
+published overage rate, a subscription as the flat fee it is rather than a per-document figure
+invented by dividing.
+
+[![The price calculator: 100 documents of 10 pages costed across two tools, with the cheapest plan
+for that volume highlighted](.github/screenshot-price-calculator.png)](https://redaction-tools.com/price-calculator)
 
 ## How we treat prices
 
