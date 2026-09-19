@@ -2,13 +2,13 @@
 
 import { signIn, useSession } from 'next-auth/react'
 import Link from 'next/link'
-import posthog from 'posthog-js'
 import { type ReactNode, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardDescription, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
+import { analytics } from '@/lib/analytics'
 import { errorMessage } from '@/lib/api/error-message'
 import {
   useClaimTool,
@@ -84,9 +84,7 @@ export function ClaimListing({ tool }: { tool: ToolDetailOut }) {
       <ClaimPrompt vendor={tool.vendor.name}>
         <Button
           onClick={() => {
-            if (process.env.NEXT_PUBLIC_POSTHOG_KEY && process.env.NEXT_PUBLIC_POSTHOG_HOST) {
-              posthog.capture('listing_claim_started', { tool_slug: tool.slug })
-            }
+            analytics.capture('listing_claim_started', { tool_slug: tool.slug })
             setStarted(true)
           }}
         >
@@ -161,9 +159,7 @@ export function ClaimListing({ tool }: { tool: ToolDetailOut }) {
         className="mt-4 max-w-xl space-y-4"
         onSubmit={(event) => {
           event.preventDefault()
-          if (process.env.NEXT_PUBLIC_POSTHOG_KEY && process.env.NEXT_PUBLIC_POSTHOG_HOST) {
-            posthog.capture('listing_claim_requested', { tool_slug: tool.slug })
-          }
+          analytics.capture('listing_claim_requested', { tool_slug: tool.slug })
           create.mutate({ data: { tool: tool.slug, work_email: email, role, evidence } })
         }}
       >

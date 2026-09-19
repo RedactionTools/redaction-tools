@@ -2,7 +2,6 @@
 
 import { signIn, signOut, useSession } from 'next-auth/react'
 import Link from 'next/link'
-import posthog from 'posthog-js'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -15,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Skeleton } from '@/components/ui/skeleton'
+import { analytics } from '@/lib/analytics'
 
 /** "Ada Lovelace" -> "AL"; falls back to the email's first letter. */
 function initials(name?: string | null, email?: string | null): string {
@@ -28,9 +28,7 @@ export function UserMenu() {
   const { data: session, status } = useSession()
 
   const handleSignOut = () => {
-    if (process.env.NEXT_PUBLIC_POSTHOG_KEY && process.env.NEXT_PUBLIC_POSTHOG_HOST) {
-      posthog.reset()
-    }
+    analytics.reset()
     void signOut()
   }
 

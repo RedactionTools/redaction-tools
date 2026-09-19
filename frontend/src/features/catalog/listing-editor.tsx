@@ -1,11 +1,11 @@
 'use client'
 
-import posthog from 'posthog-js'
 import { useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
+import { analytics } from '@/lib/analytics'
 import { errorMessage } from '@/lib/api/error-message'
 import { useListFacets, useProposeToolRevision } from '@/lib/api/generated/catalog/catalog'
 import type { MyListingOut } from '@/lib/api/generated/model'
@@ -97,12 +97,10 @@ export function ListingEditor({ listing }: { listing: MyListingOut }) {
       aria-label={`Propose an edit to ${listing.name}`}
       onSubmit={(event) => {
         event.preventDefault()
-        if (process.env.NEXT_PUBLIC_POSTHOG_KEY && process.env.NEXT_PUBLIC_POSTHOG_HOST) {
-          posthog.capture('listing_revision_proposed', {
-            tool_slug: listing.slug,
-            changed_field_count: Object.keys(changes).length,
-          })
-        }
+        analytics.capture('listing_revision_proposed', {
+          tool_slug: listing.slug,
+          changed_field_count: Object.keys(changes).length,
+        })
         propose.mutate({ slug: listing.slug, data: { changes } })
       }}
     >

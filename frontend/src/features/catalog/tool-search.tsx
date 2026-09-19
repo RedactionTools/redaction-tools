@@ -1,11 +1,11 @@
 'use client'
 
 import { usePathname, useRouter } from 'next/navigation'
-import posthog from 'posthog-js'
 import { useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { analytics } from '@/lib/analytics'
 import { type CatalogFilters, resetPage, toQueryString } from '@/lib/catalog/filters'
 
 /**
@@ -27,9 +27,7 @@ export function ToolSearch({ filters }: { filters: CatalogFilters }) {
       onSubmit={(event) => {
         event.preventDefault()
         const query = toQueryString({ ...resetPage(filters), q: value.trim() || undefined })
-        if (process.env.NEXT_PUBLIC_POSTHOG_KEY && process.env.NEXT_PUBLIC_POSTHOG_HOST) {
-          posthog.capture('catalog_search_submitted', { has_query: Boolean(value.trim()) })
-        }
+        analytics.capture('catalog_search_submitted', { has_query: Boolean(value.trim()) })
         router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false })
       }}
     >

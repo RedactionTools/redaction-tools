@@ -1,11 +1,11 @@
 'use client'
 
 import { SessionProvider, useSession } from 'next-auth/react'
-import posthog from 'posthog-js'
 import { useEffect, useRef, type ReactNode } from 'react'
 
 // Registers the getSession()-backed token source for the browser bundle.
 import '@/lib/api/token-source.client'
+import { analytics, analyticsEnabled } from '@/lib/analytics'
 import { useGetMe } from '@/lib/api/generated/auth/auth'
 
 import { QueryProvider } from './query-provider'
@@ -19,11 +19,11 @@ function PostHogIdentity() {
   const { data: user } = useGetMe({ query: { enabled: isAuthenticated } })
 
   useEffect(() => {
-    if (!process.env.NEXT_PUBLIC_POSTHOG_KEY || !process.env.NEXT_PUBLIC_POSTHOG_HOST) return
+    if (!analyticsEnabled) return
 
     if (!isAuthenticated) {
       if (isSignedOut && previousUserId.current) {
-        posthog.reset()
+        analytics.reset()
         previousUserId.current = null
       }
       return
@@ -32,11 +32,11 @@ function PostHogIdentity() {
     if (!user) return
 
     if (previousUserId.current && previousUserId.current !== user.id) {
-      posthog.reset()
+      analytics.reset()
     }
 
     if (previousUserId.current !== user.id) {
-      posthog.identify(user.id, { email: user.email, name: user.name })
+      analytics.identify(user.id, { email: user.email, name: user.name })
       previousUserId.current = user.id
     }
   }, [isAuthenticated, isSignedOut, user])

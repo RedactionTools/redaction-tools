@@ -1,25 +1,17 @@
 import posthog from 'posthog-js'
 
-const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY
-const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST
+import { isDevelopment, posthogConfig } from '@/lib/analytics'
 
-if (!posthogKey) {
-  if (process.env.NODE_ENV === 'development') {
-    throw new Error(
-      'NEXT_PUBLIC_POSTHOG_KEY variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once NEXT_PUBLIC_POSTHOG_KEY is configured',
-    )
-  }
-} else if (!posthogHost) {
-  if (process.env.NODE_ENV === 'development') {
-    throw new Error(
-      'NEXT_PUBLIC_POSTHOG_HOST variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once NEXT_PUBLIC_POSTHOG_HOST is configured',
-    )
-  }
-} else {
-  posthog.init(posthogKey, {
-    api_host: posthogHost,
+if (posthogConfig) {
+  posthog.init(posthogConfig.key, {
+    api_host: posthogConfig.host,
     defaults: '2026-01-30',
     capture_exceptions: true,
-    debug: process.env.NODE_ENV === 'development',
   })
+} else if (!isDevelopment) {
+  // Development is off by design; anywhere else this is a misconfiguration
+  // that silently drops every event.
+  console.warn(
+    'PostHog is not initialised: NEXT_PUBLIC_POSTHOG_KEY and NEXT_PUBLIC_POSTHOG_HOST must both be set.',
+  )
 }

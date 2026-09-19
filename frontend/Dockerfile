@@ -26,6 +26,14 @@ ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 # robots.txt and every JSON-LD @id, so a wrong value here is published SEO.
 ARG NEXT_PUBLIC_SITE_URL=http://localhost:3007
 ENV NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL}
+# Analytics, and optional: with either one empty, src/lib/analytics.ts leaves
+# PostHog uninitialised and the app runs on without reporting. They are build
+# arguments for the same reason as the two above - passing them to the running
+# container instead is the silent failure this guards against.
+ARG NEXT_PUBLIC_POSTHOG_KEY=
+ENV NEXT_PUBLIC_POSTHOG_KEY=${NEXT_PUBLIC_POSTHOG_KEY}
+ARG NEXT_PUBLIC_POSTHOG_HOST=
+ENV NEXT_PUBLIC_POSTHOG_HOST=${NEXT_PUBLIC_POSTHOG_HOST}
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN bun run build

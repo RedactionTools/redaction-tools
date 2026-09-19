@@ -3,11 +3,11 @@
 import { useQueries } from '@tanstack/react-query'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import posthog from 'posthog-js'
 import { useState } from 'react'
 
 import { Select } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
+import { analytics } from '@/lib/analytics'
 import { getGetToolQueryOptions, useListTools } from '@/lib/api/generated/catalog/catalog'
 import { MAX_TOOLS, toolsHref } from '@/lib/catalog/calculator-tools'
 
@@ -81,9 +81,7 @@ export function PriceCalculator({ slugs }: { slugs: string[] }) {
           disabled={full}
           onChange={(event) => {
             const toolSlug = event.target.value
-            if (process.env.NEXT_PUBLIC_POSTHOG_KEY && process.env.NEXT_PUBLIC_POSTHOG_HOST) {
-              posthog.capture('price_comparison_tool_added', { tool_slug: toolSlug })
-            }
+            analytics.capture('price_comparison_tool_added', { tool_slug: toolSlug })
             show([...slugs, toolSlug])
           }}
         >
@@ -120,9 +118,7 @@ export function PriceCalculator({ slugs }: { slugs: string[] }) {
                   aria-label={`Remove ${item.name}`}
                   className="text-muted-foreground hover:bg-muted hover:text-foreground flex size-8 items-center justify-center rounded-full leading-none"
                   onClick={() => {
-                    if (process.env.NEXT_PUBLIC_POSTHOG_KEY && process.env.NEXT_PUBLIC_POSTHOG_HOST) {
-                      posthog.capture('price_comparison_tool_removed', { tool_slug: item.slug })
-                    }
+                    analytics.capture('price_comparison_tool_removed', { tool_slug: item.slug })
                     show(slugs.filter((slug) => slug !== item.slug))
                   }}
                 >
