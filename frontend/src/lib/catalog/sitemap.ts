@@ -11,9 +11,21 @@ import type { ToolListItemOut } from '@/lib/api/generated/model'
  * identical - and a section that cries wolf devalues the signal for the whole
  * domain, not just for itself.
  */
+/** The freshest thing the catalog can honestly say about itself. */
+function newestChange(tools: ToolListItemOut[]): string | undefined {
+  const dates = tools
+    .map((tool) => tool.price_summary.last_changed_at ?? tool.price_summary.last_verified_at)
+    .filter((date): date is string => Boolean(date))
+
+  return dates.length ? dates.reduce((a, b) => (a > b ? a : b)) : undefined
+}
+
 export function buildSitemapEntries(site: string, tools: ToolListItemOut[]): MetadataRoute.Sitemap {
   const staticRoutes: MetadataRoute.Sitemap = [
-    { url: `${site}/`, changeFrequency: 'weekly', priority: 1 },
+    // The hub is dated by the catalog beneath it. The other three have only the
+    // build date to offer, which moves on every deploy while the page sits
+    // still - so they carry no lastmod rather than a misleading one.
+    { url: `${site}/`, lastModified: newestChange(tools), changeFrequency: 'weekly', priority: 1 },
     { url: `${site}/price-calculator`, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${site}/methodology`, changeFrequency: 'monthly', priority: 0.5 },
     { url: `${site}/submit`, changeFrequency: 'monthly', priority: 0.5 },

@@ -4,12 +4,13 @@ import Link from 'next/link'
 import { auth } from '@/auth'
 import { Button } from '@/components/ui/button'
 import { SubmitForm } from '@/features/catalog/submit-form'
+import { canonicalMetadata } from '@/lib/seo/canonical'
 
 export const metadata: Metadata = {
   title: 'Submit a redaction tool',
   description:
     'Tell us about a redaction tool we are missing. Every submission is reviewed by an editor before it appears in the catalog.',
-  alternates: { canonical: '/submit' },
+  ...canonicalMetadata('/submit'),
 }
 
 // The explainer is public and indexable; only the form is gated. Keeping the

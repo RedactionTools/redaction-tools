@@ -3,9 +3,7 @@ import type { ReactNode } from 'react'
 
 import { Container } from '@/components/layout/container'
 import { Logo } from '@/components/layout/logo'
-
-const SUBREDDIT_URL = 'https://www.reddit.com/r/RedactionTools/'
-const LINKEDIN_URL = 'https://www.linkedin.com/company/redaction-tools/'
+import { LINKEDIN_URL, REDDIT_URL, SITE_DESCRIPTION, SITE_NAME } from '@/lib/seo/site'
 
 // Brand marks, drawn inline: there is no icon package here (radix-ui is the
 // only UI dependency), same call as the header's GitHub glyph.
@@ -51,11 +49,9 @@ export function SiteFooter() {
             {/* The mark is decorative - the wordmark beside it names the link. */}
             <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">
               <Logo size={24} />
-              Redaction Tools
+              {SITE_NAME}
             </Link>
-            <p className="text-muted-foreground max-w-sm text-sm">
-              Catalog of redaction tools with benchmarks and a leaderboard.
-            </p>
+            <p className="text-muted-foreground max-w-sm text-sm">{SITE_DESCRIPTION}</p>
           </div>
           <nav className="text-muted-foreground flex flex-wrap gap-x-4 gap-y-2 text-sm">
             <Link href="/" className="hover:text-foreground">
@@ -70,12 +66,20 @@ export function SiteFooter() {
             <Link href="/my-listings" className="hover:text-foreground">
               Your listings
             </Link>
+            {/* The only discovery path a machine-readable file has is a link to
+                it. Not a <Link>: it is a route handler, not a page, so there is
+                nothing for the router to prefetch. */}
+            <a href="/llms.txt" className="hover:text-foreground">
+              llms.txt
+            </a>
           </nav>
         </div>
         <div className="border-border text-muted-foreground flex flex-wrap items-center justify-between gap-4 border-t pt-6 text-sm">
-          <p>© {year} Redaction Tools</p>
+          <p>
+            © {year} {SITE_NAME}
+          </p>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-            <SocialLink href={SUBREDDIT_URL} mark={REDDIT_MARK}>
+            <SocialLink href={REDDIT_URL} mark={REDDIT_MARK}>
               r/RedactionTools
             </SocialLink>
             <SocialLink href={LINKEDIN_URL} mark={LINKEDIN_MARK}>

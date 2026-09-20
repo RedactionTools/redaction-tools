@@ -89,14 +89,23 @@ export function itemListJsonLd(site: string, tools: { slug: string; name: string
 
 export function collectionPageJsonLd(
   site: string,
-  { name, numberOfItems }: { name: string; numberOfItems: number },
+  {
+    name,
+    description,
+    numberOfItems,
+  }: { name: string; description?: string; numberOfItems: number },
 ) {
   return {
     '@type': 'CollectionPage',
     '@id': `${site}/#catalog`,
     name,
+    ...(description ? { description } : {}),
     url: `${site}/`,
     numberOfItems,
+    // A bare pointer at the node the layout defines - the ownership rule cuts
+    // both ways, and the catalog no more redefines the site than the hub
+    // redefines a tool.
+    isPartOf: { '@id': websiteId(site) },
   }
 }
 
@@ -108,6 +117,95 @@ export function breadcrumbJsonLd(site: string, crumbs: { name: string; url: stri
       position: index + 1,
       name: crumb.name,
       item: crumb.url,
+    })),
+  }
+}
+
+/** The site entity, referenced from the catalog and from the organization. */
+export function websiteId(site: string): string {
+  return `${site}/#website`
+}
+
+/** The publisher entity, referenced from the site. */
+export function organizationId(site: string): string {
+  return `${site}/#organization`
+}
+
+/**
+ * The site itself.
+ *
+ * No `potentialAction`/`SearchAction`: Google retired the sitelinks searchbox
+ * in 2024, and the only target we could give it is `/?q=` - a URL `robots.ts`
+ * disallows. Advertising a crawl entry point we have deliberately closed is
+ * a contradiction for no remaining consumer.
+ */
+export function websiteJsonLd(
+  site: string,
+  { name, description }: { name: string; description: string },
+) {
+  return {
+    '@type': 'WebSite',
+    '@id': websiteId(site),
+    url: `${site}/`,
+    name,
+    description,
+    inLanguage: 'en',
+    publisher: { '@id': organizationId(site) },
+  } as Record<string, unknown> & {
+    '@type': string
+    '@id': string
+    publisher: unknown
+    potentialAction?: unknown
+  }
+}
+
+/** Who publishes it, and where else that publisher speaks. */
+export function organizationJsonLd(
+  site: string,
+  {
+    name,
+    description,
+    logo,
+    sameAs,
+  }: { name: string; description: string; logo: string; sameAs: readonly string[] },
+) {
+  return {
+    '@type': 'Organization',
+    '@id': organizationId(site),
+    name,
+    url: `${site}/`,
+    description,
+    // JSON-LD gets no metadataBase, so every URL in it has to be absolute.
+    logo: { '@type': 'ImageObject', url: logo },
+    sameAs: [...sameAs],
+  }
+}
+
+/**
+ * The questions a listing answers, when it answers any.
+ *
+ * Returns undefined rather than an empty `FAQPage`, because a page claiming to
+ * answer nothing is a worse claim than one that stays quiet. Callers spread the
+ * result, so undefined contributes nothing to the graph.
+ *
+ * Worth knowing what this does and does not buy: Google restricted FAQ rich
+ * results to government and health sites in 2023, so this is not a SERP
+ * feature. It is extractable question-and-answer text for the answer engines,
+ * which is the point.
+ */
+export function faqPageJsonLd(
+  pageUrl: string,
+  faq: readonly { question: string; answer: string }[],
+) {
+  if (faq.length === 0) return undefined
+
+  return {
+    '@type': 'FAQPage',
+    '@id': `${pageUrl}#faq`,
+    mainEntity: faq.map((entry) => ({
+      '@type': 'Question',
+      name: entry.question,
+      acceptedAnswer: { '@type': 'Answer', text: entry.answer },
     })),
   }
 }

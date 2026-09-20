@@ -1,14 +1,24 @@
-import { render, screen } from '@testing-library/react'
+import { render } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
 import { Logo } from '@/components/layout/logo'
 
 describe('Logo', () => {
   it('ships a light-theme and a dark-theme variant', () => {
-    render(<Logo />)
+    const { container } = render(<Logo />)
 
-    const images = screen.getAllByRole('presentation', { hidden: true })
-    expect(images).toHaveLength(2)
+    expect(container.querySelectorAll('img')).toHaveLength(2)
+  })
+
+  // The wordmark beside the mark names the link, so announcing the image too
+  // would say it twice. Hidden from assistive tech, described for crawlers.
+  it('names itself for a crawler while staying out of the accessibility tree', () => {
+    const { container } = render(<Logo />)
+
+    for (const img of Array.from(container.querySelectorAll('img'))) {
+      expect(img.getAttribute('alt')).toBe('Redaction Tools logo')
+      expect(img.getAttribute('aria-hidden')).toBe('true')
+    }
   })
 
   // The mark is dark navy on transparency and would vanish on the dark theme,

@@ -3,14 +3,16 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
 import { ToolProfile } from '@/features/catalog/tool-profile'
+import { canonicalMetadata } from '@/lib/seo/canonical'
 import { getGetToolQueryKey } from '@/lib/api/generated/catalog/catalog'
-import { priceSentence } from '@/lib/catalog/format'
 import { fetchTool } from '@/lib/catalog/server'
 import { clientEnv } from '@/lib/env'
+import { toolMetaDescription } from '@/lib/seo/description'
 import { getQueryClient } from '@/lib/query/client'
 import {
   breadcrumbJsonLd,
   combineJsonLd,
+  faqPageJsonLd,
   softwareApplicationJsonLd,
   toolUrl,
 } from '@/lib/seo/json-ld'
@@ -26,10 +28,11 @@ export async function generateMetadata({ params }: PageProps<'/tool/[slug]'>): P
   const year = new Date().getUTCFullYear()
   return {
     title: `${tool.name} redaction — pricing and features (${year})`,
-    // The description carries the price, its unit and its date, because this is
-    // the string a search result or an answer engine quotes verbatim.
-    description: priceSentence(tool.name, tool.price_summary),
-    alternates: { canonical: `/tool/${tool.slug}` },
+    // Leads with the price, its unit and its date, because that is the string a
+    // search result or an answer engine quotes verbatim - then fills the rest of
+    // the snippet with positioning rather than leaving it empty.
+    description: toolMetaDescription(tool),
+    ...canonicalMetadata(`/tool/${tool.slug}`, { hasRouteImage: true }),
   }
 }
 
@@ -42,12 +45,15 @@ export default async function ToolPage({ params }: PageProps<'/tool/[slug]'>) {
   queryClient.setQueryData(getGetToolQueryKey(slug), tool)
 
   const site = clientEnv.NEXT_PUBLIC_SITE_URL
+  // The FAQ node is spread rather than listed: it is undefined when the
+  // listing answers nothing, and an empty FAQPage claims more than silence.
   const jsonLd = combineJsonLd([
     softwareApplicationJsonLd(site, tool),
     breadcrumbJsonLd(site, [
       { name: 'Redaction tools', url: `${site}/` },
       { name: tool.name, url: toolUrl(site, tool.slug) },
     ]),
+    ...[faqPageJsonLd(toolUrl(site, tool.slug), tool.faq)].filter(Boolean),
   ])
 
   return (

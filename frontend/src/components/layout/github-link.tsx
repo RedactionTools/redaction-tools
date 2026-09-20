@@ -1,6 +1,5 @@
+import { GITHUB_REPO_URL } from '@/lib/seo/site'
 import { cn } from '@/lib/utils'
-
-const REPO_URL = 'https://github.com/RedactionTools/redaction-tools'
 
 /**
  * The repo link in the header.
@@ -16,7 +15,7 @@ const REPO_URL = 'https://github.com/RedactionTools/redaction-tools'
 export function GitHubLink({ label, className }: { label?: string; className?: string }) {
   return (
     <a
-      href={REPO_URL}
+      href={GITHUB_REPO_URL}
       // Leaving the site, so the tab is new; noreferrer implies noopener, but
       // both are spelled out because the pairing is the well-known one.
       target="_blank"

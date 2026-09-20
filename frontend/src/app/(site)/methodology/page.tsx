@@ -1,16 +1,33 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
+import { canonicalMetadata } from '@/lib/seo/canonical'
+import { clientEnv } from '@/lib/env'
+import { breadcrumbJsonLd, combineJsonLd } from '@/lib/seo/json-ld'
+
 export const metadata: Metadata = {
-  title: 'How we source prices and decide what gets listed',
+  title: 'How we verify prices and decide what gets listed',
   description:
     'Where every price in this catalog comes from, how we mark its provenance, what a listing has to clear to be published, and how to correct us.',
-  alternates: { canonical: '/methodology' },
+  ...canonicalMetadata('/methodology'),
 }
 
 export default function MethodologyPage() {
+  const site = clientEnv.NEXT_PUBLIC_SITE_URL
+
   return (
     <article className="prose-none max-w-2xl space-y-8">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: combineJsonLd([
+            breadcrumbJsonLd(site, [
+              { name: 'Redaction tools', url: `${site}/` },
+              { name: 'Methodology', url: `${site}/methodology` },
+            ]),
+          ]),
+        }}
+      />
       <header className="space-y-3">
         <h1 className="text-2xl font-semibold tracking-tight text-balance sm:text-3xl">
           How we verify prices and decide what gets listed

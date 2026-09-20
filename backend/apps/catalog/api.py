@@ -94,6 +94,26 @@ def _row(tool):
     }
 
 
+def _faq(tool):
+    """The questions this listing answers, less anything malformed.
+
+    `Tool.faq` is a JSONField typed by hand in the admin, and `FaqItemOut` is
+    strict about it. Without this filter a single mistyped key would turn a
+    published profile into a 500 - so the boundary drops what it cannot
+    serialise rather than letting one bad row take the page down.
+    """
+    entries = tool.faq if isinstance(tool.faq, list) else []
+    return [
+        {"question": entry["question"].strip(), "answer": entry["answer"].strip()}
+        for entry in entries
+        if isinstance(entry, dict)
+        and isinstance(entry.get("question"), str)
+        and isinstance(entry.get("answer"), str)
+        and entry["question"].strip()
+        and entry["answer"].strip()
+    ]
+
+
 def _facets(tool):
     """The tool's facets in the taxonomy's own order, so a page renders them in
     the order the editors chose rather than by primary key."""
@@ -237,7 +257,7 @@ def get_tool(request: HttpRequest, slug: str):
             "vendor_copy_md": tool.vendor_copy_md,
             "pros": tool.pros,
             "cons": tool.cons,
-            "faq": tool.faq,
+            "faq": _faq(tool),
             "facets": _facets(tool),
             "screenshots": _screenshots(tool),
             "plans": plans,

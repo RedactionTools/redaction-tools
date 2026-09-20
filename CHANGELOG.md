@@ -11,6 +11,40 @@ given in brackets.
 
 ### Added
 
+- **A share card on every page** — links to the catalog used to unfurl bare in Slack, LinkedIn
+  and everywhere else, because the site carried no Open Graph tags at all. It now declares them
+  once, at the root: a tool's card is drawn per request with its name, its vendor and its entry
+  price, and everything else gets the site card. Declared once and only once, because Next
+  replaces the `openGraph` block rather than merging it — a page that sets its own would
+  silently drop the site name and the image along with it.
+- **`/llms.txt` and `/llms-full.txt`** — the catalog as plain text, for the readers that are not
+  browsers. The first is a short index: a count, the provenance rules, and a line per tool
+  carrying the same price sentence the profile shows. The second is a fact block per tool —
+  price with its unit and date, entry price, free tier, trial, facets, how the figure was
+  obtained and the vendor's own pricing page. Both are built from the list response alone, never
+  one request per tool: they are public, uncacheable and fetched by robots, and an N+1 behind
+  them would turn one crawl into one request per listing.
+- **The questions a listing answers** — `faq` had been carried by the API since the catalog
+  shipped and rendered nowhere, because it was typed as a bare list of dicts and reached the
+  frontend as `unknown`. It is now a real schema, a "Common questions" block on the profile and
+  `FAQPage` markup, each gated on there being a question to answer. Worth knowing what that last
+  part does and does not buy: Google restricted FAQ rich results to government and health sites
+  in 2023, so this is extractable question-and-answer text for the answer engines rather than a
+  search feature.
+- **Structured data for the hub and the site** — the homepage emits `CollectionPage` and an
+  `ItemList` of every listed tool, and every page a crawler may fetch now carries `WebSite` and
+  `Organization`. The builders for the first two had been written and unit-tested months ago and
+  imported by nothing. The hub's graph is gated on the unfiltered view: a filtered hub is
+  `noindex` and shows a different subset, so letting it claim the same `@id` is the
+  duplicate-entity error in a new costume. No `SearchAction` — Google retired the sitelinks
+  searchbox in 2024, and the only target available is a URL `robots.txt` disallows.
+- **Answer engines named in `robots.txt`** — fourteen of them, plus a crawl delay for the two
+  that fetch far more than they cite. The access is the same as anyone else's; what the list
+  buys is an auditable statement of who is welcome. Each group repeats the disallow set in full,
+  which is not redundancy: a crawler obeys the single most specific group naming it and ignores
+  `*` entirely, so a named group that forgot a path would be a named group granted *more* of the
+  site than an anonymous one.
+
 - **Screenshots on a listing** — a tool's profile can now show pictures of the product, above
   the plan table, because a buyer works out what a tool is before what it costs and this is the
   only part of the page that shows them the thing rather than describing it. One upload becomes
@@ -61,10 +95,39 @@ given in brackets.
 
 ### Changed
 
+- **A tool's meta description no longer stops at the price.** It still leads with the price
+  sentence, which is the string a search result or an answer engine quotes verbatim and is
+  therefore never truncated — but the rest of the snippet is now filled with the tagline, then
+  the summary's opening sentence, added whole while they fit. "Redactable has a free tier, as of
+  15 September 2026." was using a third of the space available to it.
+- **`/health` is no longer indexable**, by `noindex` rather than a `robots.txt` disallow: a
+  disallowed URL is never fetched, so the crawler never sees the `noindex` and can still index
+  it from a stray link.
+- **The sitemap reads past the first hundred tools.** It asked for one page of 100 and stopped,
+  which was correct for seven tools and silently wrong for the hundred-and-first. The hub entry
+  is also dated now, by the newest price change in the catalog — the three trust pages are still
+  undated, because the only date available for them is the build date, which moves on every
+  deploy while the page sits still.
+
 - `Tool.is_listable()` now delegates to `listability_blockers()`, which names each reason a
   tool falls short instead of only answering yes or no. Same verdict, same queries.
 
 ### Fixed
+
+- **The site described a leaderboard it does not have.** "Catalog of redaction tools with
+  benchmarks and a leaderboard" was the fallback description on every page that set none of its
+  own, the footer blurb and the API's own summary — three hand-written copies, which is why it
+  was corrected in none of them when the leaderboard slipped to a later phase. There is now one
+  copy, in `frontend/src/lib/seo/site.ts`, and a test that fails if it promises a benchmark
+  again. The social links moved there too, since they are also what the `Organization` markup
+  claims as ours and an identity claim that disagrees with the footer is worse than none.
+- **The auth proxy ran on `robots.txt` and `sitemap.xml`**, and would have run on the new
+  machine-readable routes and the share cards. Beyond the wasted token decode, `auth` can attach
+  a rotated-session `Set-Cookie` to the response, and putting one of those on a year-cached
+  public asset is how a session leaks into a shared cache.
+- **The methodology page's title contradicted its own heading** — "How we source prices" against
+  "How we verify prices". The heading won; it is the stronger claim and the wording the footer
+  already uses.
 
 - **tdd-guard could not see the test suite.** The repo carried the rulebook but not the
   reporter that writes `.claude/tdd-guard/data/test.json`, so the guard had no evidence any

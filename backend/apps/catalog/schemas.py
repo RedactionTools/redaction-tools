@@ -131,6 +131,20 @@ class ToolScreenshotOut(Schema):
     captured_at: date | None
 
 
+class FaqItemOut(Schema):
+    """One question a listing answers.
+
+    Typed rather than left as a bare dict so the generated client gets a real
+    shape instead of `{[key: string]: unknown}` - which is what kept the field
+    unrendered. The source is a JSONField typed by hand in the admin, so the
+    view normalises before serialising: with this schema in place a mistyped
+    key would be a 500 on a public page rather than a missing answer.
+    """
+
+    question: str
+    answer: str
+
+
 class ToolDetailOut(ToolListItemOut):
     website_url: str
     pricing_url: str
@@ -139,7 +153,7 @@ class ToolDetailOut(ToolListItemOut):
     vendor_copy_md: str
     pros: list[str]
     cons: list[str]
-    faq: list[dict]
+    faq: list[FaqItemOut]
     facets: list[ToolFacetOut]
     screenshots: list[ToolScreenshotOut]
     plans: list[PlanOut]

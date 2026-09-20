@@ -51,3 +51,40 @@ describe('buildSitemapEntries', () => {
     expect(entries.map((entry) => entry.url)).toContain('https://example.com/price-calculator')
   })
 })
+
+describe('the hub entry', () => {
+  const hubOf = (tools: Parameters<typeof buildSitemapEntries>[1]) =>
+    buildSitemapEntries(SITE, tools).find((entry) => entry.url === `${SITE}/`)
+
+  it('is dated by the newest price change in the catalog', () => {
+    const older = makeTool()
+    older.price_summary.last_changed_at = '2026-05-01T00:00:00Z'
+    const newer = makeTool()
+    newer.slug = 'nitro-pdf'
+    newer.price_summary.last_changed_at = '2026-08-20T00:00:00Z'
+
+    expect(hubOf([older, newer])?.lastModified).toBe('2026-08-20T00:00:00Z')
+  })
+
+  it('falls back to a verification when a tool has never moved its price', () => {
+    const tool = makeTool()
+    tool.price_summary.last_changed_at = null
+    tool.price_summary.last_verified_at = '2026-09-15T00:00:00Z'
+
+    expect(hubOf([tool])?.lastModified).toBe('2026-09-15T00:00:00Z')
+  })
+
+  // Claiming a date we cannot source is worse than claiming none: a lastmod
+  // that moves on every deploy devalues the signal for the whole domain.
+  it('goes undated when there is nothing to date it by', () => {
+    expect(hubOf([])?.lastModified).toBeUndefined()
+  })
+
+  it('leaves the trust pages undated, having only the build date to offer', () => {
+    const entries = buildSitemapEntries(SITE, [makeTool()])
+
+    for (const path of ['/methodology', '/submit', '/price-calculator']) {
+      expect(entries.find((entry) => entry.url === `${SITE}${path}`)?.lastModified).toBeUndefined()
+    }
+  })
+})

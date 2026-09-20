@@ -291,3 +291,39 @@ def test_a_screenshot_awaiting_review_is_not_on_the_profile(client):
     payload = client.get(f"{LIST_URL}/adobe-acrobat").json()
 
     assert payload["screenshots"] == []
+
+
+@pytest.mark.django_db
+def test_detail_serves_the_faq_as_typed_pairs(client):
+    """A listing's questions reach the client as question/answer, not as `dict`."""
+    tool = Tool.objects.get(slug="adobe-acrobat")
+    tool.faq = [{"question": "Does it remove the text?", "answer": "Yes, on export."}]
+    tool.save(update_fields=["faq"])
+
+    payload = client.get(f"{LIST_URL}/adobe-acrobat").json()
+
+    assert payload["faq"] == [{"question": "Does it remove the text?", "answer": "Yes, on export."}]
+
+
+@pytest.mark.django_db
+def test_detail_drops_a_malformed_faq_entry_rather_than_failing(client):
+    """`faq` is a JSONField typed by hand in the admin.
+
+    Once the response schema is typed, one mistyped key would turn a public
+    profile into a 500. Entries that are not a question and an answer are
+    dropped at the boundary instead.
+    """
+    tool = Tool.objects.get(slug="adobe-acrobat")
+    tool.faq = [
+        {"question": "Kept?", "answer": "Yes."},
+        {"q": "Wrong keys", "a": "dropped"},
+        {"question": "No answer"},
+        {"question": "  ", "answer": "blank question"},
+        "not even an object",
+    ]
+    tool.save(update_fields=["faq"])
+
+    response = client.get(f"{LIST_URL}/adobe-acrobat")
+
+    assert response.status_code == 200
+    assert response.json()["faq"] == [{"question": "Kept?", "answer": "Yes."}]

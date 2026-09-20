@@ -31,9 +31,12 @@ function monogram(name: string): string {
  * broken site, while a monogram reads as a tool without a logo - which is what
  * it is.
  *
- * `alt` is empty and the monogram is hidden from assistive tech on purpose: the
- * tool's name is always rendered immediately beside this, so anything here would
- * be read out twice.
+ * The logo and the monogram are both hidden from assistive tech on purpose: the
+ * tool's name is always rendered immediately beside this, so announcing either
+ * would read the name twice. The `alt` is still written out, because one
+ * attribute serves two readers that want opposite things - `aria-hidden` keeps
+ * it from being spoken, while leaving a crawler or a model something better
+ * than an empty string to associate the image with.
  */
 export function ToolLogo({
   name,
@@ -62,8 +65,8 @@ export function ToolLogo({
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={logoUrl}
-          alt=""
-          role="presentation"
+          alt={`${name} logo`}
+          aria-hidden="true"
           loading="lazy"
           onError={() => setFailed(true)}
           className={cn(image, 'w-auto object-contain')}

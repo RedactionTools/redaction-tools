@@ -5,9 +5,12 @@ import { makeScreenshot, makeToolDetail } from '@/features/catalog/fixtures'
 import {
   breadcrumbJsonLd,
   collectionPageJsonLd,
+  faqPageJsonLd,
   itemListJsonLd,
+  organizationJsonLd,
   softwareApplicationJsonLd,
   toolId,
+  websiteJsonLd,
 } from './json-ld'
 
 const SITE = 'https://redaction-tools.com'
@@ -116,5 +119,81 @@ describe('breadcrumbJsonLd', () => {
 
     expect(node.itemListElement).toHaveLength(2)
     expect(node.itemListElement[1].position).toBe(2)
+  })
+})
+
+describe('websiteJsonLd', () => {
+  const node = () => websiteJsonLd(SITE, { name: 'Redaction Tools', description: 'A catalog.' })
+
+  it('claims one stable @id for the site', () => {
+    expect(node()['@type']).toBe('WebSite')
+    expect(node()['@id']).toBe(`${SITE}/#website`)
+  })
+
+  it('names its publisher by pointer rather than redefining it', () => {
+    expect(node().publisher).toEqual({ '@id': `${SITE}/#organization` })
+  })
+
+  // Retired by Google in 2024, and it would advertise `/?q=` - a URL robots.txt
+  // disallows. Declaring a crawl entry point we have closed is worse than none.
+  it('advertises no search action', () => {
+    expect(node().potentialAction).toBeUndefined()
+  })
+})
+
+describe('organizationJsonLd', () => {
+  const node = () =>
+    organizationJsonLd(SITE, {
+      name: 'Redaction Tools',
+      description: 'A catalog.',
+      logo: `${SITE}/images/RedactionToolsLogo.png`,
+      sameAs: ['https://www.reddit.com/r/RedactionTools/'],
+    })
+
+  it('claims one stable @id the site can point at', () => {
+    expect(node()['@type']).toBe('Organization')
+    expect(node()['@id']).toBe(`${SITE}/#organization`)
+  })
+
+  it('gives the logo as a resolvable absolute URL', () => {
+    expect(node().logo).toMatchObject({
+      '@type': 'ImageObject',
+      url: expect.stringMatching(/^https:/),
+    })
+  })
+
+  it('lists the profiles that speak for us', () => {
+    expect(node().sameAs).toEqual(['https://www.reddit.com/r/RedactionTools/'])
+  })
+})
+
+describe('collectionPageJsonLd', () => {
+  it('anchors the catalog to the site it belongs to', () => {
+    const node = collectionPageJsonLd(SITE, { name: 'Redaction tools', numberOfItems: 7 })
+
+    expect(node.isPartOf).toEqual({ '@id': `${SITE}/#website` })
+  })
+})
+
+describe('faqPageJsonLd', () => {
+  const PAGE = `${SITE}/tool/adobe-acrobat`
+
+  it('marks up the questions a listing answers', () => {
+    const node = faqPageJsonLd(PAGE, [{ question: 'Does it remove text?', answer: 'Yes.' }])
+
+    expect(node?.['@type']).toBe('FAQPage')
+    expect(node?.mainEntity).toEqual([
+      {
+        '@type': 'Question',
+        name: 'Does it remove text?',
+        acceptedAnswer: { '@type': 'Answer', text: 'Yes.' },
+      },
+    ])
+  })
+
+  // An empty FAQPage is a claim that the page answers nothing, which is worse
+  // than saying nothing at all.
+  it('emits nothing rather than an empty FAQPage', () => {
+    expect(faqPageJsonLd(PAGE, [])).toBeUndefined()
   })
 })

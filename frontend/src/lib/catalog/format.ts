@@ -80,7 +80,8 @@ export function priceHeadline(summary: PriceSummaryOut): string {
   return 'Price not published'
 }
 
-function verifiedOn(summary: PriceSummaryOut): string | null {
+/** The date a price was last checked, worded as the profile words it. */
+export function verifiedOn(summary: PriceSummaryOut): string | null {
   if (!summary.last_verified_at) return null
   return new Intl.DateTimeFormat('en-GB', {
     day: 'numeric',

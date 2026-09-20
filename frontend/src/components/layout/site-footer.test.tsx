@@ -16,7 +16,13 @@ describe('SiteFooter', () => {
 
     const images = Array.from(container.querySelectorAll('img'))
     expect(images).toHaveLength(2)
-    for (const img of images) expect(img.getAttribute('alt')).toBe('')
+    // Kept out of the accessibility tree rather than left unnamed: the wordmark
+    // beside it already names the link, while the alt still describes the image
+    // to anything reading the markup.
+    for (const img of images) {
+      expect(img.getAttribute('aria-hidden')).toBe('true')
+      expect(img.getAttribute('alt')).toBe('Redaction Tools logo')
+    }
   })
 
   it('links to the subreddit', () => {

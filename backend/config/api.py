@@ -29,7 +29,10 @@ class RedactionAPI(NinjaAPI):
 api = RedactionAPI(
     title="redaction-tools API",
     version="1.0.0",
-    description="Catalog of redaction tools with benchmarks and a leaderboard.",
+    description=(
+        "Redaction tools compared by price, media and method, with the source and date "
+        "recorded for every figure."
+    ),
     urls_namespace="api",
     docs_url="/docs",
 )

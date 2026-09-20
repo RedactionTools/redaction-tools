@@ -6,18 +6,31 @@ import {
   getGetToolQueryOptions,
   getListToolsQueryOptions,
 } from '@/lib/api/generated/catalog/catalog'
+import { canonicalMetadata } from '@/lib/seo/canonical'
 import { toolSlugs } from '@/lib/catalog/calculator-tools'
+import { clientEnv } from '@/lib/env'
 import { getQueryClient } from '@/lib/query/client'
+import { breadcrumbJsonLd, combineJsonLd } from '@/lib/seo/json-ld'
 
 // Per-request, like the hub and the profiles: `next build` runs with no backend
 // reachable, so a prerendered page would ship an empty tool picker.
 export const dynamic = 'force-dynamic'
 
-export const metadata: Metadata = {
-  title: 'Redaction price calculator — what your documents actually cost',
-  description:
-    'Set how many documents you redact and how long they are, and see what that costs on every plan of any tool in the catalog — several at once, side by side, including the per-page rate each works out to.',
-  alternates: { canonical: '/price-calculator' },
+export async function generateMetadata({
+  searchParams,
+}: PageProps<'/price-calculator'>): Promise<Metadata> {
+  const slugs = toolSlugs(await searchParams)
+
+  return {
+    title: 'Redaction price calculator — what your documents actually cost',
+    description:
+      'Set how many documents you redact and how long they are, and see what that costs on every plan of any tool in the catalog — several at once, side by side, including the per-page rate each works out to.',
+    ...canonicalMetadata('/price-calculator'),
+    // The same rule the hub applies to its facets. `robots.ts` only disallows a
+    // query string on the root path, so `?tool=a&tool=b` is otherwise a fully
+    // crawlable near-duplicate of this page for every combination anyone links.
+    robots: slugs.length ? { index: false, follow: true } : undefined,
+  }
 }
 
 export default async function PriceCalculatorPage({
@@ -25,6 +38,7 @@ export default async function PriceCalculatorPage({
 }: PageProps<'/price-calculator'>) {
   const slugs = toolSlugs(await searchParams)
   const queryClient = getQueryClient()
+  const site = clientEnv.NEXT_PUBLIC_SITE_URL
 
   await Promise.all([
     queryClient.prefetchQuery(getListToolsQueryOptions({ page_size: 100 })),
@@ -33,6 +47,17 @@ export default async function PriceCalculatorPage({
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: combineJsonLd([
+            breadcrumbJsonLd(site, [
+              { name: 'Redaction tools', url: `${site}/` },
+              { name: 'Price calculator', url: `${site}/price-calculator` },
+            ]),
+          ]),
+        }}
+      />
       <div className="space-y-8">
         <header className="space-y-3">
           <h1 className="text-2xl font-semibold tracking-tight text-balance sm:text-3xl">

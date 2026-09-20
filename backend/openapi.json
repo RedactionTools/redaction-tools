@@ -3,7 +3,7 @@
   "info": {
     "title": "redaction-tools API",
     "version": "1.0.0",
-    "description": "Catalog of redaction tools with benchmarks and a leaderboard."
+    "description": "Redaction tools compared by price, media and method, with the source and date recorded for every figure."
   },
   "paths": {
     "/api/v1/health": {
@@ -1289,6 +1289,25 @@
         "title": "VendorOut",
         "type": "object"
       },
+      "FaqItemOut": {
+        "description": "One question a listing answers.\n\nTyped rather than left as a bare dict so the generated client gets a real\nshape instead of `{[key: string]: unknown}` - which is what kept the field\nunrendered. The source is a JSONField typed by hand in the admin, so the\nview normalises before serialising: with this schema in place a mistyped\nkey would be a 500 on a public page rather than a missing answer.",
+        "properties": {
+          "question": {
+            "title": "Question",
+            "type": "string"
+          },
+          "answer": {
+            "title": "Answer",
+            "type": "string"
+          }
+        },
+        "required": [
+          "question",
+          "answer"
+        ],
+        "title": "FaqItemOut",
+        "type": "object"
+      },
       "PlanLimitOut": {
         "properties": {
           "kind": {
@@ -1571,8 +1590,7 @@
           },
           "faq": {
             "items": {
-              "additionalProperties": true,
-              "type": "object"
+              "$ref": "#/components/schemas/FaqItemOut"
             },
             "title": "Faq",
             "type": "array"

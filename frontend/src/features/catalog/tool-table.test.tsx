@@ -75,10 +75,9 @@ describe('ToolTable', () => {
     render()
 
     const row = screen.getByTestId('tool-row-adobe-acrobat')
-    expect(within(row).getByRole('presentation')).toHaveAttribute(
-      'src',
-      '/images/tools/adobe-acrobat.svg',
-    )
+    // Queried as an element, not by role: the logo is `aria-hidden`, because
+    // the tool's name is right beside it in the same cell.
+    expect(row.querySelector('img')).toHaveAttribute('src', '/images/tools/adobe-acrobat.svg')
   })
 
   it('falls back to a monogram for a tool with no logo', () => {

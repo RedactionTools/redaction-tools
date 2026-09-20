@@ -136,10 +136,9 @@ describe('ToolProfile', () => {
   it('shows the logo in the profile header', () => {
     render()
 
-    expect(screen.getByRole('presentation')).toHaveAttribute(
-      'src',
-      '/images/tools/adobe-acrobat.svg',
-    )
+    // Queried as an element, not by role: the logo is `aria-hidden`, because
+    // the tool's name is right beside it.
+    expect(document.querySelector('img')).toHaveAttribute('src', '/images/tools/adobe-acrobat.svg')
   })
 
   it('falls back to a monogram when a listing has no logo yet', () => {
@@ -152,5 +151,24 @@ describe('ToolProfile', () => {
     render()
 
     expect(screen.getByTestId('document-cost-calculator')).toBeInTheDocument()
+  })
+})
+
+describe('the FAQ', () => {
+  const withFaq = (faq: { question: string; answer: string }[]) => makeToolDetail({ faq })
+
+  it('shows the questions the listing answers', () => {
+    render(withFaq([{ question: 'Does it remove the text?', answer: 'Yes, on export.' }]))
+
+    expect(screen.getByRole('heading', { name: /common questions/i })).toBeInTheDocument()
+    expect(screen.getByText('Does it remove the text?')).toBeInTheDocument()
+    expect(screen.getByText('Yes, on export.')).toBeInTheDocument()
+  })
+
+  // A heading over nothing tells a reader the page has answers it does not.
+  it('raises no heading when the listing answers none', () => {
+    render(makeToolDetail({ faq: [] }))
+
+    expect(screen.queryByRole('heading', { name: /common questions/i })).not.toBeInTheDocument()
   })
 })

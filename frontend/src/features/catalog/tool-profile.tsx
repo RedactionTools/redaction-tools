@@ -69,6 +69,7 @@ export function ToolProfile({ slug }: { slug: string }) {
       <PlanTable tool={tool} />
       <DocumentCostCalculator tool={tool} />
       <Editorial tool={tool} />
+      <Faq tool={tool} />
       {/* Last, because the page is written for a buyer: the vendor who came to
           correct it will read to the end, and a buyer should not meet a vendor
           call to action before the assessment. */}
@@ -270,6 +271,32 @@ function Editorial({ tool }: { tool: ToolDetailOut }) {
           <p className="text-muted-foreground mt-2 text-sm">{tool.vendor_copy_md}</p>
         </Card>
       ) : null}
+    </section>
+  )
+}
+
+/**
+ * The questions a listing answers, as a description list.
+ *
+ * A `<dl>` rather than a disclosure widget: a question whose answer is behind a
+ * click is a question an extractor has to guess is there, and this block exists
+ * to be read by machines as much as by buyers. Rendered only when there is
+ * something to answer, which is also the gate on the FAQPage markup.
+ */
+function Faq({ tool }: { tool: ToolDetailOut }) {
+  if (tool.faq.length === 0) return null
+
+  return (
+    <section className="space-y-4">
+      <h2 className="text-xl font-semibold">Common questions</h2>
+      <dl className="space-y-4">
+        {tool.faq.map((entry) => (
+          <div key={entry.question} className="space-y-1">
+            <dt className="font-medium">{entry.question}</dt>
+            <dd className="text-muted-foreground text-pretty">{entry.answer}</dd>
+          </div>
+        ))}
+      </dl>
     </section>
   )
 }

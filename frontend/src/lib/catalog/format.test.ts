@@ -2,7 +2,14 @@ import { describe, expect, it } from 'vitest'
 
 import type { PriceSummaryOut } from '@/lib/api/generated/model'
 
-import { formatAmount, formatCost, formatUnit, priceHeadline, priceSentence } from './format'
+import {
+  formatAmount,
+  formatCost,
+  formatUnit,
+  priceHeadline,
+  priceSentence,
+  verifiedOn,
+} from './format'
 
 function summary(overrides: Partial<PriceSummaryOut> = {}): PriceSummaryOut {
   return {
@@ -118,5 +125,17 @@ describe('formatCost', () => {
 
   it('formats in whatever currency the plan publishes', () => {
     expect(formatCost('14.0000', 'EUR')).toBe('€14.00')
+  })
+})
+
+describe('verifiedOn', () => {
+  it('reads the check date the way the profile writes it', () => {
+    expect(verifiedOn({ ...summary(), last_verified_at: '2026-09-15T00:00:00Z' })).toBe(
+      '15 September 2026',
+    )
+  })
+
+  it('says nothing when a price has never been checked', () => {
+    expect(verifiedOn({ ...summary(), last_verified_at: null })).toBeNull()
   })
 })
