@@ -202,3 +202,157 @@ def test_revoking_a_claim_takes_ownership_back(admin_client, user):
     )
 
     assert list(Tool.objects.owned_by(user)) == []
+
+
+@pytest.mark.django_db
+def test_the_price_list_names_the_tool_each_plan_belongs_to(admin_client):
+    """Plan names repeat across vendors, so "Pro" alone does not say whose price this is."""
+    response = admin_client.get("/admin/catalog/planprice/")
+
+    assert response.status_code == 200
+    assert b"Adobe Acrobat" in response.content
+
+
+# --- Screenshots -----------------------------------------------------------
+
+
+def _image_file(width=1600, height=900):
+    import io
+
+    from django.core.files.uploadedfile import SimpleUploadedFile
+    from PIL import Image
+
+    buffer = io.BytesIO()
+    Image.new("RGB", (width, height), (40, 110, 60)).save(buffer, format="PNG")
+    return SimpleUploadedFile("panel.png", buffer.getvalue(), content_type="image/png")
+
+
+@pytest.mark.django_db
+def test_an_editor_uploading_a_screenshot_gets_it_rendered_and_published(admin_client, staff_user):
+    """The admin is an editor's own surface, so an upload here is a decision -
+    it goes onto the profile rather than into a queue of their own making."""
+    from django.core.files.storage import default_storage
+
+    from apps.catalog.models import ToolScreenshot, ToolScreenshotStatus
+
+    tool = Tool.objects.get(slug="adobe-acrobat")
+
+    response = admin_client.post(
+        "/admin/catalog/toolscreenshot/add/",
+        {
+            "tool": tool.pk,
+            "image": _image_file(2000, 1000),
+            "alt_text": "The Acrobat redaction panel",
+            "caption": "",
+            "source": "staff",
+            "status": ToolScreenshotStatus.PUBLISHED,
+            "source_url": "",
+            "captured_at": "",
+            "review_note": "",
+            "sort_order": "0",
+        },
+    )
+
+    assert response.status_code == 302, response.context["errors"]
+    shot = ToolScreenshot.objects.get(tool=tool)
+    assert shot.status == ToolScreenshotStatus.PUBLISHED
+    assert shot.uploaded_by == staff_user
+    assert shot.rendition_widths == [480, 960, 1440, 1920]
+    assert default_storage.exists(shot.rendition_path(960))
+
+
+@pytest.mark.django_db
+def test_a_file_that_is_not_an_image_is_a_form_error_rather_than_a_crash(admin_client):
+    from django.core.files.uploadedfile import SimpleUploadedFile
+
+    tool = Tool.objects.get(slug="adobe-acrobat")
+
+    response = admin_client.post(
+        "/admin/catalog/toolscreenshot/add/",
+        {
+            "tool": tool.pk,
+            "image": SimpleUploadedFile("panel.png", b"nope", content_type="image/png"),
+            "alt_text": "Claims to be a PNG",
+            "caption": "",
+            "source": "staff",
+            "status": "published",
+            "source_url": "",
+            "captured_at": "",
+            "review_note": "",
+            "sort_order": "0",
+        },
+    )
+
+    assert response.status_code == 200
+    assert b"not an image" in response.content or b"not a PNG" in response.content
+
+
+@pytest.mark.django_db
+def test_publishing_a_vendor_upload_from_the_list_records_the_reviewer(admin_client, staff_user):
+    from apps.catalog import screenshots
+    from apps.catalog.models import ToolScreenshotSource, ToolScreenshotStatus
+
+    shot = screenshots.store(
+        tool=Tool.objects.get(slug="adobe-acrobat"),
+        data=_image_file().read(),
+        alt_text="Sent in by the vendor",
+        source=ToolScreenshotSource.VENDOR,
+    )
+
+    admin_client.post(
+        "/admin/catalog/toolscreenshot/",
+        {"action": "publish_screenshots", "_selected_action": [str(shot.pk)]},
+    )
+
+    shot.refresh_from_db()
+    assert shot.status == ToolScreenshotStatus.PUBLISHED
+    assert shot.reviewed_by == staff_user
+
+
+@pytest.mark.django_db
+def test_re_rendering_from_the_list_rewrites_the_renditions(admin_client):
+    """The action that makes a new width possible without re-collecting every
+    screenshot in the catalog."""
+    from django.core.files.storage import default_storage
+
+    from apps.catalog import screenshots
+    from apps.catalog.models import ToolScreenshotSource
+
+    shot = screenshots.store(
+        tool=Tool.objects.get(slug="adobe-acrobat"),
+        data=_image_file().read(),
+        alt_text="Rendered once",
+        source=ToolScreenshotSource.STAFF,
+    )
+    default_storage.delete(shot.rendition_path(960))
+
+    admin_client.post(
+        "/admin/catalog/toolscreenshot/",
+        {"action": "rerender_screenshots", "_selected_action": [str(shot.pk)]},
+    )
+
+    assert default_storage.exists(shot.rendition_path(960))
+
+
+@pytest.mark.django_db
+def test_deleting_a_screenshot_in_the_admin_takes_its_files_too(admin_client):
+    """Django never deletes a FileField's file on row delete, so the admin has
+    to route through the service or every removal orphans four renditions."""
+    from django.core.files.storage import default_storage
+
+    from apps.catalog import screenshots
+    from apps.catalog.models import ToolScreenshotSource
+
+    shot = screenshots.store(
+        tool=Tool.objects.get(slug="adobe-acrobat"),
+        data=_image_file(2000, 1000).read(),
+        alt_text="To be removed",
+        source=ToolScreenshotSource.STAFF,
+    )
+    paths = [shot.image.name, *(shot.rendition_path(w) for w in shot.rendition_widths)]
+
+    admin_client.post(
+        f"/admin/catalog/toolscreenshot/{shot.pk}/delete/", {"post": "yes"}, follow=True
+    )
+
+    assert [path for path in paths if default_storage.exists(path)] == []

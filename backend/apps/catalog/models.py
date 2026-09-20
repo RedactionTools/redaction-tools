@@ -268,6 +268,153 @@ class ToolFacet(TimeStampedModel):
         return f"{self.tool.name} -> {self.value.slug}"
 
 
+# --- Screenshots -----------------------------------------------------------
+# A listing's own pictures, uploaded rather than hotlinked, and rendered into a
+# fixed set of widths by `apps.catalog.screenshots`. The rules about pixels live
+# in `images.py`, the rules about storage in `screenshots.py`, and this holds
+# what the row says about the picture: who supplied it, whether it is published,
+# and which renditions were actually written.
+
+
+# The rendition a bare `src` points at. Not the widest one: that is for a
+# desktop figure, and a browser that ignored the srcset would download it on a
+# phone.
+DISPLAY_WIDTH = 960
+
+
+class ToolScreenshotStatus(models.TextChoices):
+    PENDING = "pending", "Pending review"
+    PUBLISHED = "published", "Published"
+    REJECTED = "rejected", "Rejected"
+
+
+class ToolScreenshotSource(models.TextChoices):
+    STAFF = "staff", "Our editors"
+    VENDOR = "vendor", "The vendor"
+
+
+class ToolScreenshotQuerySet(models.QuerySet):
+    def published(self):
+        return self.filter(status=ToolScreenshotStatus.PUBLISHED)
+
+
+class ToolScreenshot(TimeStampedModel):
+    """One picture of a tool, plus the renditions the site serves.
+
+    Content-addressed: `digest` is the SHA-256 of the normalized source, and
+    every file for this row sits under a directory named after it. That makes
+    the rendition URLs immutable - they can be cached forever, because the bytes
+    behind a path can never change - and makes re-uploading the same capture
+    idempotent rather than a second copy.
+    """
+
+    tool = models.ForeignKey(Tool, on_delete=models.CASCADE, related_name="screenshots")
+    image = models.ImageField(
+        upload_to="screenshots", help_text="The normalized source. Renditions sit beside it."
+    )
+    digest = models.CharField(max_length=64, db_index=True, help_text="SHA-256 of the source.")
+    width = models.PositiveIntegerField()
+    height = models.PositiveIntegerField()
+    rendition_widths = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="The widths actually written, so a srcset never offers a file that is absent.",
+    )
+
+    # Required, not optional: a screenshot with no alt text is an image a screen
+    # reader announces as nothing at all, and the caption is not a substitute -
+    # it is read as well, and says something different.
+    alt_text = models.CharField(max_length=200, help_text="What the picture shows.")
+    caption = models.CharField(max_length=300, blank=True, help_text="Shown under the figure.")
+
+    source = models.CharField(max_length=16, choices=ToolScreenshotSource.choices)
+    status = models.CharField(
+        max_length=16,
+        choices=ToolScreenshotStatus.choices,
+        default=ToolScreenshotStatus.PENDING,
+        db_index=True,
+    )
+    source_url = models.URLField(
+        blank=True,
+        validators=[validate_external_url],
+        help_text="Where the capture came from, when it was fetched rather than taken.",
+    )
+    captured_at = models.DateField(
+        null=True,
+        blank=True,
+        help_text="When the interface looked like this. A UI shot goes stale silently.",
+    )
+
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="screenshot_uploads",
+    )
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="screenshot_reviews",
+    )
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    review_note = models.CharField(
+        max_length=300, blank=True, help_text="Why it was rejected. The uploader is shown this."
+    )
+    sort_order = models.PositiveIntegerField(default=0)
+
+    objects = ToolScreenshotQuerySet.as_manager()
+
+    class Meta:
+        db_table = "catalog_tool_screenshot"
+        ordering = ["tool", "sort_order", "id"]
+        constraints = [
+            # The same capture twice on one listing is a mistake, not a gallery.
+            # Across listings it is legitimate - two tools can be shown side by
+            # side in one picture - which is why the digest alone is not unique.
+            models.UniqueConstraint(fields=["tool", "digest"], name="uniq_tool_screenshot_digest")
+        ]
+        indexes = [models.Index(fields=["tool", "status"])]
+
+    def __str__(self):
+        return f"{self.tool.name}: {self.alt_text[:60]}"
+
+    @property
+    def base_path(self):
+        """The directory every file for this screenshot lives in."""
+        return f"screenshots/{self.digest}"
+
+    def rendition_path(self, width):
+        return f"{self.base_path}/w{width}.webp"
+
+    def rendition_url(self, width):
+        return f"{settings.PUBLIC_MEDIA_URL}{self.rendition_path(width)}"
+
+    @property
+    def srcset(self):
+        """Every rendition that exists, as the attribute an `<img>` takes.
+
+        Built from `rendition_widths` rather than from the declared set, so a
+        screenshot narrower than a declared width never advertises a file that
+        was not written.
+        """
+        return ", ".join(f"{self.rendition_url(width)} {width}w" for width in self.rendition_widths)
+
+    @property
+    def display_url(self):
+        """The one URL to use where a single `src` is all there is.
+
+        The largest rendition that is not a full-width one: a reader whose
+        browser ignores `srcset` should get a usable picture, not the 1920.
+        """
+        widths = self.rendition_widths or [self.width]
+        return self.rendition_url(
+            max((w for w in widths if w <= DISPLAY_WIDTH), default=min(widths))
+        )
+
+
 class PriceUnit(models.TextChoices):
     MONTH = "month", "Per month"
     YEAR = "year", "Per year"

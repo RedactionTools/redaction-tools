@@ -62,6 +62,10 @@ vitest + Testing Library, jsdom, colocated as `*.test.ts(x)`.
   data with `queryClient.setQueryData(getXQueryKey(), fixture)` rather than
   mocking fetch. Assert on what the user sees.
 - Don't test generated code or page components.
+- `vitest.config.ts` registers tdd-guard's reporter beside `'default'`, pointed
+  at the **repo** root - `.claude/` is a directory up from here, and its default
+  would write a `frontend/.claude/` that nothing reads. Drop it and the guard
+  stops seeing frontend test runs, which makes it refuse implementation edits.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

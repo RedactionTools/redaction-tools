@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { makeToolDetail } from '@/features/catalog/fixtures'
+import { makeScreenshot, makeToolDetail } from '@/features/catalog/fixtures'
 
 import {
   breadcrumbJsonLd,
@@ -31,6 +31,24 @@ describe('softwareApplicationJsonLd', () => {
     const node = softwareApplicationJsonLd(SITE, makeToolDetail())
 
     expect(node.author).toEqual({ '@type': 'Organization', name: 'Adobe' })
+  })
+
+  // schema.org's own property for this, and one of the few Google names for a
+  // software result - the pictures are on the page either way, so the only cost
+  // of omitting them was that nothing machine-readable said what they were.
+  it('lists the listing screenshots as the application screenshots', () => {
+    const node = softwareApplicationJsonLd(
+      SITE,
+      makeToolDetail({ screenshots: [makeScreenshot()] }),
+    )
+
+    expect(node.screenshot).toEqual([makeScreenshot().url])
+  })
+
+  it('omits screenshot entirely when the listing has none', () => {
+    const node = softwareApplicationJsonLd(SITE, makeToolDetail())
+
+    expect('screenshot' in node).toBe(false)
   })
 
   it('aggregates the published prices into a single offer range', () => {

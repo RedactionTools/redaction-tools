@@ -27,6 +27,14 @@ describe('MyListingsPanel', () => {
     )
   })
 
+  it('offers a screenshot upload beside each listing', () => {
+    render()
+
+    expect(
+      screen.getByRole('form', { name: /upload a screenshot of adobe acrobat/i }),
+    ).toBeInTheDocument()
+  })
+
   it('says plainly that edits are proposals, not changes', () => {
     render()
 

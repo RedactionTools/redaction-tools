@@ -332,6 +332,68 @@ class SetPlanPriceResult(Struct):
     previous: PriceOut | None
 
 
+class AddScreenshotParams(Struct):
+    slug: SLUG
+    image_url: Annotated[
+        str,
+        Meta(
+            description=(
+                "A public http(s) URL of the picture. Fetched server-side, so it "
+                "must resolve to a public address."
+            )
+        ),
+    ]
+    alt_text: Annotated[
+        str,
+        Meta(
+            description=(
+                "What the picture shows, for a reader who cannot see it. Required, "
+                "and not a caption: describe the interface, not the point being made."
+            )
+        ),
+    ]
+    caption: Annotated[str, Meta(description="Shown under the figure. Optional.")] = ""
+    captured_at: Annotated[
+        str | UnsetType,
+        Meta(description="ISO date the interface looked like this, e.g. '2026-09-01'."),
+    ] = UNSET
+    status: Annotated[
+        str | UnsetType,
+        Meta(description="published (the default) or pending, to leave it for review."),
+    ] = UNSET
+
+
+class ScreenshotOut(Struct):
+    id: int
+    tool: str
+    alt_text: str
+    caption: str
+    status: str
+    source: str
+    source_url: str
+    width: int
+    height: int
+    rendition_widths: Annotated[
+        list[int], Meta(description="The widths written. Never wider than the source.")
+    ]
+    url: str
+    captured_at: str | None
+    review_note: str
+
+
+class ScreenshotList(Struct):
+    tool: str
+    items: list[ScreenshotOut]
+
+
+class ReviewScreenshotParams(Struct):
+    screenshot_id: Annotated[int, Meta(description="From catalog_list_screenshots.")]
+    status: Annotated[str, Meta(description="published or rejected.")]
+    note: Annotated[
+        str, Meta(description="Why. Shown to the vendor who uploaded it, so write it for them.")
+    ] = ""
+
+
 def register(server):
     """Attach the staff catalog tools to `server`."""
 
@@ -491,4 +553,70 @@ def register(server):
             return msgspec.convert(
                 staff.set_plan_price(user=request.user, **msgspec.structs.asdict(params)),
                 SetPlanPriceResult,
+            )
+
+    @server.tool(
+        description=(
+            "Add a screenshot to a listing from a public image URL. The server "
+            "fetches it, strips its metadata and renders it at every width the "
+            "site serves, so pass the largest capture available rather than a "
+            "pre-scaled one. alt_text is required. Published immediately unless "
+            "you pass status=pending."
+        ),
+        read_only=False,
+        destructive=False,
+        idempotent=True,
+        open_world=True,
+        permission=is_staff,
+    )
+    def catalog_add_screenshot(request, params: AddScreenshotParams) -> ScreenshotOut:
+        with _as_tool_error():
+            return msgspec.convert(
+                staff.add_screenshot(
+                    user=request.user,
+                    slug=params.slug,
+                    image_url=params.image_url,
+                    alt_text=params.alt_text,
+                    caption=params.caption,
+                    **_changes(params, "slug", "image_url", "alt_text", "caption"),
+                ),
+                ScreenshotOut,
+            )
+
+    @server.tool(
+        description=(
+            "List a listing's screenshots at every status. Pending rows are the "
+            "ones the vendor sent in and nobody has looked at."
+        ),
+        read_only=True,
+        idempotent=True,
+        open_world=False,
+        permission=is_staff,
+    )
+    def catalog_list_screenshots(request, params: SlugParams) -> ScreenshotList:
+        with _as_tool_error():
+            return msgspec.convert(staff.list_screenshots(slug=params.slug), ScreenshotList)
+
+    @server.tool(
+        description=(
+            "Publish or reject one screenshot. Rejecting keeps the row and the "
+            "note, which is what the uploader is shown - so a rejection reads as "
+            "a decision rather than as an upload that vanished."
+        ),
+        read_only=False,
+        destructive=True,
+        idempotent=True,
+        open_world=False,
+        permission=is_staff,
+    )
+    def catalog_review_screenshot(request, params: ReviewScreenshotParams) -> ScreenshotOut:
+        with _as_tool_error():
+            return msgspec.convert(
+                staff.review_screenshot(
+                    user=request.user,
+                    screenshot_id=params.screenshot_id,
+                    status=params.status,
+                    note=params.note,
+                ),
+                ScreenshotOut,
             )

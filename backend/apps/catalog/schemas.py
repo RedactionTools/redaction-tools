@@ -5,7 +5,7 @@ is what Orval turns into the typed frontend client, and an undeclared shape
 generates an untyped one.
 """
 
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 
 from ninja import Schema
@@ -112,6 +112,25 @@ class ToolFacetOut(Schema):
     label: str
 
 
+class ToolScreenshotOut(Schema):
+    """One picture of the tool, in every width it was rendered at.
+
+    `url` is for a bare `src` and `srcset` is the real payload: the same capture
+    at several widths, so the browser picks by viewport rather than being sent
+    the desktop rendition on a phone. `width` and `height` are the source's, and
+    are what lets a figure reserve its space before the image arrives.
+    """
+
+    url: str
+    srcset: str
+    width: int
+    height: int
+    alt: str
+    caption: str
+    # A UI shot goes stale silently, so a profile can say how old this one is.
+    captured_at: date | None
+
+
 class ToolDetailOut(ToolListItemOut):
     website_url: str
     pricing_url: str
@@ -122,6 +141,7 @@ class ToolDetailOut(ToolListItemOut):
     cons: list[str]
     faq: list[dict]
     facets: list[ToolFacetOut]
+    screenshots: list[ToolScreenshotOut]
     plans: list[PlanOut]
     updated_at: datetime
 
@@ -219,6 +239,35 @@ class MyListingOut(Schema):
     logo_url: str
     vendor_copy_md: str
     facet_slugs: list[str]
+
+
+class ScreenshotUploadIn(Schema):
+    """The fields that travel beside the file in a multipart upload."""
+
+    alt_text: str
+    caption: str = ""
+    captured_at: date | None = None
+
+
+class MyScreenshotOut(Schema):
+    """An owner's own view of a picture they uploaded, at any status.
+
+    Carries `status` and `review_note` because the pending and rejected states
+    are the two an owner needs explained: a picture that is on the profile needs
+    no telling, and one that was turned down should say why rather than appear
+    to have vanished.
+    """
+
+    id: int
+    url: str
+    srcset: str
+    width: int
+    height: int
+    alt: str
+    caption: str
+    status: str
+    review_note: str
+    created_at: datetime
 
 
 class ToolRevisionIn(Schema):

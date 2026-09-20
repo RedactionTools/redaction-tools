@@ -63,7 +63,11 @@ backend.redaction-tools.com {
         header_up X-Forwarded-Proto {scheme}
     }
 
-    @immutable path /static/*
+    # /static/* is hashed by whitenoise's manifest storage; /media/* is named
+    # after a hash of its own contents by apps/catalog/screenshots.py. Both are
+    # safe to cache hard, and gunicorn serves the second of them - so a repeat
+    # visitor asking again is a request that need not have happened.
+    @immutable path /static/* /media/*
     header @immutable Cache-Control "public, max-age=31536000, immutable"
 
     header {

@@ -11,7 +11,11 @@ import { getAccessToken } from '@/lib/api/token-source'
 export const customFetch = async <T>(url: string, options: RequestInit = {}): Promise<T> => {
   const headers = new Headers(options.headers)
   headers.set('Accept', 'application/json')
-  if (options.body && !headers.has('Content-Type')) {
+  // Not for FormData: its Content-Type carries a boundary only the browser
+  // knows, and labelling a multipart body as JSON makes Django parse it as an
+  // empty POST - the upload arrives with no file and no error.
+  const isMultipart = typeof FormData !== 'undefined' && options.body instanceof FormData
+  if (options.body && !isMultipart && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json')
   }
 

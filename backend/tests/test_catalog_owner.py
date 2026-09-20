@@ -296,3 +296,161 @@ def test_applying_a_revision_refuses_a_field_staff_changed_in_the_meantime(
     assert owned_tool.tagline == "Editor's wording"
     revision.refresh_from_db()
     assert revision.status == ToolRevisionStatus.SUBMITTED
+
+
+# --- Screenshots -----------------------------------------------------------
+# An owner may add a picture of their own product, which is the one kind of
+# content they hold that we cannot produce ourselves. It is still a proposal:
+# nothing they upload reaches a profile until an editor publishes it.
+
+
+def _upload(width=1600, height=900):
+    import io
+
+    from django.core.files.uploadedfile import SimpleUploadedFile
+    from PIL import Image
+
+    buffer = io.BytesIO()
+    Image.new("RGB", (width, height), (30, 90, 160)).save(buffer, format="PNG")
+    return SimpleUploadedFile("editor.png", buffer.getvalue(), content_type="image/png")
+
+
+@pytest.mark.django_db
+def test_an_owner_can_upload_a_screenshot_of_their_own_listing(client, bearer, owned_tool):
+    response = client.post(
+        f"{LISTINGS}/adobe-acrobat/screenshots",
+        {"image": _upload(), "alt_text": "The redaction panel", "caption": "Marking text"},
+        **bearer,
+    )
+
+    assert response.status_code == 201, response.content
+    body = response.json()
+    assert body["status"] == "pending"
+    assert body["alt"] == "The redaction panel"
+    assert owned_tool.screenshots.count() == 1
+
+
+@pytest.mark.django_db
+def test_an_uploaded_screenshot_is_not_on_the_profile_until_an_editor_publishes_it(
+    client, bearer, owned_tool
+):
+    """The whole boundary in one test: a vendor supplies the picture, an editor
+    decides whether it is one of ours."""
+    client.post(
+        f"{LISTINGS}/adobe-acrobat/screenshots",
+        {"image": _upload(), "alt_text": "The redaction panel"},
+        **bearer,
+    )
+
+    profile = client.get("/api/v1/catalog/tools/adobe-acrobat").json()
+
+    assert profile["screenshots"] == []
+
+
+@pytest.mark.django_db
+def test_uploading_to_a_listing_you_do_not_own_is_a_404(client, bearer, owned_tool):
+    response = client.post(
+        f"{LISTINGS}/foxit-editor/screenshots",
+        {"image": _upload(), "alt_text": "Not mine"},
+        **bearer,
+    )
+
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_a_file_that_is_not_an_image_is_refused_with_a_reason(client, bearer, owned_tool):
+    from django.core.files.uploadedfile import SimpleUploadedFile
+
+    response = client.post(
+        f"{LISTINGS}/adobe-acrobat/screenshots",
+        {
+            "image": SimpleUploadedFile("shot.png", b"not a png at all", content_type="image/png"),
+            "alt_text": "Claims to be a PNG",
+        },
+        **bearer,
+    )
+
+    assert response.status_code == 422
+    assert "image" in response.content.decode()
+
+
+@pytest.mark.django_db
+def test_an_owner_sees_their_own_pending_uploads(client, bearer, owned_tool):
+    client.post(
+        f"{LISTINGS}/adobe-acrobat/screenshots",
+        {"image": _upload(), "alt_text": "The redaction panel"},
+        **bearer,
+    )
+
+    rows = client.get(f"{LISTINGS}/adobe-acrobat/screenshots", **bearer).json()
+
+    assert [row["status"] for row in rows] == ["pending"]
+    assert rows[0]["srcset"].count("w,") >= 1
+
+
+@pytest.mark.django_db
+def test_an_owner_can_withdraw_an_upload_that_has_not_been_reviewed(client, bearer, owned_tool):
+    created = client.post(
+        f"{LISTINGS}/adobe-acrobat/screenshots",
+        {"image": _upload(), "alt_text": "The redaction panel"},
+        **bearer,
+    ).json()
+
+    response = client.delete(f"{LISTINGS}/adobe-acrobat/screenshots/{created['id']}", **bearer)
+
+    assert response.status_code == 204
+    assert owned_tool.screenshots.count() == 0
+
+
+@pytest.mark.django_db
+def test_an_owner_cannot_withdraw_a_screenshot_an_editor_published(
+    client, bearer, owned_tool, staff_user
+):
+    """Once it is on the profile it is ours. A vendor removing published content
+    is an edit to the listing, which goes through review like any other."""
+    from apps.catalog import screenshots
+    from apps.catalog.models import ToolScreenshotSource, ToolScreenshotStatus
+
+    shot = screenshots.store(
+        tool=owned_tool,
+        data=_upload().read(),
+        alt_text="Published",
+        source=ToolScreenshotSource.VENDOR,
+        status=ToolScreenshotStatus.PUBLISHED,
+    )
+
+    response = client.delete(f"{LISTINGS}/adobe-acrobat/screenshots/{shot.pk}", **bearer)
+
+    assert response.status_code == 409
+    assert owned_tool.screenshots.count() == 1
+
+
+@pytest.mark.django_db
+def test_a_listing_cannot_be_filled_with_screenshots(client, bearer, owned_tool, settings):
+    settings.CATALOG_MAX_SCREENSHOTS = 2
+
+    for index in range(3):
+        response = client.post(
+            f"{LISTINGS}/adobe-acrobat/screenshots",
+            {"image": _upload(1600 + index, 900), "alt_text": f"Shot {index}"},
+            **bearer,
+        )
+
+    assert response.status_code == 409
+    assert owned_tool.screenshots.count() == 2
+
+
+@pytest.mark.django_db
+def test_an_upload_with_blank_alt_text_is_refused(client, bearer, owned_tool):
+    """The admin form strips and refuses it, and the MCP tool refuses it by
+    name, so the one surface that accepted whitespace was this one - and an
+    unreadable alt attribute is what a screen reader announces as nothing."""
+    response = client.post(
+        f"{LISTINGS}/adobe-acrobat/screenshots",
+        {"image": _upload(), "alt_text": "   "},
+        **bearer,
+    )
+
+    assert response.status_code == 422
+    assert owned_tool.screenshots.count() == 0

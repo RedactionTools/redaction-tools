@@ -187,6 +187,13 @@ which exist yet for `prod`:
    `CORS_ALLOWED_ORIGINS`, and the real public `NEXT_PUBLIC_API_URL` — not
    `localhost`).
 
+   `PUBLIC_MEDIA_URL` has no default in production and the stack refuses to
+   start without it: it is the absolute base screenshot URLs are built from,
+   and the failure mode of a wrong one is a page of broken images rather than
+   an error anyone sees. Set it to `https://backend.redaction-tools.com/media`.
+   Uploaded screenshots live in the `media_data` volume — the only state
+   outside Postgres, so include it in whatever backs the database up.
+
    Register `https://backend.redaction-tools.com/accounts/google/login/callback/`
    as an authorized redirect URI in the Google Cloud console while you are
    there. `SOCIALACCOUNT_ONLY = True`, so it is the only way anyone reaches the

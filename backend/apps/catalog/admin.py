@@ -5,12 +5,17 @@ surfaced rather than buried: whether a tool clears the publication bar, and wher
 each published figure came from.
 """
 
+from django import forms
 from django.contrib import admin
 from django.db import transaction
 from django.utils import timezone
+from django.utils.html import format_html
 from django.utils.text import slugify
 from unfold.admin import ModelAdmin, TabularInline
 
+from apps.catalog import images
+from apps.catalog import screenshots as screenshot_service
+from apps.catalog.images import ImageRejected
 from apps.catalog.models import (
     Benchmark,
     CrawlSource,
@@ -29,6 +34,9 @@ from apps.catalog.models import (
     ToolFacet,
     ToolRevision,
     ToolRevisionStatus,
+    ToolScreenshot,
+    ToolScreenshotSource,
+    ToolScreenshotStatus,
     ToolStatus,
     ToolSubmission,
     ToolSubmissionStatus,
@@ -85,6 +93,184 @@ class PlanInline(TabularInline):
     )
 
 
+class ToolScreenshotForm(forms.ModelForm):
+    """The admin's upload, through the same gate as every other surface.
+
+    The pipeline runs here rather than in the model's `save()` so that a file
+    we will not store is a form error an editor can read, instead of a 500 from
+    somewhere inside the request.
+    """
+
+    class Meta:
+        model = ToolScreenshot
+        fields = (
+            "tool",
+            "image",
+            "alt_text",
+            "caption",
+            "source",
+            "status",
+            "source_url",
+            "captured_at",
+            "sort_order",
+        )
+
+    def clean_image(self):
+        upload = self.cleaned_data["image"]
+        # An unchanged file comes back as the stored FieldFile rather than an
+        # upload; there is nothing to re-render in that case.
+        if not hasattr(upload, "read") or upload is getattr(self.instance, "image", None):
+            return upload
+        upload.seek(0)
+        self._image_data = upload.read()
+        try:
+            self._loaded = images.load_screenshot(self._image_data)
+        except ImageRejected as exc:
+            raise forms.ValidationError(str(exc)) from exc
+        return upload
+
+    def clean(self):
+        cleaned = super().clean()
+        loaded = getattr(self, "_loaded", None)
+        tool = cleaned.get("tool")
+        if loaded is None or tool is None:
+            return cleaned
+        # The same capture twice on one listing is a mistake, and the database
+        # would report it as an opaque constraint violation.
+        digest = screenshot_service.digest_of(loaded)
+        clash = (
+            ToolScreenshot.objects.filter(tool=tool, digest=digest)
+            .exclude(pk=self.instance.pk)
+            .first()
+        )
+        if clash is not None:
+            raise forms.ValidationError(
+                f"{tool} already has this exact picture ({clash.alt_text!r})."
+            )
+        return cleaned
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if (loaded := getattr(self, "_loaded", None)) is not None:
+            screenshot_service.apply_image(instance, loaded)
+        if commit:
+            instance.save()
+        return instance
+
+
+def screenshot_preview(obj, width=240):
+    """The picture itself. A gallery is unreviewable as a list of filenames."""
+    if not obj.rendition_widths:
+        return "—"
+    return format_html(
+        '<img src="{}" width="{}" style="border-radius:4px" alt="" />',
+        obj.rendition_url(min(obj.rendition_widths)),
+        width,
+    )
+
+
+class ToolScreenshotInline(TabularInline):
+    """What this listing shows, in the order it shows it.
+
+    Uploading happens on the screenshot's own page rather than here: the file
+    has to go through the render pipeline, and an inline formset that half-ran
+    it would leave rows pointing at renditions that were never written.
+    """
+
+    model = ToolScreenshot
+    extra = 0
+    max_num = 0
+    can_delete = False
+    show_change_link = True
+    fields = ("preview", "alt_text", "status", "source", "sort_order")
+    readonly_fields = ("preview",)
+
+    @admin.display(description="Preview")
+    def preview(self, obj):
+        return screenshot_preview(obj, width=160)
+
+
+@admin.register(ToolScreenshot)
+class ToolScreenshotAdmin(ModelAdmin):
+    """Screenshots, and the queue of the ones vendors have sent in.
+
+    Pending rows are the working list: a vendor upload is stored and rendered on
+    arrival but is not on the profile until it is published here.
+    """
+
+    form = ToolScreenshotForm
+    list_display = ("preview", "tool", "alt_text", "status", "source", "captured_at", "sort_order")
+    list_display_links = ("preview", "alt_text")
+    list_filter = ("status", "source", "tool")
+    search_fields = ("alt_text", "caption", "tool__name")
+    autocomplete_fields = ("tool",)
+    list_select_related = ("tool",)
+    readonly_fields = ("preview", "dimensions", "uploaded_by", "reviewed_by", "reviewed_at")
+    actions = ("publish_screenshots", "reject_screenshots", "rerender_screenshots")
+
+    @admin.display(description="Preview")
+    def preview(self, obj):
+        return screenshot_preview(obj)
+
+    @admin.display(description="Rendered")
+    def dimensions(self, obj):
+        """Stated rather than left to be inferred: an editor choosing whether to
+        re-render needs to see what is actually on disk."""
+        widths = ", ".join(f"{width}w" for width in obj.rendition_widths) or "nothing yet"
+        return f"{obj.width}x{obj.height} source, rendered at {widths}"
+
+    def get_changeform_initial_data(self, request):
+        # An editor's own upload is a decision, not a submission. Shown as a
+        # default they can change rather than forced, because the same form is
+        # how a vendor's picture gets published.
+        return {"source": ToolScreenshotSource.STAFF, "status": ToolScreenshotStatus.PUBLISHED}
+
+    def save_model(self, request, obj, form, change):
+        # Stamped from the request rather than a form field, like every other
+        # attribution in this admin.
+        if obj.uploaded_by_id is None:
+            obj.uploaded_by = request.user
+        if obj.status != ToolScreenshotStatus.PENDING and obj.reviewed_by_id is None:
+            obj.reviewed_by = request.user
+            obj.reviewed_at = timezone.now()
+        super().save_model(request, obj, form, change)
+
+    def delete_model(self, request, obj):
+        # Django never deletes a FileField's file when its row goes, so a plain
+        # delete here would orphan a source and four renditions every time.
+        screenshot_service.discard(obj)
+
+    def delete_queryset(self, request, queryset):
+        for shot in queryset:
+            screenshot_service.discard(shot)
+
+    @admin.action(description="Publish - put on the profile")
+    def publish_screenshots(self, request, queryset):
+        for shot in queryset:
+            screenshot_service.review(
+                screenshot=shot, user=request.user, status=ToolScreenshotStatus.PUBLISHED
+            )
+        self.message_user(request, f"Published {queryset.count()} screenshots.")
+
+    @admin.action(description="Reject - keep the row, not the picture")
+    def reject_screenshots(self, request, queryset):
+        """Rejected rather than deleted: the uploader is shown the outcome, and a
+        deleted row would read to them as one that never arrived."""
+        for shot in queryset:
+            screenshot_service.review(
+                screenshot=shot, user=request.user, status=ToolScreenshotStatus.REJECTED
+            )
+        self.message_user(request, f"Rejected {queryset.count()} screenshots.")
+
+    @admin.action(description="Re-render from the stored source")
+    def rerender_screenshots(self, request, queryset):
+        """What makes a new rendition width possible without going back to every
+        vendor for a fresh capture."""
+        for shot in queryset:
+            screenshot_service.rerender(shot)
+        self.message_user(request, f"Re-rendered {queryset.count()} screenshots.")
+
+
 @admin.register(Tool)
 class ToolAdmin(ModelAdmin):
     list_display = ("name", "vendor", "status", "listable", "is_first_party", "last_verified_at")
@@ -92,7 +278,7 @@ class ToolAdmin(ModelAdmin):
     search_fields = ("name", "slug", "tagline", "summary")
     prepopulated_fields = {"slug": ("name",)}
     autocomplete_fields = ("vendor",)
-    inlines = (ToolFacetInline, PlanInline)
+    inlines = (ToolFacetInline, ToolScreenshotInline, PlanInline)
     readonly_fields = ("created_at", "updated_at")
 
     @admin.display(boolean=True, description="Listable")
@@ -142,6 +328,7 @@ class PlanAdmin(ModelAdmin):
 @admin.register(PlanPrice)
 class PlanPriceAdmin(ModelAdmin):
     list_display = (
+        "tool",
         "plan",
         "amount",
         "currency",
@@ -157,6 +344,12 @@ class PlanPriceAdmin(ModelAdmin):
     autocomplete_fields = ("plan",)
     readonly_fields = ("entered_by",)
     actions = ("unpin_prices",)
+    list_select_related = ("plan__tool",)
+
+    @admin.display(description="Tool", ordering="plan__tool__name")
+    def tool(self, obj):
+        """Plan names repeat across vendors, so the list has to say whose plan this is."""
+        return obj.plan.tool
 
     def save_model(self, request, obj, form, change):
         # Stamped from the request rather than a form field: an audit trail that

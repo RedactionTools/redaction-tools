@@ -709,6 +709,166 @@
           }
         ]
       }
+    },
+    "/api/v1/catalog/my-listings/{slug}/screenshots": {
+      "get": {
+        "operationId": "list_my_screenshots",
+        "summary": "Screenshots on a listing you maintain",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MyScreenshotOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            }
+          }
+        },
+        "description": "Every status, not just the published ones: a pending upload that was\ninvisible here would be uploaded again.",
+        "tags": [
+          "catalog"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "upload_tool_screenshot",
+        "summary": "Upload a screenshot of a listing you maintain",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyScreenshotOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "catalog"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "title": "MultiPartBodyParams",
+                "type": "object",
+                "properties": {
+                  "alt_text": {
+                    "title": "Alt Text",
+                    "type": "string"
+                  },
+                  "caption": {
+                    "default": "",
+                    "title": "Caption",
+                    "type": "string"
+                  },
+                  "captured_at": {
+                    "anyOf": [
+                      {
+                        "format": "date",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Captured At"
+                  },
+                  "image": {
+                    "format": "binary",
+                    "title": "Image",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "alt_text",
+                  "image"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/catalog/my-listings/{slug}/screenshots/{screenshot_id}": {
+      "delete": {
+        "operationId": "withdraw_tool_screenshot",
+        "summary": "Withdraw a screenshot you uploaded",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "screenshot_id",
+            "schema": {
+              "title": "Screenshot Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "description": "Only while it is still a proposal.\n\nA published picture is part of the listing, and a vendor pulling one is an\nedit to the listing - which goes through review like every other edit.",
+        "tags": [
+          "catalog"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -1424,6 +1584,13 @@
             "title": "Facets",
             "type": "array"
           },
+          "screenshots": {
+            "items": {
+              "$ref": "#/components/schemas/ToolScreenshotOut"
+            },
+            "title": "Screenshots",
+            "type": "array"
+          },
           "plans": {
             "items": {
               "$ref": "#/components/schemas/PlanOut"
@@ -1456,6 +1623,7 @@
           "cons",
           "faq",
           "facets",
+          "screenshots",
           "plans",
           "updated_at"
         ],
@@ -1489,6 +1657,58 @@
           "label"
         ],
         "title": "ToolFacetOut",
+        "type": "object"
+      },
+      "ToolScreenshotOut": {
+        "description": "One picture of the tool, in every width it was rendered at.\n\n`url` is for a bare `src` and `srcset` is the real payload: the same capture\nat several widths, so the browser picks by viewport rather than being sent\nthe desktop rendition on a phone. `width` and `height` are the source's, and\nare what lets a figure reserve its space before the image arrives.",
+        "properties": {
+          "url": {
+            "title": "Url",
+            "type": "string"
+          },
+          "srcset": {
+            "title": "Srcset",
+            "type": "string"
+          },
+          "width": {
+            "title": "Width",
+            "type": "integer"
+          },
+          "height": {
+            "title": "Height",
+            "type": "integer"
+          },
+          "alt": {
+            "title": "Alt",
+            "type": "string"
+          },
+          "caption": {
+            "title": "Caption",
+            "type": "string"
+          },
+          "captured_at": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Captured At"
+          }
+        },
+        "required": [
+          "url",
+          "srcset",
+          "width",
+          "height",
+          "alt",
+          "caption",
+          "captured_at"
+        ],
+        "title": "ToolScreenshotOut",
         "type": "object"
       },
       "ErrorSchema": {
@@ -2132,6 +2352,97 @@
           }
         },
         "title": "PriceProposalIn",
+        "type": "object"
+      },
+      "MyScreenshotOut": {
+        "description": "An owner's own view of a picture they uploaded, at any status.\n\nCarries `status` and `review_note` because the pending and rejected states\nare the two an owner needs explained: a picture that is on the profile needs\nno telling, and one that was turned down should say why rather than appear\nto have vanished.",
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          },
+          "srcset": {
+            "title": "Srcset",
+            "type": "string"
+          },
+          "width": {
+            "title": "Width",
+            "type": "integer"
+          },
+          "height": {
+            "title": "Height",
+            "type": "integer"
+          },
+          "alt": {
+            "title": "Alt",
+            "type": "string"
+          },
+          "caption": {
+            "title": "Caption",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "review_note": {
+            "title": "Review Note",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "url",
+          "srcset",
+          "width",
+          "height",
+          "alt",
+          "caption",
+          "status",
+          "review_note",
+          "created_at"
+        ],
+        "title": "MyScreenshotOut",
+        "type": "object"
+      },
+      "ScreenshotUploadIn": {
+        "description": "The fields that travel beside the file in a multipart upload.",
+        "properties": {
+          "alt_text": {
+            "title": "Alt Text",
+            "type": "string"
+          },
+          "caption": {
+            "default": "",
+            "title": "Caption",
+            "type": "string"
+          },
+          "captured_at": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Captured At"
+          }
+        },
+        "required": [
+          "alt_text"
+        ],
+        "title": "ScreenshotUploadIn",
         "type": "object"
       }
     },

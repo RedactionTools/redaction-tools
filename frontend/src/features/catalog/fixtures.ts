@@ -6,6 +6,7 @@ import type {
   ToolDetailOut,
   ToolListItemOut,
   ToolPageOut,
+  ToolScreenshotOut,
 } from '@/lib/api/generated/model'
 
 /** Shared test data, shaped exactly like the API's own responses. */
@@ -100,6 +101,23 @@ export function makeListing(overrides: Partial<MyListingOut> = {}): MyListingOut
   }
 }
 
+/** One published screenshot, in the shape the profile renders. */
+export function makeScreenshot(overrides: Partial<ToolScreenshotOut> = {}): ToolScreenshotOut {
+  return {
+    url: 'http://localhost:8007/media/screenshots/abc123/w960.webp',
+    srcset:
+      'http://localhost:8007/media/screenshots/abc123/w480.webp 480w, ' +
+      'http://localhost:8007/media/screenshots/abc123/w960.webp 960w, ' +
+      'http://localhost:8007/media/screenshots/abc123/w1440.webp 1440w',
+    width: 1600,
+    height: 900,
+    alt: 'The Acrobat redaction panel with two marks applied',
+    caption: 'Marking text for redaction',
+    captured_at: '2026-09-01',
+    ...overrides,
+  }
+}
+
 export function makePage(items: ToolListItemOut[]): ToolPageOut {
   return { count: items.length, items }
 }
@@ -144,6 +162,9 @@ export function makeToolDetail(overrides: Partial<ToolDetailOut> = {}): ToolDeta
         label: 'True content removal',
       },
     ],
+    // Empty by default: most tests are about prices and editorial, and a
+    // gallery every one of them had to account for would be noise.
+    screenshots: [],
     updated_at: '2026-09-17T00:00:00Z',
     plans: [
       {

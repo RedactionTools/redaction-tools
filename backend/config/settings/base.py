@@ -19,6 +19,7 @@ env = environ.Env(
     CSRF_TRUSTED_ORIGINS=(list, []),
     CORS_ALLOWED_ORIGINS=(list, ["http://localhost:3007"]),
     FRONTEND_URL=(str, "http://localhost:3007"),
+    PUBLIC_MEDIA_URL=(str, "http://localhost:8007/media"),
     GOOGLE_CLIENT_ID=(str, ""),
     GOOGLE_CLIENT_SECRET=(str, ""),
     JWT_ACCESS_TOKEN_LIFETIME=(int, 15 * 60),
@@ -234,6 +235,13 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
+# Where a browser fetches uploads from, stated rather than derived. Absolute
+# because the API and the site are different origins, and read from settings
+# rather than from the request: a server-rendered page reaches this API at
+# http://backend:8007 over the compose network, so a request-derived URL would
+# put a hostname only the containers can resolve into the HTML.
+PUBLIC_MEDIA_URL = env("PUBLIC_MEDIA_URL").rstrip("/") + "/"
+
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
     "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
@@ -272,6 +280,10 @@ CATALOG_READ_RATE = env("CATALOG_READ_RATE", default="120/min")
 CATALOG_SUBMIT_RATE = env("CATALOG_SUBMIT_RATE", default="5/hour")
 CATALOG_CLAIM_RATE = env("CATALOG_CLAIM_RATE", default="10/day")
 CATALOG_MAX_OPEN_SUBMISSIONS = env.int("CATALOG_MAX_OPEN_SUBMISSIONS", default=5)
+CATALOG_SCREENSHOT_RATE = env("CATALOG_SCREENSHOT_RATE", default="20/day")
+# Per listing, counting everything not yet rejected. A profile is a page about a
+# tool, not a gallery, and an owner with an unbounded upload slot will fill it.
+CATALOG_MAX_SCREENSHOTS = env.int("CATALOG_MAX_SCREENSHOTS", default=8)
 
 # --- Staff MCP server ------------------------------------------------------
 # The MCP endpoint is /mcp; its OAuth authorization server is /oauth/. Claude's

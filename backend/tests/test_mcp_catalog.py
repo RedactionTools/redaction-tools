@@ -27,6 +27,9 @@ TOOLS = {
     "catalog_update_plan",
     "catalog_set_plan_limit",
     "catalog_set_plan_price",
+    "catalog_add_screenshot",
+    "catalog_list_screenshots",
+    "catalog_review_screenshot",
 }
 
 
@@ -245,3 +248,106 @@ def test_creating_a_plan_twice_is_a_correctable_error(call_tool):
 
     assert result["isError"] is True
     assert "catalog_update_plan" in result["content"][0]["text"]
+
+
+# --- Screenshots -----------------------------------------------------------
+# MCP speaks JSON, so a model cannot hand us a file. It hands us a URL and the
+# server fetches it - through the same SSRF guard every other URL in the catalog
+# passes, because this one is fetched from inside the compose network.
+
+
+def _png(width=2000, height=1000):
+    import io
+
+    from PIL import Image
+
+    buffer = io.BytesIO()
+    Image.new("RGB", (width, height), (90, 40, 120)).save(buffer, format="PNG")
+    return buffer.getvalue()
+
+
+@pytest.fixture
+def served_image(monkeypatch):
+    """Stand in for the vendor's web server, so no test touches the network."""
+    from apps.catalog import screenshots
+
+    monkeypatch.setattr(screenshots, "fetch", lambda url, **kwargs: _png())
+    return "https://93.184.216.34/shots/editor.png"
+
+
+def test_adding_a_screenshot_fetches_the_url_and_publishes_it(call_tool, served_image):
+    body = payload(
+        call_tool(
+            "catalog_add_screenshot",
+            {
+                "slug": SEEDED,
+                "image_url": served_image,
+                "alt_text": "The redaction panel with two marks applied",
+                "captured_at": "2026-09-01",
+            },
+        )
+    )
+
+    assert body["status"] == "published"
+    assert body["rendition_widths"] == [480, 960, 1440, 1920]
+    assert body["source_url"] == served_image
+
+
+def test_a_screenshot_url_that_points_inward_is_refused(call_tool):
+    result = call_tool(
+        "catalog_add_screenshot",
+        {"slug": SEEDED, "image_url": METADATA_URL, "alt_text": "The metadata service"},
+    )
+
+    assert result["isError"] is True
+    from apps.catalog.models import ToolScreenshot
+
+    assert ToolScreenshot.objects.count() == 0
+
+
+def test_listing_screenshots_shows_what_is_waiting_on_review(call_tool, served_image):
+    from apps.catalog import screenshots
+    from apps.catalog.models import ToolScreenshotSource
+
+    screenshots.store(
+        tool=Tool.objects.get(slug=SEEDED),
+        data=_png(1200, 700),
+        alt_text="Sent in by the vendor",
+        source=ToolScreenshotSource.VENDOR,
+    )
+
+    body = payload(call_tool("catalog_list_screenshots", {"slug": SEEDED}))
+
+    assert [row["status"] for row in body["items"]] == ["pending"]
+    assert body["items"][0]["source"] == "vendor"
+
+
+def test_reviewing_a_screenshot_publishes_it(call_tool, staff_user):
+    from apps.catalog import screenshots
+    from apps.catalog.models import ToolScreenshot, ToolScreenshotSource
+
+    shot = screenshots.store(
+        tool=Tool.objects.get(slug=SEEDED),
+        data=_png(1200, 700),
+        alt_text="Sent in by the vendor",
+        source=ToolScreenshotSource.VENDOR,
+    )
+
+    body = payload(
+        call_tool(
+            "catalog_review_screenshot",
+            {"screenshot_id": shot.pk, "status": "published", "note": "Checked against the app."},
+        )
+    )
+
+    assert body["status"] == "published"
+    assert ToolScreenshot.objects.get(pk=shot.pk).reviewed_by == staff_user
+
+
+def test_a_screenshot_with_no_alt_text_is_refused(call_tool, served_image):
+    result = call_tool(
+        "catalog_add_screenshot", {"slug": SEEDED, "image_url": served_image, "alt_text": "  "}
+    )
+
+    assert result["isError"] is True
+    assert "alt" in result["content"][0]["text"].lower()

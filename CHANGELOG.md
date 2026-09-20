@@ -11,6 +11,29 @@ given in brackets.
 
 ### Added
 
+- **Screenshots on a listing** — a tool's profile can now show pictures of the product, above
+  the plan table, because a buyer works out what a tool is before what it costs and this is the
+  only part of the page that shows them the thing rather than describing it. One upload becomes
+  a WebP at each of four widths, shipped as a real `srcset` with the figure's dimensions, so a
+  phone is not sent the desktop rendition and the page does not reflow as each picture lands.
+  Three ways in, one gate: an editor uploads in the admin, a verified owner uploads from
+  **My listings**, and `catalog_add_screenshot` fetches a URL for the staff MCP server. An
+  owner's upload is a proposal like every other thing they send — stored and rendered at once,
+  on the profile only when an editor publishes it, and a rejection keeps its note, which they
+  are shown. `alt_text` is required at all three, because a screenshot without it is an image a
+  screen reader announces as nothing.
+- **A rendition set that can be changed** — sources are kept and every file is named after the
+  SHA-256 of its own bytes, so adding a width is `manage.py rerender_screenshots` rather than a
+  request to every vendor for a fresh capture. Content-addressed paths also mean the bytes behind
+  a URL can never change, which is what lets `/media/` be served with a year's `immutable`
+  cache from gunicorn. Two listings may legitimately share a capture, so files are removed only
+  when the last row referencing that digest goes.
+- **What an upload may be, stated once** in `apps/catalog/images.py`: PNG, JPEG or WebP (a GIF
+  would publish as its first frame; SVG is a document that can carry script), 12 MB, and 50
+  megapixels checked against the header before anything is decoded — a few hundred KB of PNG can
+  declare 900 million pixels, and it is decoding that allocates them. Every source is re-encoded
+  on the way in, which is what drops the EXIF that can name the machine a capture was taken on.
+  Nothing is ever upscaled: a 320px capture renders once, at 320px.
 - **Cheapest plan marked in the cost calculator** — the table now names the plan that costs
   least for the volume in the fields, and says so in words rather than by tint alone. A flat
   fee that covers the work counts at that fee; an annual or per-seat fee does not, because
@@ -40,6 +63,23 @@ given in brackets.
 
 - `Tool.is_listable()` now delegates to `listability_blockers()`, which names each reason a
   tool falls short instead of only answering yes or no. Same verdict, same queries.
+
+### Fixed
+
+- **tdd-guard could not see the test suite.** The repo carried the rulebook but not the
+  reporter that writes `.claude/tdd-guard/data/test.json`, so the guard had no evidence any
+  test had run and refused every implementation edit as unproven — failing closed in the one
+  direction that makes the discipline impossible to follow rather than merely unenforced.
+  `tdd-guard-pytest` and `tdd-guard-vitest` are now dev dependencies, each pointed at the repo
+  root — by `backend/conftest.py` and `vitest.config.ts`. Both suites run from a subdirectory and
+  both reporters default to `.claude/tdd-guard/data` relative to the working directory, so left
+  alone they write a `backend/.claude/` and a `frontend/.claude/` that nothing reads. Each derives
+  the root from its own file's location, which keeps one machine's absolute path out of the repo.
+  One `test.json` serves both suites and the last run wins, so a red/green cycle should run the
+  component's own suite rather than `make test`.
+- **A screenshot could be uploaded with whitespace for alt text** through the owner API. The
+  admin form stripped it and the MCP tool refused a blank by name; this was the surface that
+  took it, and the field exists to be read aloud to someone who cannot see the picture.
 
 ## [2026-09-18]
 

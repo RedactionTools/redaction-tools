@@ -47,6 +47,12 @@ RUN chown app:app /app
 
 USER app
 
+# MEDIA_ROOT, created here rather than left to the volume mount. Docker copies
+# an existing directory's ownership onto a fresh named volume, and creates it
+# root-owned when the path is absent - which would leave this process unable to
+# write the uploads it renders.
+RUN mkdir -p /app/media
+
 # Collected at build time: production uses whitenoise's manifest storage, which
 # raises on a missing manifest entry, so without this the admin 500s on its own
 # CSS. No database is touched - the placeholders only satisfy settings that are

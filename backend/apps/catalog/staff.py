@@ -16,13 +16,16 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.utils import timezone
+from django.utils.dateparse import parse_date
 
+from apps.catalog import screenshots as screenshot_service
 from apps.catalog.constants import (
     PLAN_URL_FIELDS,
     STAFF_EDITABLE_PLAN_FIELDS,
     STAFF_EDITABLE_TOOL_FIELDS,
     URL_FIELDS,
 )
+from apps.catalog.images import ImageRejected
 from apps.catalog.models import (
     BillingPeriod,
     Plan,
@@ -36,6 +39,9 @@ from apps.catalog.models import (
     ToolRevision,
     ToolRevisionOrigin,
     ToolRevisionStatus,
+    ToolScreenshot,
+    ToolScreenshotSource,
+    ToolScreenshotStatus,
     ToolStatus,
     listability_blockers,
 )
@@ -477,4 +483,105 @@ def _price(price):
         "is_overage": price.is_overage,
         "source": price.source,
         "source_note": price.source_note,
+    }
+
+
+# --- Screenshots -----------------------------------------------------------
+# A model cannot hand us a file over JSON-RPC, so it hands us a URL and the
+# server fetches it. Published on arrival, like every other staff write here:
+# there is no draft step on this surface, and the review queue exists for
+# pictures vendors send in.
+
+
+def add_screenshot(*, user, slug, image_url, alt_text, caption="", captured_at=None, status=None):
+    """Fetch `image_url`, render it, and put it on the listing."""
+    tool = Tool.objects.filter(slug=slug).first()
+    if tool is None:
+        raise StaffError(f"No tool with slug {slug!r}.")
+    if not alt_text.strip():
+        # Refused rather than defaulted: alt text is what a screen reader
+        # announces, and a generated one would describe nothing.
+        raise StaffError("alt_text is required: say what the picture shows.")
+
+    status = status or ToolScreenshotStatus.PUBLISHED
+    _reject_unknown_status(status)
+    captured_at = _date(captured_at)
+
+    try:
+        shot = screenshot_service.store(
+            tool=tool,
+            data=screenshot_service.fetch(image_url),
+            alt_text=alt_text.strip(),
+            caption=caption,
+            captured_at=captured_at,
+            source=ToolScreenshotSource.STAFF,
+            status=status,
+            source_url=image_url,
+            uploaded_by=user,
+        )
+    except ImageRejected as exc:
+        raise StaffError(str(exc)) from exc
+
+    if status != ToolScreenshotStatus.PENDING:
+        screenshot_service.review(screenshot=shot, user=user, status=status)
+    return _screenshot(shot)
+
+
+def list_screenshots(*, slug):
+    """Every screenshot on a listing, at any status.
+
+    Pending rows included, and the reason to call this: they are what a vendor
+    has sent in and nobody has looked at.
+    """
+    tool = Tool.objects.filter(slug=slug).first()
+    if tool is None:
+        raise StaffError(f"No tool with slug {slug!r}.")
+    return {"tool": slug, "items": [_screenshot(shot) for shot in tool.screenshots.all()]}
+
+
+def review_screenshot(*, user, screenshot_id, status, note=""):
+    """Publish or reject one screenshot, recording who decided."""
+    _reject_unknown_status(status)
+    shot = ToolScreenshot.objects.select_related("tool").filter(pk=screenshot_id).first()
+    if shot is None:
+        raise StaffError(f"No screenshot with id {screenshot_id}.")
+    return _screenshot(
+        screenshot_service.review(screenshot=shot, user=user, status=status, note=note)
+    )
+
+
+def _date(value):
+    """An ISO date string as a date, because MCP has no date type.
+
+    Parsed here rather than left to the ORM: assigning a string to a DateField
+    survives the save and comes back out of the row as a date, so the only thing
+    that would notice a malformed one is the response schema.
+    """
+    if not value or not isinstance(value, str):
+        return value or None
+    if (parsed := parse_date(value)) is None:
+        raise StaffError(f"captured_at must be an ISO date like 2026-09-01, not {value!r}.")
+    return parsed
+
+
+def _reject_unknown_status(status):
+    if status not in ToolScreenshotStatus.values:
+        raise StaffError(f"status must be one of: {', '.join(ToolScreenshotStatus.values)}.")
+
+
+def _screenshot(shot):
+    return {
+        "id": shot.pk,
+        "tool": shot.tool.slug,
+        "alt_text": shot.alt_text,
+        "caption": shot.caption,
+        "status": shot.status,
+        "source": shot.source,
+        "source_url": shot.source_url,
+        "width": shot.width,
+        "height": shot.height,
+        "rendition_widths": shot.rendition_widths,
+        "url": shot.display_url,
+        "captured_at": shot.captured_at.isoformat() if shot.captured_at else None,
+        "review_note": shot.review_note,
     }

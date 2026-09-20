@@ -67,6 +67,11 @@ The parts that bite if you miss them:
   by default, so the crawler (phase 2) can never overwrite one.
 - **Owners never write a price.** `PriceProposal` is the only path, and it publishes through the
   admin as `source=VENDOR`, pinned and badged.
+- **Every screenshot upload goes through `apps/catalog/screenshots.py`**, from all three surfaces
+  (admin, owner API, MCP). It renders the WebP widths in `images.py` and names every file after the
+  SHA-256 of its source - which is what lets `/media/` be served `immutable`, and why files are
+  deleted only when the last row sharing that digest goes. A vendor upload lands `pending`; only an
+  editor publishes it. Adding a width is `manage.py rerender_screenshots`, not a re-collection.
 - **Seed migrations are idempotent** and guarded by an existence check. They put 7 tools in every
   test database, so a test asserting "the catalog is empty" will not hold.
 - Catalog routes and `sitemap.ts` are `force-dynamic`: `next build` runs with no backend (CI
@@ -93,6 +98,9 @@ The parts that bite if you miss them:
   plan's overage rate along with its monthly fee - copy the service, not the admin.
 - Optional MCP parameters are `msgspec.UNSET`, and a numeric constraint goes on the inner
   type: `Annotated[int, Meta(ge=0)] | UnsetType`.
+- **`catalog_add_screenshot` fetches a URL**, because MCP carries no files. That makes it a
+  server-side fetch from inside the compose network, so it runs through `validate_external_url`
+  and re-checks every redirect hop - a 302 into 169.254.169.254 is the whole attack.
 - **One MCP tool per table.** A plan, its caps and each of its prices are written by
   separate tools, because a single call that creates all four can half-succeed and because
   a price carries provenance a plan does not. `create_plan` reports
@@ -102,6 +110,12 @@ The parts that bite if you miss them:
 
 - Tests come first; the repo carries tdd-guard's rulebook in
   `.claude/tdd-guard/data/`. One failing test at a time, then minimal code.
+  The guard reads `test.json` there, written by `tdd-guard-pytest` (pointed at
+  the repo root by `backend/conftest.py`) and `tdd-guard-vitest` (by
+  `vitest.config.ts`) - without those it sees no test run and refuses every
+  implementation edit. One file serves both suites and the last run wins, so
+  run the component's own suite mid-cycle, not `make test`. `DEVELOPMENT.md`
+  has the symptom and the check.
 - Backend: ruff, line length 100, tests in `backend/tests/`, pytest fixtures in
   `backend/conftest.py`.
 - Frontend: see `frontend/CLAUDE.md`.

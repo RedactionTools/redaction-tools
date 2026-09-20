@@ -56,6 +56,11 @@ export function softwareApplicationJsonLd(site: string, tool: ToolDetailOut) {
     applicationCategory: 'SecurityApplication',
     author: { '@type': 'Organization', name: tool.vendor.name },
     publisher: { '@type': 'Organization', name: tool.vendor.name },
+    // Spread rather than set to null: an empty `screenshot` array is a claim
+    // that there are none, where the absent property claims nothing.
+    ...(tool.screenshots.length > 0
+      ? { screenshot: tool.screenshots.map((shot) => shot.url) }
+      : {}),
     offers: aggregateOffer(tool),
   } as Record<string, unknown> & {
     '@type': string
@@ -63,6 +68,7 @@ export function softwareApplicationJsonLd(site: string, tool: ToolDetailOut) {
     applicationCategory: string
     author: unknown
     offers?: unknown
+    screenshot?: string[]
     aggregateRating?: unknown
     review?: unknown
   }

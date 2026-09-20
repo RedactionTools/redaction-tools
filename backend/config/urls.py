@@ -1,8 +1,8 @@
 from django.conf import settings
-from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import include, path
+from django.urls import include, path, re_path
 
+from apps.core.views import serve_media
 from config.api import api
 from config.mcp import server as mcp_server
 
@@ -23,5 +23,11 @@ urlpatterns = [
     path("", include("django_mcpz.oauth.wellknown")),
 ]
 
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# Uploads, at every DEBUG setting. Nothing else in the stack serves them:
+# whitenoise handles STATIC_ROOT only, and the Caddy in front belongs to the
+# pdf-redaction stack and has no mount for this volume. The responses are
+# immutable and cacheable, which is what makes serving them from gunicorn
+# affordable - see apps/core/views.py.
+urlpatterns += [
+    re_path(rf"^{settings.MEDIA_URL.lstrip('/')}(?P<path>.*)$", serve_media, name="media"),
+]

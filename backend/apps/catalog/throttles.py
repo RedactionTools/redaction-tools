@@ -28,3 +28,12 @@ class ClaimThrottle(AuthRateThrottle):
 
     def __init__(self):
         super().__init__(settings.CATALOG_CLAIM_RATE)
+
+
+class ScreenshotThrottle(AuthRateThrottle):
+    """Tighter than the other write limits, because each call decodes an image."""
+
+    scope = "catalog_screenshot"
+
+    def __init__(self):
+        super().__init__(settings.CATALOG_SCREENSHOT_RATE)

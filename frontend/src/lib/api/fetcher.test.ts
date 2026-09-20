@@ -43,6 +43,19 @@ describe('customFetch', () => {
     expect(headers.get('Authorization')).toBe('Bearer access-token')
   })
 
+  it('leaves a multipart body to set its own Content-Type', async () => {
+    // The boundary is part of the header and only the browser knows it. Naming
+    // the type ourselves would send a FormData body labelled as JSON, which
+    // Django parses as an empty POST - the upload arrives with no file.
+    const body = new FormData()
+    body.append('alt_text', 'The redaction panel')
+
+    await customFetch('/api/v1/catalog/my-listings/acme/screenshots', { method: 'POST', body })
+
+    const headers = new Headers(fetchSpy.mock.calls[0][1]?.headers)
+    expect(headers.has('Content-Type')).toBe(false)
+  })
+
   it('omits the Authorization header entirely when there is no token', async () => {
     await customFetch('/api/v1/health', { method: 'GET' })
 

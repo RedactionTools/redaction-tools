@@ -222,6 +222,69 @@ anyone's mark.
 `backend/tests/test_catalog_seed.py` asserts every recorded path resolves to a file that exists,
 so a missing or misspelled logo fails the suite rather than appearing as a broken image.
 
+## Tool screenshots
+
+Logos are files in the repo; screenshots are uploads. `ToolScreenshot` holds one picture of a
+tool, and `apps/catalog/screenshots.py` is the single gate every upload passes through, whichever
+surface it arrived from:
+
+| Surface | Route | Lands as |
+| --- | --- | --- |
+| Django admin | Catalog → Tool screenshots → Add | `staff`, published |
+| Owner web UI | `POST /api/v1/catalog/my-listings/<slug>/screenshots` | `vendor`, **pending** |
+| Staff MCP | `catalog_add_screenshot` (fetches a URL) | `staff`, published |
+
+Owners propose here as everywhere else: an upload is stored and rendered immediately, but it is
+not on the profile until an editor publishes it — in the admin, or with
+`catalog_review_screenshot`. A rejection keeps the row and its note, which the owner is shown; a
+deleted row would read to them as an upload that never arrived.
+
+### Resizing and converting
+
+One upload becomes several files. `apps/catalog/images.py` holds the whole policy:
+
+```
+media/screenshots/<sha256>/source.png      the upload, re-encoded and metadata-stripped
+media/screenshots/<sha256>/w480.webp       one WebP per declared width
+media/screenshots/<sha256>/w960.webp
+media/screenshots/<sha256>/w1440.webp
+media/screenshots/<sha256>/w1920.webp
+```
+
+- **`VARIANT_WIDTHS` is the srcset.** The API ships `url` (a mid rendition for a bare `src`) and
+  `srcset` with every width that was actually written, and the gallery sets `sizes` so a phone
+  never downloads the desktop rendition.
+- **Never upscaled.** A 320px capture renders once, at 320px. `rendition_widths` records what is
+  on disk, so a srcset never offers a file that is absent.
+- **The widths are changeable.** The sources are kept, so adding one is
+  `uv run manage.py rerender_screenshots` (or the admin's re-render action), not a request to
+  every vendor for a fresh capture.
+- **Content-addressed.** Every path is named after the SHA-256 of its own source, so the bytes
+  behind a URL can never change and `/media/` is served `immutable` with a year's max-age. Two
+  listings may legitimately share a capture, so files are removed only when the last row
+  referencing that digest goes.
+- **What is refused:** anything that is not a PNG, JPEG or WebP (a GIF is a moving picture and
+  would publish as its first frame; SVG is a document that can carry script), over 12 MB, or over
+  50 megapixels — checked against the header, before any decode, because a few hundred KB of PNG
+  can declare 900 million pixels. Every source is re-encoded on the way in, which is what drops
+  the EXIF that can name the machine a capture was taken on.
+- **`alt_text` is required** at every surface. A screenshot with none is an image a screen reader
+  announces as nothing, and the caption is not a substitute — it is read as well, and says
+  something different.
+
+### Serving
+
+`apps/core/views.py` serves `MEDIA_ROOT` through `default_storage` at every `DEBUG` setting.
+Nothing else in the stack does: whitenoise indexes its files once at boot, so anything uploaded
+after the last restart would 404 until the next one, and the Caddy in front belongs to the
+pdf-redaction stack and has no mount for the volume. `PUBLIC_MEDIA_URL` is the absolute base a
+browser fetches them from — absolute because the API and the site are different origins, and read
+from settings rather than from the request, since a server-rendered page reaches this API at
+`http://backend:8007` and a request-derived URL would put that hostname into the HTML.
+
+In production the uploads live in the `media_data` volume, mounted into `backend` and `qcluster`.
+It is the one piece of state outside Postgres, so it belongs in whatever backs the database up.
+
 ## Rendering and the API-down build
 
 Catalog routes and `sitemap.ts` declare `export const dynamic = 'force-dynamic'`. The frontend
@@ -244,6 +307,30 @@ no missing migrations, checks both generated artifacts are current, and builds b
 
 Tests come first here — the repo carries tdd-guard's rulebook in `.claude/tdd-guard/data/`. One
 failing test at a time, then the minimal code to pass it.
+
+The guard only enforces that if it can *see* the test run, and it reads the results from
+`.claude/tdd-guard/data/test.json`. Both suites write it, through a reporter apiece:
+
+| Suite | Reporter | Pointed at the repo root by |
+| --- | --- | --- |
+| pytest | `tdd-guard-pytest` (dev dependency, self-registering) | `backend/conftest.py` |
+| vitest | `tdd-guard-vitest` (dev dependency, listed in `reporters`) | `vitest.config.ts` |
+
+`make install` is all either needs. Three things about them here:
+
+- **Both need the repo root, and neither would find it.** `.claude/` is at the root; pytest runs
+  from `backend/` and vitest from `frontend/`, and both reporters default to that path relative to
+  the working directory. Left alone they write a `backend/.claude/` and a `frontend/.claude/` that
+  nothing reads. The root is derived in each config from the file's own location, rather than
+  written in as an absolute path that would be one machine's.
+- **There is one `test.json` for both suites, and the last run wins.** `make test` runs the backend
+  then the frontend, so afterwards the file holds only frontend results — and a backend
+  implementation edit then looks unproven. During a red/green cycle run the component's own suite,
+  which is the focused file you are working on anyway.
+- **Without a reporter the guard fails closed**: seeing no test output, it treats every
+  implementation edit as unproven and refuses it, so the discipline it exists to enforce becomes
+  impossible to satisfy. If an agent reports that it cannot write implementation code, check that
+  `test.json` exists and that its mtime moves when you run the suite.
 
 Two things about the backend suite that surprise people:
 

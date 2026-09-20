@@ -255,5 +255,7 @@ frontend/.env.*.local
 !frontend/public/**
 docs/plan.md
 
-# tdd-guard scratch: a per-session record of edits, not project content.
+# tdd-guard scratch: a per-session record of edits and the last test run, not
+# project content. `instructions.md` beside them is the rulebook and is tracked.
 .claude/tdd-guard/data/modifications.json
+.claude/tdd-guard/data/test.json

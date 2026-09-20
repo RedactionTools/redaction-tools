@@ -21,6 +21,7 @@ import { ClaimListing } from './claim-listing'
 import { DocumentCostCalculator } from './document-cost-calculator'
 import { PriceProvenanceBadge } from './price-provenance-badge'
 import { ToolLogo } from './tool-logo'
+import { ToolScreenshots } from './tool-screenshots'
 
 const MEDIA = new Set(['pdf', 'image', 'video', 'audio', 'text'])
 const DEPLOYMENT = new Set(['online', 'desktop', 'self-hosted', 'api-tools', 'browser-extension'])
@@ -61,6 +62,10 @@ export function ToolProfile({ slug }: { slug: string }) {
       <ToolHeader tool={tool} />
       <KeyFacts tool={tool} />
       <Capabilities tool={tool} />
+      {/* Before the plan table: a buyer works out what the tool is before what
+          it costs, and this is the only part of the page that shows them the
+          thing rather than describing it. */}
+      <ToolScreenshots name={tool.name} screenshots={tool.screenshots} />
       <PlanTable tool={tool} />
       <DocumentCostCalculator tool={tool} />
       <Editorial tool={tool} />

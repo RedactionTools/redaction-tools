@@ -18,6 +18,16 @@ from apps.catalog.models import (
 LIST_URL = "/api/v1/catalog/tools"
 
 
+def _png_bytes(width, height):
+    import io
+
+    from PIL import Image
+
+    buffer = io.BytesIO()
+    Image.new("RGB", (width, height), (20, 60, 120)).save(buffer, format="PNG")
+    return buffer.getvalue()
+
+
 def _slugs(payload):
     return [tool["slug"] for tool in payload["items"]]
 
@@ -235,3 +245,49 @@ def test_a_quote_only_tool_is_listed_without_a_price(client):
     summary = payload["items"][0]["price_summary"]
     assert summary["is_quote_only"] is True
     assert summary["from_amount"] is None
+
+
+@pytest.mark.django_db
+def test_a_profile_carries_published_screenshots_with_a_srcset(client):
+    """A picture ships as every width it was rendered at, so a phone is not sent
+    the 1920 and the figure can be reserved before it loads."""
+    from apps.catalog import screenshots
+    from apps.catalog.models import ToolScreenshotSource, ToolScreenshotStatus
+
+    tool = Tool.objects.get(slug="adobe-acrobat")
+    screenshots.store(
+        tool=tool,
+        data=_png_bytes(2000, 1000),
+        alt_text="The Acrobat redaction panel",
+        caption="Marking text for redaction",
+        source=ToolScreenshotSource.STAFF,
+        status=ToolScreenshotStatus.PUBLISHED,
+    )
+
+    payload = client.get(f"{LIST_URL}/adobe-acrobat").json()
+
+    shot = payload["screenshots"][0]
+    assert shot["alt"] == "The Acrobat redaction panel"
+    assert shot["caption"] == "Marking text for redaction"
+    assert (shot["width"], shot["height"]) == (2000, 1000)
+    assert shot["url"].startswith("http")
+    assert "480w" in shot["srcset"] and "1920w" in shot["srcset"]
+
+
+@pytest.mark.django_db
+def test_a_screenshot_awaiting_review_is_not_on_the_profile(client):
+    """A vendor uploading a picture must not be able to publish one."""
+    from apps.catalog import screenshots
+    from apps.catalog.models import ToolScreenshotSource
+
+    tool = Tool.objects.get(slug="adobe-acrobat")
+    screenshots.store(
+        tool=tool,
+        data=_png_bytes(1000, 500),
+        alt_text="Not reviewed yet",
+        source=ToolScreenshotSource.VENDOR,
+    )
+
+    payload = client.get(f"{LIST_URL}/adobe-acrobat").json()
+
+    assert payload["screenshots"] == []

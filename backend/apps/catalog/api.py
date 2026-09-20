@@ -15,13 +15,17 @@ from types import SimpleNamespace
 from django.conf import settings
 from django.http import HttpRequest
 from django.utils import timezone
-from ninja import Query, Router, Status
+from ninja import File, Form, Query, Router, Status
 from ninja.errors import HttpError, ValidationError
+from ninja.files import UploadedFile
 
 from apps.accounts.api import JWTAuth
+from apps.catalog import images
+from apps.catalog import screenshots as screenshot_service
 from apps.catalog.claims import domain_matches, issue_claim_code, verify_claim_code
 from apps.catalog.constants import OWNER_EDITABLE_FIELDS, URL_FIELDS
 from apps.catalog.filters import ToolFilters, apply_filters
+from apps.catalog.images import ImageRejected
 from apps.catalog.models import (
     FacetDimension,
     FacetValue,
@@ -31,6 +35,9 @@ from apps.catalog.models import (
     ToolClaim,
     ToolClaimStatus,
     ToolRevision,
+    ToolScreenshot,
+    ToolScreenshotSource,
+    ToolScreenshotStatus,
     ToolStatus,
     ToolSubmission,
 )
@@ -39,8 +46,10 @@ from apps.catalog.schemas import (
     CatalogStatsOut,
     FacetDimensionOut,
     MyListingOut,
+    MyScreenshotOut,
     PriceProposalIn,
     PriceProposalOut,
+    ScreenshotUploadIn,
     ToolClaimIn,
     ToolClaimOut,
     ToolClaimVerifyIn,
@@ -53,7 +62,7 @@ from apps.catalog.schemas import (
     ToolSubmissionOut,
 )
 from apps.catalog.services import check_external_urls, client_ip, conflict, normalize_host
-from apps.catalog.throttles import ClaimThrottle, SubmitThrottle
+from apps.catalog.throttles import ClaimThrottle, ScreenshotThrottle, SubmitThrottle
 from apps.core.schemas import ErrorSchema
 
 router = Router(tags=["catalog"])
@@ -65,7 +74,9 @@ def _base_queryset():
     return (
         Tool.objects.published()
         .select_related("vendor")
-        .prefetch_related("facets__value__dimension", "plans__prices", "plans__limits")
+        .prefetch_related(
+            "facets__value__dimension", "plans__prices", "plans__limits", "screenshots"
+        )
     )
 
 
@@ -103,6 +114,24 @@ def _facets(tool):
             "label": facet.value.label,
         }
         for facet in facets
+    ]
+
+
+def _screenshots(tool):
+    """The tool's published pictures. Anything awaiting review is not a picture
+    of this tool as far as the public API is concerned."""
+    return [
+        {
+            "url": shot.display_url,
+            "srcset": shot.srcset,
+            "width": shot.width,
+            "height": shot.height,
+            "alt": shot.alt_text,
+            "caption": shot.caption,
+            "captured_at": shot.captured_at,
+        }
+        for shot in tool.screenshots.all()
+        if shot.status == ToolScreenshotStatus.PUBLISHED
     ]
 
 
@@ -210,6 +239,7 @@ def get_tool(request: HttpRequest, slug: str):
             "cons": tool.cons,
             "faq": tool.faq,
             "facets": _facets(tool),
+            "screenshots": _screenshots(tool),
             "plans": plans,
             "updated_at": tool.updated_at,
         },
@@ -581,3 +611,132 @@ def withdraw_price_proposal(request: HttpRequest, proposal_id: int):
     if not deleted:
         return Status(404, {"detail": "No pending proposal of yours with that id."})
     return Status(204, None)
+
+
+# --- Owner screenshots -----------------------------------------------------
+# The one kind of content an owner holds that we cannot produce ourselves: a
+# picture of their own product. Still a proposal - an upload is stored, rendered
+# and left pending, and only an editor moves it onto the profile.
+
+
+def _my_screenshot_out(shot):
+    return {
+        "id": shot.pk,
+        "url": shot.display_url,
+        "srcset": shot.srcset,
+        "width": shot.width,
+        "height": shot.height,
+        "alt": shot.alt_text,
+        "caption": shot.caption,
+        "status": shot.status,
+        "review_note": shot.review_note,
+        "created_at": shot.created_at,
+    }
+
+
+@router.get(
+    "/my-listings/{slug}/screenshots",
+    response=list[MyScreenshotOut],
+    auth=JWTAuth(),
+    summary="Screenshots on a listing you maintain",
+)
+def list_my_screenshots(request: HttpRequest, slug: str):
+    """Every status, not just the published ones: a pending upload that was
+    invisible here would be uploaded again."""
+    tool = _owned_tool_or_404(request, slug)
+    return [_my_screenshot_out(shot) for shot in tool.screenshots.all()]
+
+
+@router.post(
+    "/my-listings/{slug}/screenshots",
+    response={201: MyScreenshotOut},
+    auth=JWTAuth(),
+    throttle=[ScreenshotThrottle()],
+    summary="Upload a screenshot of a listing you maintain",
+)
+def upload_tool_screenshot(
+    request: HttpRequest,
+    slug: str,
+    payload: Form[ScreenshotUploadIn],
+    image: File[UploadedFile],
+):
+    tool = _owned_tool_or_404(request, slug)
+
+    # Stripped before it is judged, so whitespace does not satisfy a field that
+    # exists to be read aloud. The admin form strips too and the MCP tool
+    # refuses a blank by name; this was the one surface that took it.
+    alt_text = payload.alt_text.strip()
+    if not alt_text:
+        raise ValidationError(
+            [
+                {
+                    "type": "value_error",
+                    "loc": ["body", "alt_text"],
+                    "msg": "Say what the picture shows: this is read to anyone who cannot see it.",
+                }
+            ]
+        )
+
+    # Rejected uploads do not count: a vendor whose picture was turned down can
+    # try a better one, and a rejection that consumed a slot forever would make
+    # the review a punishment.
+    held = tool.screenshots.exclude(status=ToolScreenshotStatus.REJECTED).count()
+    if held >= settings.CATALOG_MAX_SCREENSHOTS:
+        raise conflict(
+            f"This listing already holds {held} screenshots, which is the limit. "
+            "Withdraw one before adding another."
+        )
+
+    # Django puts no ceiling on an uploaded file's size - it streams a large one
+    # to a temp file - so the size is checked before anything is read into
+    # memory to be decoded.
+    if image.size > images.MAX_UPLOAD_BYTES:
+        raise _image_error(f"That file is too large. The limit is {_max_upload_mb()} MB.")
+
+    try:
+        shot = screenshot_service.store(
+            tool=tool,
+            data=image.read(),
+            alt_text=alt_text,
+            caption=payload.caption,
+            captured_at=payload.captured_at,
+            source=ToolScreenshotSource.VENDOR,
+            uploaded_by=request.auth,
+        )
+    except ImageRejected as exc:
+        raise _image_error(str(exc)) from exc
+
+    return Status(201, _my_screenshot_out(shot))
+
+
+@router.delete(
+    "/my-listings/{slug}/screenshots/{screenshot_id}",
+    response={204: None},
+    auth=JWTAuth(),
+    summary="Withdraw a screenshot you uploaded",
+)
+def withdraw_tool_screenshot(request: HttpRequest, slug: str, screenshot_id: int):
+    """Only while it is still a proposal.
+
+    A published picture is part of the listing, and a vendor pulling one is an
+    edit to the listing - which goes through review like every other edit.
+    """
+    tool = _owned_tool_or_404(request, slug)
+    shot = ToolScreenshot.objects.filter(tool=tool, pk=screenshot_id).first()
+    if shot is None:
+        raise HttpError(404, "No screenshot of yours with that id.")
+    if shot.status == ToolScreenshotStatus.PUBLISHED:
+        raise conflict(
+            "That screenshot is published. Propose the change and an editor will remove it."
+        )
+
+    screenshot_service.discard(shot)
+    return Status(204, None)
+
+
+def _image_error(message):
+    return ValidationError([{"type": "value_error", "loc": ["body", "image"], "msg": message}])
+
+
+def _max_upload_mb():
+    return images.MAX_UPLOAD_BYTES // 1024 // 1024

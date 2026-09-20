@@ -1,6 +1,35 @@
+"""Fixtures shared by the backend suite.
+
+Also the one place that tells tdd-guard's pytest reporter where to write: see
+`pytest_configure` below.
+"""
+
+import pathlib
+
 import pytest
 from django.contrib.auth import get_user_model
 from django.test import Client
+
+# The repo root, which is where `.claude/tdd-guard/data/` lives - not this
+# directory. Derived from this file's location so it is right in any checkout.
+PROJECT_ROOT = pathlib.Path(__file__).resolve().parent.parent
+
+
+@pytest.hookimpl(tryfirst=True)
+def pytest_configure(config):
+    """Point tdd-guard's pytest reporter at the repo root.
+
+    Without this the reporter writes `backend/.claude/tdd-guard/data/test.json`
+    and the hook reads the repo root's, so it sees no test output at all and
+    refuses every implementation edit as unproven - which is worse than no
+    guard, because the discipline it enforces becomes impossible to satisfy.
+
+    It only reads the absolute path from the `tdd_guard_project_root` ini
+    option, so setting that in pyproject.toml would commit one machine's paths.
+    `tryfirst` because the reporter resolves the directory once, in its own
+    `pytest_configure`, and conftest hooks run before entry-point plugins.
+    """
+    config.inicfg["tdd_guard_project_root"] = str(PROJECT_ROOT)
 
 
 @pytest.fixture

@@ -18,6 +18,7 @@ dependencies = [
     "django-cors-headers>=4.9.0",
     "django-mcpz>=1.0.3,<2",
     "msgspec>=0.20",
+    "pillow>=12.0",
 ]
 
 [dependency-groups]
@@ -27,6 +28,7 @@ dev = [
     "pytest-django>=4.14",
     "pytest-cov>=7.0",
     "pre-commit>=4.0",
+    "tdd-guard-pytest>=0.1.2",
 ]
 
 [tool.ruff]

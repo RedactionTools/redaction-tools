@@ -30,6 +30,7 @@ import type {
   FacetDimensionOut,
   ListToolsParams,
   MyListingOut,
+  MyScreenshotOut,
   PriceProposalIn,
   PriceProposalOut,
   ToolClaimIn,
@@ -40,7 +41,8 @@ import type {
   ToolRevisionIn,
   ToolRevisionOut,
   ToolSubmissionIn,
-  ToolSubmissionOut
+  ToolSubmissionOut,
+  UploadToolScreenshotBody
 } from '../model';
 
 import { customFetch } from '../../fetcher';
@@ -1182,4 +1184,268 @@ export const useWithdrawPriceProposal = <TError = ErrorSchema,
         TContext
       > => {
       return useMutation(getWithdrawPriceProposalMutationOptions(options), queryClient);
+    }
+    export const getListMyScreenshotsUrl = (slug: string,) => {
+
+
+
+
+  return `/api/v1/catalog/my-listings/${slug}/screenshots`
+}
+
+/**
+ * Every status, not just the published ones: a pending upload that was
+ * invisible here would be uploaded again.
+ * @summary Screenshots on a listing you maintain
+ */
+export const listMyScreenshots = async (slug: string, options?: Parameters<typeof customFetch>[1]): Promise<MyScreenshotOut[]> => {
+
+  return customFetch<MyScreenshotOut[]>(getListMyScreenshotsUrl(slug),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListMyScreenshotsQueryKey = (slug: string,) => {
+    return [
+    `/api/v1/catalog/my-listings/${slug}/screenshots`
+    ] as const;
+    }
+
+
+export const getListMyScreenshotsQueryOptions = <TData = Awaited<ReturnType<typeof listMyScreenshots>>, TError = unknown>(slug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyScreenshots>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListMyScreenshotsQueryKey(slug);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listMyScreenshots>>> = ({ signal }) => listMyScreenshots(slug, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: slug !== null && slug !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listMyScreenshots>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListMyScreenshotsQueryResult = NonNullable<Awaited<ReturnType<typeof listMyScreenshots>>>
+export type ListMyScreenshotsQueryError = unknown
+
+
+export function useListMyScreenshots<TData = Awaited<ReturnType<typeof listMyScreenshots>>, TError = unknown>(
+ slug: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyScreenshots>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMyScreenshots>>,
+          TError,
+          Awaited<ReturnType<typeof listMyScreenshots>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListMyScreenshots<TData = Awaited<ReturnType<typeof listMyScreenshots>>, TError = unknown>(
+ slug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyScreenshots>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMyScreenshots>>,
+          TError,
+          Awaited<ReturnType<typeof listMyScreenshots>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListMyScreenshots<TData = Awaited<ReturnType<typeof listMyScreenshots>>, TError = unknown>(
+ slug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyScreenshots>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Screenshots on a listing you maintain
+ */
+
+export function useListMyScreenshots<TData = Awaited<ReturnType<typeof listMyScreenshots>>, TError = unknown>(
+ slug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyScreenshots>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListMyScreenshotsQueryOptions(slug,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export const getUploadToolScreenshotUrl = (slug: string,) => {
+
+
+
+
+  return `/api/v1/catalog/my-listings/${slug}/screenshots`
+}
+
+/**
+ * @summary Upload a screenshot of a listing you maintain
+ */
+export const uploadToolScreenshot = async (slug: string,
+    uploadToolScreenshotBody: UploadToolScreenshotBody, options?: Parameters<typeof customFetch>[1]): Promise<MyScreenshotOut> => {
+    const formData = new FormData();
+formData.append(`alt_text`, uploadToolScreenshotBody.alt_text);
+if(uploadToolScreenshotBody.caption !== undefined) {
+ formData.append(`caption`, uploadToolScreenshotBody.caption);
+ }
+if(uploadToolScreenshotBody.captured_at !== undefined && uploadToolScreenshotBody.captured_at !== null) {
+ formData.append(`captured_at`, uploadToolScreenshotBody.captured_at);
+ }
+formData.append(`image`, uploadToolScreenshotBody.image);
+
+  return customFetch<MyScreenshotOut>(getUploadToolScreenshotUrl(slug),
+  {
+    ...options,
+    method: 'POST'
+    ,
+    body: formData
+  }
+);}
+
+
+
+
+
+export const getUploadToolScreenshotMutationKey = () => ['uploadToolScreenshot'] as const;
+
+export const getUploadToolScreenshotMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadToolScreenshot>>, TError,UploadToolScreenshotMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof uploadToolScreenshot>>, TError,UploadToolScreenshotMutationVariables, TContext> => {
+
+const mutationKey = getUploadToolScreenshotMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof uploadToolScreenshot>>, UploadToolScreenshotMutationVariables> = (props) => {
+          const {slug,data} = props ?? {};
+
+          return  uploadToolScreenshot(slug,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UploadToolScreenshotMutationResult = NonNullable<Awaited<ReturnType<typeof uploadToolScreenshot>>>
+    export type UploadToolScreenshotMutationBody = UploadToolScreenshotBody
+    export type UploadToolScreenshotMutationError = unknown
+    export type UploadToolScreenshotMutationVariables = {slug: string;data: UploadToolScreenshotBody}
+
+    /**
+ * @summary Upload a screenshot of a listing you maintain
+ */
+export const useUploadToolScreenshot = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadToolScreenshot>>, TError,UploadToolScreenshotMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof uploadToolScreenshot>>,
+        TError,
+        UploadToolScreenshotMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUploadToolScreenshotMutationOptions(options), queryClient);
+    }
+    export const getWithdrawToolScreenshotUrl = (slug: string,
+    screenshotId: number,) => {
+
+
+
+
+  return `/api/v1/catalog/my-listings/${slug}/screenshots/${screenshotId}`
+}
+
+/**
+ * Only while it is still a proposal.
+ *
+ * A published picture is part of the listing, and a vendor pulling one is an
+ * edit to the listing - which goes through review like every other edit.
+ * @summary Withdraw a screenshot you uploaded
+ */
+export const withdrawToolScreenshot = async (slug: string,
+    screenshotId: number, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getWithdrawToolScreenshotUrl(slug,screenshotId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getWithdrawToolScreenshotMutationKey = () => ['withdrawToolScreenshot'] as const;
+
+export const getWithdrawToolScreenshotMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof withdrawToolScreenshot>>, TError,WithdrawToolScreenshotMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof withdrawToolScreenshot>>, TError,WithdrawToolScreenshotMutationVariables, TContext> => {
+
+const mutationKey = getWithdrawToolScreenshotMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof withdrawToolScreenshot>>, WithdrawToolScreenshotMutationVariables> = (props) => {
+          const {slug,screenshotId} = props ?? {};
+
+          return  withdrawToolScreenshot(slug,screenshotId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type WithdrawToolScreenshotMutationResult = NonNullable<Awaited<ReturnType<typeof withdrawToolScreenshot>>>
+
+    export type WithdrawToolScreenshotMutationError = unknown
+    export type WithdrawToolScreenshotMutationVariables = {slug: string;screenshotId: number}
+
+    /**
+ * @summary Withdraw a screenshot you uploaded
+ */
+export const useWithdrawToolScreenshot = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof withdrawToolScreenshot>>, TError,WithdrawToolScreenshotMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof withdrawToolScreenshot>>,
+        TError,
+        WithdrawToolScreenshotMutationVariables,
+        TContext
+      > => {
+      return useMutation(getWithdrawToolScreenshotMutationOptions(options), queryClient);
     }

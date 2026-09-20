@@ -53,6 +53,7 @@
     "prettier": "^3.9.7",
     "prettier-plugin-tailwindcss": "^0.8.1",
     "tailwindcss": "^4",
+    "tdd-guard-vitest": "^0.2.0",
     "typescript": "^5",
     "vite": "^8",
     "vitest": "5.0.1"

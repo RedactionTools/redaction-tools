@@ -39,6 +39,13 @@ Every write is live and audited. There is no draft or review step. A listing
 edit is recorded as an already-applied revision; a price opens a new row and
 closes the one it supersedes, so the published history stays intact.
 
+A screenshot is added from a URL rather than uploaded: catalog_add_screenshot
+fetches it, strips its metadata and renders it at every width the site serves.
+Pass the largest capture you can find - a pre-scaled one cannot be enlarged
+afterwards - and always write alt_text describing the interface. Pictures
+vendors send in arrive pending; catalog_list_screenshots shows them and
+catalog_review_screenshot decides.
+
 catalog_get_tool returns `listability_reasons`: the list of what stands between
 a listing and being a public page. Work it down, then read it again.
 

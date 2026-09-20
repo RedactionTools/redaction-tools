@@ -6,7 +6,7 @@ import type { ToolDetailOut } from '@/lib/api/generated/model'
 import { makeQueryClient } from '@/lib/query/client'
 import { renderWithProviders } from '@/test/render'
 
-import { makeToolDetail } from './fixtures'
+import { makeScreenshot, makeToolDetail } from './fixtures'
 import { ToolProfile } from './tool-profile'
 
 vi.mock('next-auth/react', () => ({
@@ -27,6 +27,15 @@ describe('ToolProfile', () => {
     render()
 
     expect(screen.getByRole('button', { name: /claim this listing/i })).toBeInTheDocument()
+  })
+
+  // Above the plan table on purpose: a buyer decides what the tool is before
+  // they care what it costs, and the pictures are the only part of the page that
+  // shows them the thing itself.
+  it('shows the listing gallery when it has one', () => {
+    render(makeToolDetail({ screenshots: [makeScreenshot()] }))
+
+    expect(screen.getByRole('heading', { name: 'Screenshots' })).toBeInTheDocument()
   })
 
   it('states the price as a sentence carrying unit, currency and date', () => {

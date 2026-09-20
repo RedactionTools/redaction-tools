@@ -50,6 +50,10 @@ services:
       EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD:-}
       EMAIL_USE_TLS: ${EMAIL_USE_TLS:-true}
       DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL:-noreply@redaction-tools.com}
+      # Absolute, and on the API's own host: screenshot URLs are rendered into
+      # pages served from the apex, so a site-relative path would resolve
+      # against the frontend, which hosts none of them.
+      PUBLIC_MEDIA_URL: ${PUBLIC_MEDIA_URL:?set PUBLIC_MEDIA_URL in .env}
     depends_on:
       db:
         condition: service_healthy
@@ -58,6 +62,11 @@ services:
     build:
       context: ./backend
     environment: *backend_env
+    volumes:
+      # Uploaded screenshots and their renditions. A named volume because they
+      # are written at runtime and are not in the image: without it every
+      # deploy would drop every picture in the catalog.
+      - media_data:/app/media
     ports:
       - "${BACKEND_PORT:-8007}:8007"
     networks:
@@ -77,6 +86,10 @@ services:
       context: ./backend
     command: python manage.py qcluster
     environment: *backend_env
+    # The same volume: a background task that re-renders a screenshot writes
+    # the same files the web process serves.
+    volumes:
+      - media_data:/app/media
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -114,6 +127,7 @@ services:
 
 volumes:
   postgres_data:
+  media_data:
 
 networks:
   # Shared with the pdf-redaction stack, whose Caddy terminates TLS and reverse

@@ -9,6 +9,7 @@ import type { PlanOut } from './planOut';
 import type { PriceSummaryOut } from './priceSummaryOut';
 import type { ToolDetailOutFaqItem } from './toolDetailOutFaqItem';
 import type { ToolFacetOut } from './toolFacetOut';
+import type { ToolScreenshotOut } from './toolScreenshotOut';
 import type { VendorOut } from './vendorOut';
 
 export interface ToolDetailOut {
@@ -30,6 +31,7 @@ export interface ToolDetailOut {
   cons: string[];
   faq: ToolDetailOutFaqItem[];
   facets: ToolFacetOut[];
+  screenshots: ToolScreenshotOut[];
   plans: PlanOut[];
   updated_at: string;
 }

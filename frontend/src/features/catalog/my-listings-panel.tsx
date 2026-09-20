@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useListMyListings } from '@/lib/api/generated/catalog/catalog'
 
 import { ListingEditor } from './listing-editor'
+import { ScreenshotUploader } from './screenshot-uploader'
 
 export function MyListingsPanel() {
   const { data, isPending } = useListMyListings()
@@ -52,6 +53,14 @@ export function MyListingsPanel() {
 
               <div className="mt-4">
                 <ListingEditor listing={listing} />
+              </div>
+
+              {/* Beside the editor rather than inside it: a revision is a set of
+                  field changes an editor rules on as one, and a picture is a
+                  file that arrives, gets rendered and is reviewed on its own. */}
+              <div className="border-border mt-6 border-t pt-4">
+                <h3 className="mb-3 text-sm font-medium">Screenshots</h3>
+                <ScreenshotUploader slug={listing.slug} name={listing.name} />
               </div>
             </Card>
           </li>
