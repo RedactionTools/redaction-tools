@@ -21,7 +21,7 @@ describe('MobileNav', () => {
     )
     expect(within(drawer).getByRole('link', { name: 'Methodology' })).toHaveAttribute(
       'href',
-      '/methodology',
+      '/docs/methodology',
     )
     expect(within(drawer).getByRole('link', { name: 'Submit a tool' })).toHaveAttribute(
       'href',

@@ -69,7 +69,7 @@ export function MobileNav() {
           has nothing to say past its title. */}
       <DialogContent
         aria-describedby={undefined}
-        className="fixed inset-y-0 right-0 flex w-72 max-w-[85vw] flex-col gap-6 border-l p-6"
+        className="border-border fixed inset-y-0 right-0 flex w-72 max-w-[85vw] flex-col gap-6 border-l p-6"
       >
         <div className="flex items-center justify-between">
           <DialogTitle>Menu</DialogTitle>

@@ -27,7 +27,7 @@ deployment, redaction method and pricing model](.github/screenshot-catalog.png)]
 | `/tool/<slug>/` | A tool's page — plans, prices, provenance and our own assessment |
 | `/price-calculator/` | Your volume, costed against every plan's published rate |
 | `/submit/` | Tell us about a tool we are missing |
-| `/methodology/` | Where prices come from, and what we will not do |
+| `/docs/` | How prices are verified, what a listing means, and how to read the catalog with a machine |
 | `/my-listings/` | Owner area for vendors with an approved claim |
 
 The calculator is the answer to prices published in units that do not compare. Give it a volume

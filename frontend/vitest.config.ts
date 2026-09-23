@@ -35,7 +35,14 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'lcov'],
       include: ['src/**'],
-      exclude: ['src/lib/api/generated/**', 'src/**/*.d.ts', 'src/app/**/layout.tsx'],
+      // `source.ts` is a fumadocs macro shell: it throws if imported outside the
+      // bundler, so there is nothing here to cover.
+      exclude: [
+        'src/lib/api/generated/**',
+        'src/**/*.d.ts',
+        'src/app/**/layout.tsx',
+        'src/lib/source.ts',
+      ],
     },
   },
 })

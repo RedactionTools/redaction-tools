@@ -74,8 +74,9 @@ describe('SiteFooter', () => {
     expect(screen.getByRole('link', { name: 'All tools' })).toHaveAttribute('href', '/')
     expect(screen.getByRole('link', { name: 'How we verify prices' })).toHaveAttribute(
       'href',
-      '/methodology',
+      '/docs/methodology',
     )
+    expect(screen.getByRole('link', { name: 'Documentation' })).toHaveAttribute('href', '/docs')
     expect(screen.getByRole('link', { name: 'Submit a tool' })).toHaveAttribute('href', '/submit')
     expect(screen.getByRole('link', { name: 'Your listings' })).toHaveAttribute(
       'href',

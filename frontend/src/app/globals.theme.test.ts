@@ -13,7 +13,13 @@ import { describe, expect, it } from 'vitest'
  */
 const CSS = readFileSync(join(import.meta.dirname, 'globals.css'), 'utf8')
 
-const THEME_TOKENS = [...CSS.matchAll(/--color-([a-z0-9-]+):/g)].map((match) => match[1])
+/**
+ * The `fd-` namespace is skipped: those belong to fumadocs, which defines every
+ * one of them in both themes in its own stylesheet. The block at the foot of
+ * globals.css only re-points them at the tokens below, so there is no
+ * `--fd-background:` for the both-themes check to find.
+ */
+const THEME_TOKENS = [...CSS.matchAll(/--color-(?!fd-)([a-z0-9-]+):/g)].map((match) => match[1])
 
 describe('the theme', () => {
   it('defines the tones the catalog spends on findings', () => {

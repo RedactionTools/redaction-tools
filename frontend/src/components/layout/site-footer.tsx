@@ -37,8 +37,8 @@ function SocialLink({ href, mark, children }: { href: string; mark: string; chil
 
 export function SiteFooter() {
   // Read at render, not hardcoded, so the footer is not wrong every January.
-  // The dynamic routes get the real year; the prerendered ones (/methodology,
-  // /submit) carry the year of the build that produced the image.
+  // The dynamic routes get the real year; the prerendered ones (/submit and
+  // every /docs page) carry the year of the build that produced the image.
   const year = new Date().getFullYear()
 
   return (
@@ -57,8 +57,11 @@ export function SiteFooter() {
             <Link href="/" className="hover:text-foreground">
               All tools
             </Link>
-            <Link href="/methodology" className="hover:text-foreground">
+            <Link href="/docs/methodology" className="hover:text-foreground">
               How we verify prices
+            </Link>
+            <Link href="/docs" className="hover:text-foreground">
+              Documentation
             </Link>
             <Link href="/submit" className="hover:text-foreground">
               Submit a tool

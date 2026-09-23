@@ -32,9 +32,22 @@ const SKIPPED = [
   '/icon.png',
   '/apple-icon.png',
   '/_next/static/chunk.js',
+  // Hit on every debounced keystroke in the docs search, and a JSON fetch is
+  // no place for a rotated-session Set-Cookie.
+  '/api/search',
 ]
 
-const GUARDED = ['/', '/account', '/my-listings', '/tool/adobe-acrobat', '/price-calculator']
+// The docs stay guarded: their header renders a session-aware account menu,
+// exactly as every other page does.
+const GUARDED = [
+  '/',
+  '/account',
+  '/my-listings',
+  '/tool/adobe-acrobat',
+  '/price-calculator',
+  '/docs',
+  '/docs/methodology',
+]
 
 describe('the proxy matcher', () => {
   it.each(SKIPPED)('leaves %s to Next', (path) => {

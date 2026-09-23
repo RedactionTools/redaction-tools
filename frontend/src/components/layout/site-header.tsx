@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import type { ReactNode } from 'react'
 
 import { Container } from '@/components/layout/container'
 import { GitHubLink } from '@/components/layout/github-link'
@@ -8,7 +9,12 @@ import { NAV_LINKS } from '@/components/layout/nav-links'
 import { ThemeToggle } from '@/components/layout/theme-toggle'
 import { UserMenu } from '@/features/account/user-menu'
 
-export function SiteHeader() {
+/**
+ * `actions` is a slot rather than a flag because the only caller that needs one
+ * is /docs, and it needs a fumadocs search trigger. Importing that here would
+ * put fumadocs in the client bundle of every page on the site.
+ */
+export function SiteHeader({ actions }: { actions?: ReactNode } = {}) {
   return (
     // Sticky rather than fixed: it keeps its place in the flex column, so the
     // page below needs no compensating top padding. z-40 sits under the account
@@ -37,6 +43,7 @@ export function SiteHeader() {
             <GitHubLink />
           </nav>
           <ThemeToggle />
+          {actions}
           <UserMenu />
           <MobileNav />
         </div>

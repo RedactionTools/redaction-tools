@@ -1,4 +1,6 @@
 @import 'tailwindcss';
+@import 'fumadocs-ui/css/neutral.css';
+@import 'fumadocs-ui/css/preset.css';
 
 /* Tailwind v4 dropped `darkMode: 'class'`; the variant is declared here instead.
    next-themes puts `.dark` on <html>. */
@@ -52,4 +54,46 @@
   --warn: oklch(0.79 0.14 70);
   --warn-subtle: oklch(0.3 0.06 70);
   --overlay: oklch(0 0 0 / 0.6);
+}
+
+/**
+ * Fumadocs reads its own `--color-fd-*` namespace. Pointing it at the tokens
+ * above is what makes /docs the same site in both themes.
+ *
+ * Unlayered and stated after the imports on purpose: neutral.css sets these in
+ * a plain `.dark { }` rule, which is unlayered too and would beat a `@theme`
+ * override - `@theme` emits into `@layer theme`, and unlayered always wins.
+ * Equal specificity, later in source order, so this wins instead.
+ *
+ * One selector list rather than two blocks: the values are `var(--background)`
+ * and friends, and `.dark` already flips those, so the indirection carries the
+ * theme by itself.
+ */
+:root,
+.dark {
+  --color-fd-background: var(--background);
+  --color-fd-foreground: var(--foreground);
+  --color-fd-muted: var(--muted);
+  --color-fd-muted-foreground: var(--muted-foreground);
+  --color-fd-border: var(--border);
+  --color-fd-ring: var(--ring);
+  --color-fd-card: var(--surface);
+  --color-fd-card-foreground: var(--foreground);
+  --color-fd-popover: var(--surface);
+  --color-fd-popover-foreground: var(--foreground);
+  --color-fd-primary: var(--foreground);
+  --color-fd-primary-foreground: var(--background);
+  --color-fd-secondary: var(--muted);
+  --color-fd-secondary-foreground: var(--foreground);
+  --color-fd-accent: var(--muted);
+  --color-fd-accent-foreground: var(--foreground);
+  --color-fd-overlay: var(--overlay);
+}
+
+/* neutral.css tints the sidebar separately in dark mode at `.dark #nd-sidebar`,
+   which outranks the block above. Matched rather than fought. */
+.dark #nd-sidebar {
+  --color-fd-muted: var(--muted);
+  --color-fd-secondary: var(--muted);
+  --color-fd-muted-foreground: var(--muted-foreground);
 }

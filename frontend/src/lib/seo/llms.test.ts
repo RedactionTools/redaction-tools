@@ -8,7 +8,11 @@ const SITE = 'https://redaction-tools.com'
 const GENERATED = new Date('2026-09-20T00:00:00Z')
 
 describe('buildLlmsTxt', () => {
-  const text = (tools = [makeTool()]) => buildLlmsTxt(SITE, tools, GENERATED)
+  const DOCS = [
+    { title: 'Methodology', url: '/docs/methodology', description: 'Where prices come from.' },
+    { title: 'Glossary', url: '/docs/buying/glossary', description: 'The filter vocabulary.' },
+  ]
+  const text = (tools = [makeTool()], docs = DOCS) => buildLlmsTxt(SITE, tools, GENERATED, docs)
 
   it('opens with an H1 and a blockquote summary', () => {
     const [title, blank, quote] = text().split('\n')
@@ -34,10 +38,28 @@ describe('buildLlmsTxt', () => {
     )
   })
 
-  it('points at the calculator, the methodology and the full file', () => {
+  it('points at the calculator, the docs and the full file', () => {
     expect(text()).toContain(`${SITE}/price-calculator`)
-    expect(text()).toContain(`${SITE}/methodology`)
+    expect(text()).toContain(`${SITE}/docs`)
     expect(text()).toContain(`${SITE}/llms-full.txt`)
+  })
+
+  it('lists every documentation page it is handed, with its description', () => {
+    expect(text()).toContain('## Documentation')
+    expect(text()).toContain(`- [Methodology](${SITE}/docs/methodology): Where prices come from.`)
+    expect(text()).toContain(`- [Glossary](${SITE}/docs/buying/glossary)`)
+  })
+
+  /**
+   * The old URL 308s. Naming it here would hand a crawler a redirect and make
+   * this file disagree with the sitemap beside it.
+   */
+  it('never points at the methodology at its old URL', () => {
+    expect(text()).not.toContain(`(${SITE}/methodology)`)
+  })
+
+  it('omits the documentation section entirely when there is none', () => {
+    expect(text([makeTool()], [])).not.toContain('## Documentation')
   })
 
   it('states the trial and free-tier distinction the catalog turns on', () => {

@@ -83,7 +83,7 @@ export function ToolScreenshots({
 
       <Dialog open={enlarged !== null} onOpenChange={(open) => !open && setEnlarged(null)}>
         {enlarged ? (
-          <DialogContent className="fixed inset-4 z-50 flex flex-col gap-3 overflow-auto rounded-lg border p-4 sm:inset-8">
+          <DialogContent className="border-border fixed inset-4 z-50 flex flex-col gap-3 overflow-auto rounded-lg border p-4 sm:inset-8">
             <div className="flex items-start justify-between gap-4">
               <DialogTitle>{`${name}: ${enlarged.alt}`}</DialogTitle>
               <DialogClose className="text-muted-foreground hover:text-foreground text-sm">

@@ -237,6 +237,9 @@ backend/media/
 # frontend/src/lib/api/generated/, both of which CI checks for staleness.
 node_modules/
 frontend/.next/
+# fumadocs-mdx: only emitted if a source.config.ts ever appears, but nothing
+# else in this file would catch it.
+frontend/.source/
 frontend/out/
 frontend/build/
 frontend/coverage/

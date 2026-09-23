@@ -11,8 +11,25 @@ describe('buildSitemapEntries', () => {
     const urls = buildSitemapEntries(SITE, []).map((entry) => entry.url)
 
     expect(urls).toContain(`${SITE}/`)
-    expect(urls).toContain(`${SITE}/methodology`)
     expect(urls).toContain(`${SITE}/submit`)
+    expect(urls).toContain(`${SITE}/price-calculator`)
+  })
+
+  it('lists every docs page it is handed', () => {
+    const urls = buildSitemapEntries(SITE, [], ['/docs', '/docs/methodology']).map((e) => e.url)
+
+    expect(urls).toContain(`${SITE}/docs`)
+    expect(urls).toContain(`${SITE}/docs/methodology`)
+  })
+
+  /**
+   * The methodology moved into the docs and its old URL 308s. A sitemap that
+   * still listed it would spend crawl budget proving the page had moved.
+   */
+  it('does not list a URL that redirects', () => {
+    const urls = buildSitemapEntries(SITE, [], ['/docs/methodology']).map((e) => e.url)
+
+    expect(urls).not.toContain(`${SITE}/methodology`)
   })
 
   it('gives every tool its canonical URL', () => {
@@ -81,9 +98,9 @@ describe('the hub entry', () => {
   })
 
   it('leaves the trust pages undated, having only the build date to offer', () => {
-    const entries = buildSitemapEntries(SITE, [makeTool()])
+    const entries = buildSitemapEntries(SITE, [makeTool()], ['/docs/methodology'])
 
-    for (const path of ['/methodology', '/submit', '/price-calculator']) {
+    for (const path of ['/submit', '/price-calculator', '/docs/methodology']) {
       expect(entries.find((entry) => entry.url === `${SITE}${path}`)?.lastModified).toBeUndefined()
     }
   })

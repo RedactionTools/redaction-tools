@@ -38,6 +38,34 @@ but Next itself runs on Node; do not use `bun --bun next dev`.
 - **Middleware is `src/proxy.ts`**, not `middleware.ts`. Next 16 renamed it and
   silently ignores the old name — auth would stop running with no error.
 
+## Docs (`/docs`)
+
+Fumadocs, with MDX in `frontend/content/docs/`. What bites:
+
+- **`src/lib/source.ts`, never `frontend/lib/source.ts`.** The repo `.gitignore`
+  carries an unanchored `lib/` rule countered only by `!frontend/src/**`, so a
+  top-level `lib/` is silently untracked.
+- **`defineDocs` is a macro.** It throws outside the bundler, so **nothing with a
+  vitest test may import `@/lib/source`**, directly or transitively. That is why
+  `buildSitemapEntries` and `buildLlmsTxt` take docs URLs as a parameter — the
+  untested route files supply them.
+- **`next.config.mjs`, not `.ts`.** Next transpiles a TypeScript config to
+  CommonJS and `require()`s it, and `fumadocs-mdx/next` is ESM-only.
+- **`DocsLayout`'s `nav` is the `md:hidden` sub-bar carrying the sidebar drawer
+  trigger**, not a navbar. Disabling it strands phone readers.
+- **`RootProvider` gets `theme={{ enabled: false }}`** — the root `Providers`
+  already owns next-themes, and fumadocs' own provider fights it over `.dark`.
+- The fumadocs preset is imported in `globals.css`, so it applies site-wide: it
+  styles `body` and sets a default `border-color` on every element. Both are
+  neutralised (utilities beat `@layer base`; the `--color-fd-*` block at the
+  foot of the file points fumadocs at this app's tokens), but a bare `border`
+  utility with no colour now resolves to `--border` rather than `currentColor`.
+- Docs pages are **static** — `generateStaticParams` over the compiled MDX, no
+  backend — which is why they do not need the `force-dynamic` the catalog does.
+- Adding a page means adding it to its folder's `meta.json`: when `pages` is
+  present, anything absent is dropped from the sidebar. `src/test/docs-content.test.ts`
+  catches that, along with missing frontmatter.
+
 ## State boundaries
 
 - **TanStack Query** owns anything that lives on the server, keyed by the

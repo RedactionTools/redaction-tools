@@ -1,0 +1,94 @@
+---
+title: Glossary
+description: The eight dimensions this catalog files tools under — media, deployment, method, pricing model, compliance, platform, capability and audience — and the terms inside each.
+---
+
+Every filter on the catalog is built from one of eight dimensions. Filtering is **OR within
+a dimension and AND across them**: picking PDF and Image widens the result, then adding
+Self-hosted narrows it.
+
+A tool must have a value recorded on media, deployment and method before it can be listed
+at all. The other five are optional and often sparse.
+
+## Redaction, and what it is not
+
+**Redaction** is the permanent removal of information from a document, such that it cannot
+be recovered from the file.
+
+**Masking** covers information up. A black rectangle drawn over a paragraph in a PDF
+viewer hides it from a reader and leaves the text in the file, where anyone can select,
+copy or extract it. This is the single most common way a "redacted" document leaks, and it
+is why **true content removal** is tracked as its own capability below.
+
+## Media
+
+What the tool can redact.
+
+- **PDF** — the default case: documents with a text layer, and scans without one.
+- **Image** — JPEG, PNG and similar, where there is no text layer to remove.
+- **Video** — moving footage, usually faces, licence plates and screens.
+- **Audio** — spoken content, typically bleeped or silenced.
+- **Text and logs** — plain text, CSV, JSON, application logs.
+
+## Deployment
+
+Where the tool runs, which is usually the first question a regulated buyer asks.
+
+- **Online** — a hosted web application. Your documents go to the vendor.
+- **Desktop** — installed software; files stay on the machine.
+- **Self-hosted** — you run it on your own infrastructure.
+- **API** — programmatic access, for redaction inside your own pipeline.
+- **Browser extension** — runs inside the browser against what is on screen.
+
+## Redaction method
+
+How the tool decides what to cover.
+
+- **Manual** — a person selects each region. Slow and fully accountable.
+- **Rule-based** — patterns and dictionaries: card numbers, national ID formats, a list of
+  names.
+- **AI-powered** — a model identifies entities, faces or speech.
+- **Hybrid** — automated detection with a human review step. The common shape for
+  high-stakes work.
+
+## Pricing model
+
+How the tool charges. The difference between these is covered at length in
+[pricing units](/docs/buying/pricing-units).
+
+Free · Freemium · Subscription · Pay per page · Pay per document · Pay per minute ·
+One-time purchase · Open source · Quote only
+
+## Compliance
+
+Regimes and certifications a vendor claims. These are **vendor claims recorded as claims**
+— we note what is published, we do not audit it.
+
+HIPAA · GDPR · CCPA · SOC 2 · ISO 27001 · CJIS · FERPA
+
+## Platform
+
+Operating systems and runtimes: Windows · macOS · Linux · iOS · Android · Web
+
+## Capability
+
+Specific features, and the dimension worth reading closely.
+
+- **True content removal** — the underlying data is destroyed, not covered. See above.
+- **OCR** — reads text out of scans, without which a scanned PDF cannot be searched for
+  anything to redact.
+- **Batch processing** — many files in one operation.
+- **Metadata removal** — strips author, revision history and EXIF, which survive a visual
+  redaction untouched.
+- **Audit log** — a record of who redacted what and when.
+- **Face detection**, **Licence plate detection** — automatic detection in images and
+  video.
+- **Entity detection** — names, addresses, account numbers and similar in text.
+- **Speech to text** — transcription, a prerequisite for redacting audio by content.
+- **Webhooks**, **SSO**, **Air-gapped** — integration and deployment constraints.
+
+## Audience
+
+Who the vendor sells to: Legal · Healthcare · Government · Law enforcement, among others.
+A tool filed under an audience is one whose own marketing targets it, not one we have
+judged suitable for it.

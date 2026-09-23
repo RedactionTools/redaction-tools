@@ -1,0 +1,33 @@
+---
+title: Developers
+description: Reading this catalog with a machine — the public REST API, the staff MCP server and the plain-text summaries.
+---
+
+The catalog is a database with a website in front of it, and the database is readable.
+
+**[REST API](/docs/developers/rest-api)** — the public endpoints: list and filter tools,
+read one, read the facet taxonomy. No key required.
+
+**[MCP server](/docs/developers/mcp-server)** — how our editors read and write the catalog
+from an AI client. Staff-only, but the design is the interesting part.
+
+## Plain text, for readers that are not browsers
+
+Two files, in the shape [llmstxt.org](https://llmstxt.org) describes:
+
+- **[`/llms.txt`](/llms.txt)** — the index: every listed tool with its price in one line,
+  plus links to the reference pages.
+- **[`/llms-full.txt`](/llms-full.txt)** — every fact the catalog holds about every
+  listing: vendor, entry price, free tier, trial, facets, price provenance, the date we
+  last checked, and the vendor's own pricing page.
+
+Both are generated from the same list response the site renders, so they cannot drift from
+what a reader sees. If you are pulling this catalog into a model's context, start here
+rather than scraping the HTML.
+
+## Licensing and attribution
+
+The prices and the taxonomy are facts. The editorial writing — descriptions, strengths,
+limitations — is ours. If you republish figures from here, please link the tool's page so a
+reader can check the provenance and the date, which are the parts that make the number
+worth anything.

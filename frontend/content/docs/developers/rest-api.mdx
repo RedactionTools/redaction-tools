@@ -1,0 +1,75 @@
+---
+title: REST API
+description: The public catalog endpoints — listing and filtering tools, reading one, and the facet taxonomy — plus how the owner routes authenticate.
+---
+
+Base URL: `https://backend.redaction-tools.com/api/v1`
+
+Interactive docs are at [`/api/v1/docs`](https://backend.redaction-tools.com/api/v1/docs),
+generated from the same OpenAPI schema the site's own typed client is built from — so if
+the site can do it, so can you.
+
+## Public endpoints
+
+No authentication, no key.
+
+| Method | Path                    | Returns                                          |
+| ------ | ----------------------- | ------------------------------------------------ |
+| `GET`  | `/catalog/tools`        | Listed tools, filtered and paginated             |
+| `GET`  | `/catalog/tools/{slug}` | One tool with its plans, prices and editorial    |
+| `GET`  | `/catalog/facets`       | The facet taxonomy — dimensions and their values |
+| `GET`  | `/catalog/stats`        | Catalog counts                                   |
+| `GET`  | `/health`               | Liveness                                         |
+
+### Listing tools
+
+`GET /catalog/tools` takes one parameter per facet dimension:
+
+```
+media           pdf | image | video | audio | text
+deployment      online | desktop | self-hosted | api | browser-extension
+method          manual | rule-based | ai | hybrid
+pricing_model   free | freemium | subscription | pay-per-page | ...
+compliance      hipaa | gdpr | ccpa | soc2 | iso27001 | cjis | ferpa
+platform        windows | macos | linux | ios | android | web
+capability      ocr | batch | true-removal | face-detection | ...
+audience        legal | healthcare | government | law-enforcement | ...
+```
+
+plus `has_free_tier`, `q` (free text), `ordering`, `page` and `page_size` (default 50).
+
+**Filtering is OR within a dimension and AND across them.** Passing two media values
+widens the result; adding a deployment value narrows it. Every added dimension is a
+narrowing one.
+
+Only listed tools are returned. A tool that has not cleared
+[the listing bar](/docs/methodology#what-a-listing-has-to-clear) is a row in our database,
+not a result here.
+
+### Reading one tool
+
+`GET /catalog/tools/{slug}` returns the full record: plans, every current price with its
+unit, currency, billing period and overage flag, the provenance of each figure, the date it
+was last checked, our editorial, and the vendor's own copy in its own field.
+
+Prices are **strings with four decimal places**, not floats. Per-page rates go below a cent
+and binary floating point does not represent them exactly — parse them as decimals.
+
+## Owner endpoints
+
+Everything under `/catalog/my-listings`, plus submissions and claims, needs a bearer token
+and is scoped to the caller's own approved claims. These exist for the site's own
+[vendor flows](/docs/vendors) rather than as a general-purpose write API.
+
+Authentication is a Google ID token traded for our own JWT pair. Access tokens live 15
+minutes and refresh tokens rotate — the new refresh token replaces the old one, and
+reusing a spent one fails.
+
+## Error shape and etiquette
+
+The schema declares no 4xx bodies; failures are HTTP status codes with a JSON detail.
+
+There is no published rate limit on the public reads, which is a request rather than a
+guarantee: use `page_size`, cache, and prefer one list call over one call per slug.
+[`/llms-full.txt`](/llms-full.txt) already contains every headline fact for every listing
+in a single response, and is the right thing to fetch if that is what you need.

@@ -11,6 +11,14 @@ given in brackets.
 
 ### Added
 
+- **A documentation section at `/docs`**, built on Fumadocs — seventeen pages across
+  methodology, buyer guides, vendor guides and developer reference, authored as MDX and
+  prerendered, with a sidebar, table of contents and search. The methodology moved out of
+  hardcoded JSX and into `content/docs/methodology.mdx`; `/methodology` redirects there
+  permanently, and the sitemap and `llms.txt` list the docs rather than the old URL. Docs
+  pages are static because they touch no backend, which is what lets them prerender in the
+  image CI builds with no API reachable.
+
 - **A share card on every page** — links to the catalog used to unfurl bare in Slack, LinkedIn
   and everywhere else, because the site carried no Open Graph tags at all. It now declares them
   once, at the root: a tool's card is drawn per request with its name, its vendor and its entry

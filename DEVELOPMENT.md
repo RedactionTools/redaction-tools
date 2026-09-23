@@ -31,7 +31,8 @@ backend/            Django project
   tests/
   openapi.json      committed schema; the Orval input
 frontend/           Next.js app
-  src/app/          routes: (site) chrome, tool/[slug], submit, methodology, auth/
+  src/app/          routes: (site) chrome, tool/[slug], submit, docs/, auth/
+  content/docs/     the fumadocs MDX served at /docs
   src/lib/api/      generated/ (Orval) + the fetch mutator and token source
   src/lib/auth/     framework-free token logic (exchange, refresh, expiry)
   src/lib/catalog/  filter parsing, price formatting, sitemap entries

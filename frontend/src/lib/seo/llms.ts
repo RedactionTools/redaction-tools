@@ -33,7 +33,20 @@ function toolLink(site: string, tool: ToolListItemOut): string {
  * The short index, in the shape llmstxt.org describes: a title, a blockquote
  * that stands on its own, prose, then sections of links.
  */
-export function buildLlmsTxt(site: string, tools: ToolListItemOut[], generatedAt: Date): string {
+/** A docs page, as `app/llms.txt/route.ts` reads it off the fumadocs source. */
+export type DocsEntry = { title: string; url: string; description?: string }
+
+/**
+ * `docs` is a parameter for the same reason the sitemap's is: the tree comes
+ * from a fumadocs macro that throws outside the bundler, and this module has
+ * unit tests.
+ */
+export function buildLlmsTxt(
+  site: string,
+  tools: ToolListItemOut[],
+  generatedAt: Date,
+  docs: readonly DocsEntry[] = [],
+): string {
   const sections: string[] = [
     `# ${SITE_NAME}`,
     tools.length
@@ -55,11 +68,25 @@ export function buildLlmsTxt(site: string, tools: ToolListItemOut[], generatedAt
       '## Reference',
       '',
       `- [Price calculator](${site}/price-calculator): Cost any tool’s plans against your own document volume.`,
-      `- [Methodology](${site}/methodology): Where every price comes from and what a listing has to clear to be published.`,
+      `- [Documentation](${site}/docs): How prices are verified, what a listing means, and how to read the catalog with a machine.`,
       `- [Submit a tool](${site}/submit): Tell us about a redaction tool we are missing.`,
       `- [Full catalog facts](${site}/llms-full.txt): Every tool’s price, vendor and provenance as plain text.`,
     ].join('\n'),
   )
+
+  // Same rule as the tools section above: no heading over an empty list.
+  if (docs.length) {
+    sections.push(
+      [
+        '## Documentation',
+        '',
+        ...docs.map(
+          (doc) =>
+            `- [${doc.title}](${site}${doc.url})${doc.description ? `: ${doc.description}` : ''}`,
+        ),
+      ].join('\n'),
+    )
+  }
 
   return `${sections.join('\n\n')}\n`
 }

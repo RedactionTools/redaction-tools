@@ -48,7 +48,7 @@ export default async function SubmitPage() {
           <li>
             If you work for the vendor, you can claim the listing afterwards and propose
             corrections. See the{' '}
-            <Link className="underline" href="/methodology">
+            <Link className="underline" href="/docs/methodology">
               methodology
             </Link>
             .

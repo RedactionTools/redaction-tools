@@ -1,0 +1,75 @@
+---
+title: MCP server
+description: How our editors read and write the catalog from an AI client — the tool surface, the authentication, and the design rules that keep a model from corrupting the data.
+---
+
+`/mcp` is a [Model Context Protocol](https://modelcontextprotocol.io) server that lets a
+staff user read and edit the catalog from an AI client: list listings, read one, edit it,
+edit its plans, publish a price, review a screenshot.
+
+**It is staff-only.** This page is here because the design decisions are worth reading if
+you are building something similar — a write API whose caller is a language model has
+failure modes an ordinary one does not.
+
+## The tools
+
+```
+catalog_list_tools        catalog_get_tool         catalog_update_tool
+catalog_list_plans        catalog_create_plan      catalog_update_plan
+catalog_set_plan_limit    catalog_set_plan_price
+catalog_add_screenshot    catalog_list_screenshots catalog_review_screenshot
+```
+
+## One tool per table
+
+A plan, its caps and each of its prices are written by separate calls, and that is
+deliberate rather than an oversight.
+
+A single `create_plan_with_everything` would be four writes behind one tool call, and a
+model that got the third argument wrong would leave a half-built plan behind. It also
+flattens a real distinction: **a price carries provenance and a plan does not.** Who
+supplied a figure, when it was checked and whether it is pinned are properties of the
+price, and a combined call would either lose them or invent them.
+
+Instead `create_plan` reports `has_pricing_position`, so a caller can see for itself that
+it has not finished.
+
+`set_plan_price` closes **only the matching slot** — the same currency, billing period and
+overage flag. A metered plan holds its monthly fee and its overage rate as two current
+rows, and a naive "close everything current" would retire the overage rate every time
+somebody corrected the monthly fee.
+
+## Refusals are data, not exceptions
+
+The rules live in one module that imports neither MCP nor the web framework and takes the
+acting user explicitly. It raises a typed refusal for anything the caller could fix by
+trying again differently, and the MCP layer turns that into an **in-band error result**
+rather than a transport failure.
+
+That distinction matters with a model on the other end: a 500 ends the turn, while
+"that currency is not one of the four this plan uses" is something the model reads and
+corrects. Every write records who made it.
+
+## Fetching a URL is the dangerous tool
+
+MCP carries no files, so `catalog_add_screenshot` takes a URL and fetches it. That makes it
+a **server-side fetch initiated by a model**, from inside our network — which is the
+classic SSRF shape.
+
+It runs through a URL validator, and the validator **re-checks every redirect hop**. A 302
+into `169.254.169.254` is the entire attack, and validating only the URL the model supplied
+would walk straight into it.
+
+## Authentication
+
+Two credentials, one gate. OAuth is what an AI client's connector flow mints; a static
+bearer token is what a terminal uses. Both end at the same staff check.
+
+A valid credential belonging to a non-staff account gets **403, not 401** — deliberately,
+so a connector does not loop trying to re-authorise a credential that is fine.
+
+## Outside the generated contract
+
+The MCP surface is exported separately from the REST API, so nothing here reaches
+`openapi.json` or the typed frontend client. Changing an MCP tool must leave both
+untouched, and there is a CI check that says so.

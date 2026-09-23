@@ -1,0 +1,54 @@
+---
+title: The price calculator
+description: How the calculator costs each plan against your own volume, what it does when a plan cannot be costed, and the arithmetic it deliberately refuses to do.
+---
+
+[The calculator](/price-calculator) exists because a published price is not a cost until
+someone supplies a volume. Give it one and it works every plan out at the vendor's own
+rate.
+
+## What you give it
+
+Two numbers: **how many documents a month**, and **how many pages each**. Between them
+they determine every unit in the catalog — pages are documents times pages-per-document,
+documents are documents, and a subscription ignores both.
+
+## What it gives back
+
+For each plan, one of four answers:
+
+**A cost.** The monthly total, plus the effective per-page figure so that plans charging in
+different units land on a comparable line. Where the volume runs past the plan's
+allowance, the breakdown shows the base fee, how far over you went, the unit that cap is
+counted in, and the overage rate applied.
+
+**Included.** The plan charges for a period and publishes no allowance, so your volume
+does not change the bill. This is the honest answer, and it is the place most comparison
+tables quietly substitute a fee divided by an assumed volume.
+
+**Over the limit.** The plan publishes a hard cap your volume exceeds, with no overage rate
+— so the plan cannot serve you at all, at any price. The cap is reported in the unit the
+vendor published it in, whether that is pages or documents, per document or per month.
+
+**Not comparable.** The plan's unit cannot be derived from documents and pages — per-minute
+video pricing, or a credit whose definition is the vendor's own. Showing a number here
+would mean inventing a conversion.
+
+## The arithmetic
+
+All money is held as four-decimal strings and every calculation runs on integer
+ten-thousandths. This is not fussiness: in floating point `0.05 * 3` is
+`0.15000000000000002`, and since the display code reads its precision off the string it is
+given, a float would not merely round badly — it would render a per-page rate at the wrong
+number of digits.
+
+A metered plan carries a base price and an overage price as separate rows, and they are
+selected by their flag rather than by position, so a plan whose overage was entered after
+its monthly fee still costs as a $15 subscription rather than a $0.05 one.
+
+## What it is not
+
+It is not a quote. It uses published list rates, so it knows nothing about your discount,
+your contract minimum, or what a salesperson will do at the end of a quarter. Treat it as
+the floor of a conversation rather than its conclusion, and check the figures against
+[the provenance marks](/docs/methodology#where-a-price-comes-from) on each listing.

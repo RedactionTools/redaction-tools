@@ -15,6 +15,9 @@ export { auth as proxy } from '@/auth'
  * rotated-session `Set-Cookie` to the response, and putting one of those on a
  * year-cached public asset is how a session leaks into a shared cache.
  *
+ * `api/search` is the docs search index: a public JSON endpoint hit on every
+ * debounced keystroke, where a JWT decode per request buys nothing.
+ *
  * `.*opengraph-image` needs the leading `.*` because the lookahead is anchored
  * straight after the `/`, while the per-tool card lives at
  * `/tool/<slug>/opengraph-image-<hash>` - Next appends that hash because the
@@ -24,6 +27,6 @@ export { auth as proxy } from '@/auth'
  */
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon\\.ico|icon\\.png|apple-icon\\.png|robots\\.txt|sitemap\\.xml|llms\\.txt|llms-full\\.txt|.*opengraph-image).*)',
+    '/((?!_next/static|_next/image|api/search|favicon\\.ico|icon\\.png|apple-icon\\.png|robots\\.txt|sitemap\\.xml|llms\\.txt|llms-full\\.txt|.*opengraph-image).*)',
   ],
 }

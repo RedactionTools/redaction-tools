@@ -1,6 +1,7 @@
 import { fetchAllTools } from '@/lib/catalog/server'
 import { clientEnv } from '@/lib/env'
 import { buildLlmsTxt } from '@/lib/seo/llms'
+import { source } from '@/lib/source'
 
 // Like the sitemap: `next build` runs with no backend, and a file baked then
 // would advertise an empty catalog for the life of the image.
@@ -18,7 +19,16 @@ const HEADERS = {
 export async function GET(): Promise<Response> {
   const site = clientEnv.NEXT_PUBLIC_SITE_URL
 
+  const docs = source.getPages().map((page) => ({
+    title: page.data.title,
+    url: page.url,
+    description: page.data.description,
+  }))
+
   // `fetchAllTools` degrades to [] rather than throwing, so a backend blip
-  // costs the tool list rather than serving a crawler a 500.
-  return new Response(buildLlmsTxt(site, await fetchAllTools(), new Date()), { headers: HEADERS })
+  // costs the tool list rather than serving a crawler a 500. The docs come from
+  // the bundle and are always there.
+  return new Response(buildLlmsTxt(site, await fetchAllTools(), new Date(), docs), {
+    headers: HEADERS,
+  })
 }

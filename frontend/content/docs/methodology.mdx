@@ -1,0 +1,70 @@
+---
+title: How we verify prices and decide what gets listed
+description: Where every price in this catalog comes from, how we mark its provenance, what a listing has to clear to be published, and how to correct us.
+---
+
+A comparison is only worth reading if you can check it. This page says where every number
+comes from, what we will not do, and how to tell us we are wrong.
+
+## Where a price comes from
+
+Every published figure carries one of three marks, and they mean different things.
+
+| Mark                         | Meaning                                                                                                                                                                                       |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ⟳ **Read automatically**     | Taken from the vendor's own public pricing page on the date shown. No login, paywall or bot protection is ever bypassed to obtain one.                                                        |
+| ✎ **Entered by our editors** | Typed in by a person, from the source noted on the listing. This is how tools whose pricing page cannot be read automatically still get a published price, instead of being quietly excluded. |
+| 🏷 **Supplied by the vendor** | Submitted by a verified representative and reviewed by us. It is labelled **not independently verified**, because it is not.                                                                  |
+
+Where these disagree, a person decides. A staff or vendor figure is _pinned_, which means
+an automated reading can never silently replace it.
+
+Every price also carries the date it was last checked. That date is not the date the price
+changed — prices are re-checked far more often than they move — so a listing dated last
+week is a claim about our attention, not about the vendor's.
+
+## What we will not do
+
+- **Present a trial as a free tier.** "Free for 14 days" and "free forever" are different
+  products, and we record them separately.
+- **Quote an annual-prepay rate as if it were a monthly one**, or a per-seat price as a
+  flat one. Every figure carries its unit.
+- **Invent a limit a vendor has not published.** An unpublished cap is recorded as
+  unpublished, not as unlimited and not as zero.
+- **Publish a price we could not confirm.** A stale number is marked stale, never refreshed
+  by assumption.
+
+## What a listing has to clear
+
+A tool is a row in a database until it clears every one of these. Until then it has no
+page, and it appears in no list:
+
+- It is **published** — not draft, not archived.
+- It has a **name, a working website and a logo**.
+- It has **at least 400 characters of our own writing**. Copy supplied by a vendor never
+  counts toward that, and is shown in a separate, labelled block.
+- It has a facet recorded on all three of **media, deployment and redaction method** — the
+  dimensions every filter depends on.
+- It has a **pricing position**: at least one public plan with a current price, a free-tier
+  flag, or an explicit enterprise-quote flag. "We could not find out" is not a position.
+
+The bar is one function in the codebase, and the public list runs it over every published
+tool on every request. There is no manual override and no exception list.
+
+## Conflicts of interest
+
+If a tool in this catalog is our own, its listing says so. It is never sorted to the top,
+its price is recorded the same way as everyone else's, and no vendor can pay for placement
+or for a better position.
+
+## Corrections
+
+If a figure here is wrong, tell us and we will fix it.
+
+Vendors can [claim their listing](/docs/vendors/claiming-a-listing) and
+[propose a correction](/docs/vendors/correcting-a-price). Every proposal is reviewed by a
+person before anything changes, and the published result says the vendor supplied it. A
+catalog edited by the vendors it ranks is worth nothing to a buyer, so there is no path
+around that review — not for a vendor, and not for us.
+
+Anyone else: the [submission form](/submit) takes corrections as well as new tools.

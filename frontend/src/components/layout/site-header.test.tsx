@@ -42,6 +42,20 @@ describe('SiteHeader', () => {
   })
 
   /**
+   * The methodology moved into the docs. The header keeps naming it rather than
+   * a generic "Docs": it is the page the catalog's credibility rests on, and a
+   * reader who follows it lands in the docs shell with the sidebar anyway.
+   */
+  it('links to the methodology in its new home', () => {
+    render(<SiteHeader />)
+
+    expect(screen.getByRole('link', { name: 'Methodology' })).toHaveAttribute(
+      'href',
+      '/docs/methodology',
+    )
+  })
+
+  /**
    * CSS-only, so the classes are the behaviour. Below `md` these destinations
    * live in the drawer instead - and because the drawer mounts its contents
    * only while open, there is still exactly one of each in the document.
@@ -64,6 +78,20 @@ describe('SiteHeader', () => {
     const nav = screen.getByRole('navigation', { name: 'Main' })
     expect(nav).not.toContainElement(screen.getByRole('button', { name: 'Theme' }))
     expect(nav).not.toContainElement(screen.getByRole('button', { name: 'Sign in' }))
+  })
+
+  /**
+   * The docs need a search trigger in the header, but the header is rendered on
+   * every page and must not import fumadocs to get one - hence a slot rather
+   * than a `showSearch` flag. It sits outside the folding nav, beside the other
+   * always-visible controls.
+   */
+  it('renders the controls a route hands it, outside the folding nav', () => {
+    render(<SiteHeader actions={<button type="button">Search docs</button>} />)
+
+    const action = screen.getByRole('button', { name: 'Search docs' })
+    expect(action).toBeVisible()
+    expect(screen.getByRole('navigation', { name: 'Main' })).not.toContainElement(action)
   })
 
   it('offers the menu the folded destinations went into', () => {
