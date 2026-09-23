@@ -23,6 +23,7 @@ describe('MobileNav', () => {
       'href',
       '/docs/methodology',
     )
+    expect(within(drawer).getByRole('link', { name: 'Blog' })).toHaveAttribute('href', '/blog')
     expect(within(drawer).getByRole('link', { name: 'Submit a tool' })).toHaveAttribute(
       'href',
       '/submit',

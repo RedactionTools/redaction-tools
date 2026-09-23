@@ -286,6 +286,27 @@ from settings rather than from the request, since a server-rendered page reaches
 In production the uploads live in the `media_data` volume, mounted into `backend` and `qcluster`.
 It is the one piece of state outside Postgres, so it belongs in whatever backs the database up.
 
+## Blog
+
+Posts are MDX in `frontend/content/blog/<slug>.mdx`, compiled by the same fumadocs macro as the
+docs (`src/lib/blog/source.ts`). That is why the standalone image serves `/blog` without
+`content/` on disk, and why every blog route, feed and share card is prerendered at build with no
+backend. What to know:
+
+- **The source module is `source.ts` by necessity.** `next.config.mjs` hands the macro plugin the
+  glob `**/source.ts`, so a module with any other name reaches the runtime unrewritten and throws.
+  Nothing with a vitest test may import it. The testable logic is in `src/lib/blog/posts.ts`,
+  `rss.ts` and `schema.ts`, and it takes posts as a parameter.
+- **Frontmatter** is `src/lib/blog/schema.ts`: `title`, `description`, `date` (`YYYY-MM-DD`),
+  optional `lastmod`, `draft`, `tags`, `authors`, `image`, `keywords`. Authors are ids in
+  `src/lib/blog/authors.ts`. `src/test/blog-content.test.ts` checks every post against the schema
+  and checks that any banner exists under `public/`.
+- **Drafts** render under `next dev` and are absent from every build.
+- **Images** go in `frontend/public/images/blog/<slug>/`.
+- **What reads the posts:** `/blog`, `/blog/page/N`, `/blog/[slug]` (with its own share card),
+  `/blog/tags/...`, the RSS feeds at `/blog/rss.xml` and `/blog/tags/<tag>/rss.xml`, the sitemap and
+  `llms.txt`. The feeds are exempt from the auth proxy, like the other machine-read files.
+
 ## Rendering and the API-down build
 
 Catalog routes and `sitemap.ts` declare `export const dynamic = 'force-dynamic'`. The frontend

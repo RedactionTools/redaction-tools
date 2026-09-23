@@ -63,6 +63,9 @@ export function SiteFooter() {
             <Link href="/docs" className="hover:text-foreground">
               Documentation
             </Link>
+            <Link href="/blog" className="hover:text-foreground">
+              Blog
+            </Link>
             <Link href="/submit" className="hover:text-foreground">
               Submit a tool
             </Link>
@@ -74,6 +77,9 @@ export function SiteFooter() {
                 nothing for the router to prefetch. */}
             <a href="/llms.txt" className="hover:text-foreground">
               llms.txt
+            </a>
+            <a href="/blog/rss.xml" className="hover:text-foreground">
+              RSS
             </a>
           </nav>
         </div>

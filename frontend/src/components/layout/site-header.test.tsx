@@ -41,6 +41,12 @@ describe('SiteHeader', () => {
     )
   })
 
+  it('links to the blog', () => {
+    render(<SiteHeader />)
+
+    expect(screen.getByRole('link', { name: 'Blog' })).toHaveAttribute('href', '/blog')
+  })
+
   /**
    * The methodology moved into the docs. The header keeps naming it rather than
    * a generic "Docs": it is the page the catalog's credibility rests on, and a

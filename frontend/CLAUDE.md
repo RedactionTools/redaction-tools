@@ -66,6 +66,18 @@ Fumadocs, with MDX in `frontend/content/docs/`. What bites:
   present, anything absent is dropped from the sidebar. `src/test/docs-content.test.ts`
   catches that, along with missing frontmatter.
 
+## Blog (`/blog`)
+
+MDX in `frontend/content/blog/`, compiled by the same macro as the docs. The same rules apply:
+
+- **`src/lib/blog/source.ts` must keep that filename** (the macro glob is `**/source.ts`), and
+  nothing tested may import it. Pure logic goes in `src/lib/blog/posts.ts` and takes posts as a
+  parameter.
+- **Blog pages are static:** `generateStaticParams` with `dynamicParams = false`. Feeds use
+  `force-static`.
+- **A post's share card path is hashed** by Next (the `(site)` group is in it), so nothing may
+  spell `/blog/<slug>/opengraph-image` by hand. JSON-LD falls back to the site card instead.
+
 ## State boundaries
 
 - **TanStack Query** owns anything that lives on the server, keyed by the

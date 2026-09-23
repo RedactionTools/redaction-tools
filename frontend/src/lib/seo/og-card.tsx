@@ -118,3 +118,33 @@ export function SiteCard({ tagline }: { tagline: string }) {
     </Frame>
   )
 }
+
+/**
+ * One blog post: its title, and who wrote it when. The title is sized down for
+ * long headlines, which satori will not shrink to fit on its own.
+ */
+export function ArticleCard({ title, byline }: { title: string; byline: string }) {
+  return (
+    <Frame>
+      <Wordmark />
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div style={{ fontSize: 26, color: MUTED, letterSpacing: 1.5 }}>BLOG</div>
+        <div
+          style={{
+            fontSize: title.length > 60 ? 56 : 72,
+            color: INK,
+            fontWeight: 700,
+            lineHeight: 1.1,
+          }}
+        >
+          {title}
+        </div>
+      </div>
+
+      <div style={{ fontSize: 28, color: MUTED, borderTop: `2px solid ${RULE}`, paddingTop: 28 }}>
+        {byline}
+      </div>
+    </Frame>
+  )
+}

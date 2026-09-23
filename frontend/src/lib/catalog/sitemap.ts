@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next'
 
 import type { ToolListItemOut } from '@/lib/api/generated/model'
+import { type BlogPostMeta, tagCounts } from '@/lib/blog/posts'
 
 /**
  * The sitemap, built from whatever the API returned.
@@ -30,6 +31,7 @@ export function buildSitemapEntries(
   site: string,
   tools: ToolListItemOut[],
   docPaths: readonly string[] = [],
+  posts: readonly BlogPostMeta[] = [],
 ): MetadataRoute.Sitemap {
   const staticRoutes: MetadataRoute.Sitemap = [
     // The hub is dated by the catalog beneath it. The others have only the
@@ -59,5 +61,33 @@ export function buildSitemapEntries(
     priority: 0.8,
   }))
 
-  return [...staticRoutes, ...docRoutes, ...toolRoutes]
+  return [...staticRoutes, ...docRoutes, ...blogRoutes(site, posts), ...toolRoutes]
+}
+
+/**
+ * The blog index, its posts and its tag pages. Posts are dated by their last
+ * edit, which the author sets by hand - so unlike a build date it only moves
+ * when the page does. Archive pages (`/blog/page/N`) are left out: each is a
+ * window that slides with every new post, never a page worth indexing.
+ */
+function blogRoutes(site: string, posts: readonly BlogPostMeta[]): MetadataRoute.Sitemap {
+  const edited = (post: BlogPostMeta) => post.lastmod ?? post.date
+  const newest = posts
+    .map(edited)
+    .reduce<string | undefined>((a, b) => (a && a > b ? a : b), undefined)
+
+  return [
+    { url: `${site}/blog`, lastModified: newest, changeFrequency: 'weekly', priority: 0.6 },
+    ...posts.map((post) => ({
+      url: `${site}${post.url}`,
+      lastModified: edited(post),
+      changeFrequency: 'monthly' as const,
+      priority: 0.6,
+    })),
+    ...tagCounts(posts).map((tag) => ({
+      url: `${site}/blog/tags/${tag.slug}`,
+      changeFrequency: 'weekly' as const,
+      priority: 0.3,
+    })),
+  ]
 }

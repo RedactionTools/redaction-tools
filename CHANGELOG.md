@@ -11,6 +11,27 @@ given in brackets.
 
 ### Added
 
+- **A blog at `/blog`**. Posts are MDX in `content/blog/`, compiled by the same Fumadocs
+  macro as the docs, so every post, tag page, archive page, RSS feed and share card is
+  prerendered in the image CI builds with no API reachable. The content model follows
+  pdf-redaction's blog: frontmatter with a date, tags, authors, an optional banner and
+  keywords; reading time and a table of contents per post; previous/next links; and paging
+  at nine posts. The engine does not follow it. Contentlayer2 and pliny would have been a
+  second MDX compiler beside the one already here. SEO:
+  - Each post carries `og:type=article` with its dates, authors and tags.
+  - Its structured data is a `BlogPosting` plus a `Person` for each author, with the publisher
+    and the blog as `@id` pointers rather than copies.
+  - The blog index emits `Blog` markup.
+  - The sitemap lists posts and tag pages, but not archive pages, which shift with every new
+    post.
+  - `llms.txt` gains a Blog section.
+
+  The feeds (`/blog/rss.xml` and one per tag) are exempt from the auth proxy, like the other
+  files machines read. Drafts render under `next dev` and never in a build. A content test
+  checks every post's frontmatter and that its banner exists. It ships with one post,
+  "Introducing Redaction Tools", and a Blog link in the header, the mobile menu and the
+  footer.
+
 - **A documentation section at `/docs`**, built on Fumadocs — seventeen pages across
   methodology, buyer guides, vendor guides and developer reference, authored as MDX and
   prerendered, with a sidebar, table of contents and search. The methodology moved out of

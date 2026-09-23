@@ -1,3 +1,4 @@
+import { getPostMetas } from '@/lib/blog/source'
 import { fetchAllTools } from '@/lib/catalog/server'
 import { clientEnv } from '@/lib/env'
 import { buildLlmsTxt } from '@/lib/seo/llms'
@@ -28,7 +29,7 @@ export async function GET(): Promise<Response> {
   // `fetchAllTools` degrades to [] rather than throwing, so a backend blip
   // costs the tool list rather than serving a crawler a 500. The docs come from
   // the bundle and are always there.
-  return new Response(buildLlmsTxt(site, await fetchAllTools(), new Date(), docs), {
+  return new Response(buildLlmsTxt(site, await fetchAllTools(), new Date(), docs, getPostMetas()), {
     headers: HEADERS,
   })
 }

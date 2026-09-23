@@ -29,6 +29,10 @@ function toolLink(site: string, tool: ToolListItemOut): string {
   return `- [${tool.name}](${site}/tool/${tool.slug}): ${priceSentence(tool.name, tool.price_summary)}`
 }
 
+function pageLink(site: string, page: DocsEntry): string {
+  return `- [${page.title}](${site}${page.url})${page.description ? `: ${page.description}` : ''}`
+}
+
 /**
  * The short index, in the shape llmstxt.org describes: a title, a blockquote
  * that stands on its own, prose, then sections of links.
@@ -46,6 +50,7 @@ export function buildLlmsTxt(
   tools: ToolListItemOut[],
   generatedAt: Date,
   docs: readonly DocsEntry[] = [],
+  posts: readonly DocsEntry[] = [],
 ): string {
   const sections: string[] = [
     `# ${SITE_NAME}`,
@@ -76,16 +81,12 @@ export function buildLlmsTxt(
 
   // Same rule as the tools section above: no heading over an empty list.
   if (docs.length) {
-    sections.push(
-      [
-        '## Documentation',
-        '',
-        ...docs.map(
-          (doc) =>
-            `- [${doc.title}](${site}${doc.url})${doc.description ? `: ${doc.description}` : ''}`,
-        ),
-      ].join('\n'),
-    )
+    sections.push(['## Documentation', '', ...docs.map((doc) => pageLink(site, doc))].join('\n'))
+  }
+
+  // Posts arrive newest first, from the same macro-free route as the docs.
+  if (posts.length) {
+    sections.push(['## Blog', '', ...posts.map((post) => pageLink(site, post))].join('\n'))
   }
 
   return `${sections.join('\n\n')}\n`

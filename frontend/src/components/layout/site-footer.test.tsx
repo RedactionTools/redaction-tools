@@ -77,10 +77,18 @@ describe('SiteFooter', () => {
       '/docs/methodology',
     )
     expect(screen.getByRole('link', { name: 'Documentation' })).toHaveAttribute('href', '/docs')
+    expect(screen.getByRole('link', { name: 'Blog' })).toHaveAttribute('href', '/blog')
     expect(screen.getByRole('link', { name: 'Submit a tool' })).toHaveAttribute('href', '/submit')
     expect(screen.getByRole('link', { name: 'Your listings' })).toHaveAttribute(
       'href',
       '/my-listings',
     )
+  })
+
+  // Feed readers discover a feed from a link as often as from the <head>.
+  it('links to the blog feed', () => {
+    render(<SiteFooter />)
+
+    expect(screen.getByRole('link', { name: 'RSS' })).toHaveAttribute('href', '/blog/rss.xml')
   })
 })

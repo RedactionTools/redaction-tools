@@ -35,6 +35,10 @@ const SKIPPED = [
   // Hit on every debounced keystroke in the docs search, and a JSON fetch is
   // no place for a rotated-session Set-Cookie.
   '/api/search',
+  // Feed readers poll these on a timer, anonymously.
+  '/blog/rss.xml',
+  '/blog/tags/catalog/rss.xml',
+  '/blog/hello/opengraph-image-a1b2c3',
 ]
 
 // The docs stay guarded: their header renders a session-aware account menu,
@@ -47,6 +51,9 @@ const GUARDED = [
   '/price-calculator',
   '/docs',
   '/docs/methodology',
+  '/blog',
+  '/blog/hello',
+  '/blog/tags/catalog',
 ]
 
 describe('the proxy matcher', () => {

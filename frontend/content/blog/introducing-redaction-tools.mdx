@@ -1,0 +1,71 @@
+---
+title: Introducing Redaction Tools
+description: A catalog of redaction software for PDF, image, video and audio, where every price carries its unit, its source and the date we last checked it.
+date: '2026-09-23'
+tags: ['Announcements', 'Catalog']
+authors: ['mykola-melnyk']
+keywords: ['redaction software', 'PDF redaction tools', 'redaction software pricing']
+---
+
+Redaction software is usually bought under pressure: a disclosure deadline, an audit, a
+breach. That is a bad time to discover the market is hard to compare. Vendors publish prices
+in different units, some publish none at all, and "free" can mean a free tier or a
+fortnight's trial depending on who wrote the page.
+
+[Redaction Tools](/) is a catalog built to make that comparison possible. This post covers
+what is in it, how we keep it honest, and where it is going.
+
+## What the catalog is
+
+Each listed tool has its own page. It covers what the tool redacts (PDF, images, video,
+audio), how it finds what to redact, where it runs, and what it costs. You can filter the
+list along each of those dimensions. Each filter narrows the list. None of them quietly
+widens it.
+
+A tool has to clear a published bar before it gets a page. It needs a working website, a
+logo, a few hundred words written by us rather than by the vendor, and a pricing position.
+A pricing position is a current price, a free tier, or an explicit "contact sales". "We
+could not find out" is not a position. The full bar is in the
+[methodology](/docs/methodology).
+
+## Prices you can check
+
+A price in this catalog always comes with three things:
+
+- **Its unit.** Per page, per document, per seat, per month. Two published prices usually
+  cannot be compared as printed, and [pricing units](/docs/buying/pricing-units) explains
+  why.
+- **Its source.** Read automatically from the vendor's public pricing page, entered by one
+  of our editors, or supplied by the vendor. A vendor-supplied figure is labelled _not
+  independently verified_, because it is not.
+- **The date we last checked it.** We re-check prices far more often than they change, so
+  this date reflects our attention, not the vendor's.
+
+Figures entered by staff or vendors are _pinned_, so an automated reading can never silently
+overwrite them. We also refuse a few things that comparison tables often do. We never
+present a trial as a free tier. We never quote an annual-prepay rate as a monthly one. We
+never invent a limit the vendor has not published.
+
+## A cost, not just a price
+
+A published price is not a cost until you supply a volume. The
+[price calculator](/price-calculator) asks for two numbers: how many documents you process a
+month, and how many pages each has. It then works out every plan at the vendor's own rate.
+Where a plan cannot serve that volume at any price, it says so rather than guessing.
+
+## Readable by machines
+
+The catalog is a database with a website in front of it, and the database is open. There is
+a public [REST API](/docs/developers/rest-api) with no key required. Two plain-text files,
+[`/llms.txt`](/llms.txt) and [`/llms-full.txt`](/llms-full.txt), carry every listed tool's
+price and provenance for readers that are not browsers.
+
+## Help us fill it in
+
+If we are missing a tool, [submit it](/submit). An editor checks it and writes the listing,
+and it goes live only once it clears the same bar as everything else. If you work for a
+vendor, you can [claim your listing](/docs/vendors/claiming-a-listing) and propose
+corrections. Every correction is reviewed by a person before anything changes.
+
+This blog will carry new listings, changes to how we verify prices, and what we learn along
+the way. The [RSS feed](/blog/rss.xml) is the easiest way to follow it.

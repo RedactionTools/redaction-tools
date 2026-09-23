@@ -75,3 +75,45 @@ describe('social wording that differs from the page title', () => {
     expect(openGraph?.description).toBe('Share card description')
   })
 })
+
+describe('a blog post', () => {
+  const article = {
+    publishedTime: '2026-09-23',
+    modifiedTime: '2026-10-01',
+    authors: ['Mykola Melnyk'],
+    tags: ['Catalog'],
+  }
+
+  // `og:type=article` is what unlocks article:published_time and friends; a
+  // post described as a website shares like a homepage.
+  it('describes itself as an article, with its dates, authors and tags', () => {
+    const { openGraph } = canonicalMetadata('/blog/hello', { article })
+
+    expect(openGraph).toMatchObject({ type: 'article', url: '/blog/hello', ...article })
+  })
+
+  it('still carries the site identity', () => {
+    const { openGraph } = canonicalMetadata('/blog/hello', { article })
+
+    expect(openGraph).toMatchObject({ siteName: 'Redaction Tools', locale: 'en_US' })
+  })
+})
+
+describe('feeds a page advertises', () => {
+  // `alternates` is assigned wholesale like `openGraph`, so a page adding
+  // `alternates.types` itself would drop its canonical.
+  it('names the feed beside the canonical', () => {
+    const { alternates } = canonicalMetadata('/blog', {
+      feeds: [{ url: '/blog/rss.xml', title: 'Redaction Tools blog' }],
+    })
+
+    expect(alternates).toEqual({
+      canonical: '/blog',
+      types: { 'application/rss+xml': [{ url: '/blog/rss.xml', title: 'Redaction Tools blog' }] },
+    })
+  })
+
+  it('names none by default', () => {
+    expect(canonicalMetadata('/blog').alternates).toEqual({ canonical: '/blog' })
+  })
+})

@@ -115,3 +115,25 @@ describe('buildLlmsFullTxt', () => {
     expect(text()).toContain('Adobe Acrobat Pro includes search-and-redact at $22.99 per month.')
   })
 })
+
+describe('the blog in llms.txt', () => {
+  const POSTS = [
+    {
+      title: 'Introducing Redaction Tools',
+      url: '/blog/introducing',
+      description: 'Why we built it.',
+    },
+  ]
+
+  it('lists each post with its summary', () => {
+    const text = buildLlmsTxt(SITE, [makeTool()], GENERATED, [], POSTS)
+
+    expect(text).toContain(
+      `## Blog\n\n- [Introducing Redaction Tools](${SITE}/blog/introducing): Why we built it.`,
+    )
+  })
+
+  it('raises no Blog heading over nothing', () => {
+    expect(buildLlmsTxt(SITE, [makeTool()], GENERATED, [], [])).not.toContain('## Blog')
+  })
+})

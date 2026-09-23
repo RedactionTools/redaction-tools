@@ -23,10 +23,13 @@ export { auth as proxy } from '@/auth'
  * `/tool/<slug>/opengraph-image-<hash>` - Next appends that hash because the
  * route's path contains the `(site)` group segment.
  *
+ * The blog's RSS feeds (`/blog/rss.xml`, `/blog/tags/<tag>/rss.xml`) are polled
+ * anonymously by feed readers, on a timer.
+ *
  * `src/proxy.matcher.test.ts` holds this to the paths it has to let through.
  */
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|api/search|favicon\\.ico|icon\\.png|apple-icon\\.png|robots\\.txt|sitemap\\.xml|llms\\.txt|llms-full\\.txt|.*opengraph-image).*)',
+    '/((?!_next/static|_next/image|api/search|favicon\\.ico|icon\\.png|apple-icon\\.png|robots\\.txt|sitemap\\.xml|llms\\.txt|llms-full\\.txt|.*opengraph-image|blog/(?:.*/)?rss\\.xml$).*)',
   ],
 }

@@ -1,4 +1,6 @@
 import type { ToolDetailOut } from '@/lib/api/generated/model'
+import type { Author } from '@/lib/blog/authors'
+import { BLOG_NAME, type BlogPostMeta } from '@/lib/blog/posts'
 
 /**
  * Structured data for the catalog.
@@ -207,6 +209,75 @@ export function faqPageJsonLd(
       name: entry.question,
       acceptedAnswer: { '@type': 'Answer', text: entry.answer },
     })),
+  }
+}
+
+/** A blog author, referenced from every post they wrote. */
+export function personId(site: string, authorId: string): string {
+  return `${site}/blog#person-${authorId}`
+}
+
+export function personJsonLd(site: string, authorId: string, author: Author) {
+  const sameAs = Object.values(author.links ?? {}).filter(Boolean)
+
+  return {
+    '@type': 'Person',
+    '@id': personId(site, authorId),
+    name: author.name,
+    ...(author.role ? { jobTitle: author.role } : {}),
+    ...(sameAs.length ? { sameAs } : {}),
+  }
+}
+
+function blogId(site: string): string {
+  return `${site}/blog#blog`
+}
+
+function postingId(site: string, post: Pick<BlogPostMeta, 'url'>): string {
+  return `${site}${post.url}#article`
+}
+
+/**
+ * One post. Its authors and publisher are pointers - the Person nodes are
+ * emitted beside it on the same page, the organization by the layout - so no
+ * entity is defined twice.
+ */
+export function blogPostingJsonLd(site: string, post: BlogPostMeta) {
+  const url = `${site}${post.url}`
+
+  return {
+    '@type': 'BlogPosting',
+    '@id': postingId(site, post),
+    url,
+    mainEntityOfPage: url,
+    headline: post.title,
+    description: post.description,
+    datePublished: post.date,
+    dateModified: post.lastmod ?? post.date,
+    inLanguage: 'en',
+    // JSON-LD gets no metadataBase, so the image is absolute: the post's own
+    // banner, or else the site card. Not the card the post's route draws -
+    // Next appends a hash to that path (the `(site)` group is in it), so any
+    // URL spelled here would 404.
+    image: post.image ? `${site}${post.image}` : `${site}/opengraph-image`,
+    ...(post.keywords?.length ? { keywords: post.keywords } : {}),
+    ...(post.tags.length ? { articleSection: post.tags[0] } : {}),
+    author: post.authors.map((id) => ({ '@id': personId(site, id) })),
+    publisher: { '@id': organizationId(site) },
+    isPartOf: { '@id': blogId(site) },
+  }
+}
+
+/** The blog as a whole, on `/blog`. Posts are listed by pointer only. */
+export function blogJsonLd(site: string, posts: readonly BlogPostMeta[]) {
+  return {
+    '@type': 'Blog',
+    '@id': blogId(site),
+    url: `${site}/blog`,
+    name: BLOG_NAME,
+    inLanguage: 'en',
+    publisher: { '@id': organizationId(site) },
+    blogPost: posts.map((post) => ({ '@id': postingId(site, post) })),
   }
 }
 

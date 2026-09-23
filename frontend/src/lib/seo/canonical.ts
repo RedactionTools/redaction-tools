@@ -47,6 +47,11 @@ const SITE_OG_IMAGE = {
  * own directory holds one. A page with no card of its own therefore has to
  * name the site's explicitly; `hasRouteImage` is how the one route that draws
  * its own (a tool profile) stands aside and lets Next inject it.
+ *
+ * `article` turns a blog post's card into `og:type=article`, which is what
+ * carries its dates, authors and tags. `feeds` names RSS alternates - here
+ * rather than in the page because `alternates` is assigned wholesale too, and
+ * a page adding `types` itself would drop its canonical.
  */
 export function canonicalMetadata(
   path: string,
@@ -54,12 +59,24 @@ export function canonicalMetadata(
     hasRouteImage = false,
     socialTitle,
     socialDescription,
-  }: { hasRouteImage?: boolean; socialTitle?: string; socialDescription?: string } = {},
+    article,
+    feeds,
+  }: {
+    hasRouteImage?: boolean
+    socialTitle?: string
+    socialDescription?: string
+    article?: { publishedTime: string; modifiedTime?: string; authors: string[]; tags: string[] }
+    feeds?: { url: string; title: string }[]
+  } = {},
 ): Pick<Metadata, 'alternates' | 'openGraph'> {
   return {
-    alternates: { canonical: path },
+    alternates: {
+      canonical: path,
+      ...(feeds?.length ? { types: { 'application/rss+xml': feeds } } : {}),
+    },
     openGraph: {
       ...SITE_OPEN_GRAPH,
+      ...(article ? { ...article, type: 'article' as const } : {}),
       // Relative, like the canonical beside it: both resolve against
       // `metadataBase`, so neither hardcodes the origin.
       url: path,

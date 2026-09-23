@@ -2,7 +2,23 @@ import { describe, expect, it } from 'vitest'
 
 import { makeTool } from '@/features/catalog/fixtures'
 
+import type { BlogPostMeta } from '@/lib/blog/posts'
+
 import { buildSitemapEntries } from './sitemap'
+
+function post(overrides: Partial<BlogPostMeta> & { slug: string }): BlogPostMeta {
+  return {
+    url: `/blog/${overrides.slug}`,
+    title: overrides.slug,
+    description: '',
+    date: '2026-01-01',
+    draft: false,
+    tags: [],
+    authors: ['mykola-melnyk'],
+    readingMinutes: 1,
+    ...overrides,
+  }
+}
 
 const SITE = 'https://redaction-tools.com'
 
@@ -103,5 +119,44 @@ describe('the hub entry', () => {
     for (const path of ['/submit', '/price-calculator', '/docs/methodology']) {
       expect(entries.find((entry) => entry.url === `${SITE}${path}`)?.lastModified).toBeUndefined()
     }
+  })
+})
+
+describe('the blog in the sitemap', () => {
+  const posts = [
+    post({ slug: 'newer', date: '2026-09-23', lastmod: '2026-10-01', tags: ['Catalog'] }),
+    post({ slug: 'older', date: '2026-01-01', tags: ['Catalog', 'PDF redaction'] }),
+  ]
+  const entries = buildSitemapEntries(SITE, [], [], posts)
+  const byUrl = (url: string) => entries.find((entry) => entry.url === url)
+
+  it('lists every post, dated by its last edit', () => {
+    expect(byUrl(`${SITE}/blog/newer`)?.lastModified).toBe('2026-10-01')
+    expect(byUrl(`${SITE}/blog/older`)?.lastModified).toBe('2026-01-01')
+  })
+
+  it('dates the blog index by its newest change', () => {
+    expect(byUrl(`${SITE}/blog`)?.lastModified).toBe('2026-10-01')
+  })
+
+  it('lists each tag once', () => {
+    const tags = entries.filter((entry) => entry.url.startsWith(`${SITE}/blog/tags/`))
+
+    expect(tags.map((entry) => entry.url)).toEqual([
+      `${SITE}/blog/tags/catalog`,
+      `${SITE}/blog/tags/pdf-redaction`,
+    ])
+  })
+
+  // Page 2 of an archive is a moving window over the same posts; listing it
+  // asks a crawler to index something that shifts under every new post.
+  it('leaves out archive pages', () => {
+    expect(entries.some((entry) => entry.url.includes('/page/'))).toBe(false)
+  })
+
+  it('still lists the blog index when nothing is published', () => {
+    const urls = buildSitemapEntries(SITE, [], [], []).map((entry) => entry.url)
+
+    expect(urls).toContain(`${SITE}/blog`)
   })
 })
