@@ -115,6 +115,9 @@ class PlanOut(Struct):
 class FacetOut(Struct):
     dimension: str
     value: str
+    slug: Annotated[str, Meta(description="The URL segment. Not what the facet tools take.")]
+    evidence_url: str
+    verified_at: str | None
 
 
 class ToolDetail(Struct):
@@ -434,6 +437,91 @@ class ReviewScreenshotParams(Struct):
     note: Annotated[
         str, Meta(description="Why. Shown to the vendor who uploaded it, so write it for them.")
     ] = ""
+
+
+class NoParams(Struct):
+    pass
+
+
+class FacetValueOut(Struct):
+    code: str
+    slug: str
+    label: str
+
+
+class FacetDimensionOut(Struct):
+    code: str
+    label: str
+    required: Annotated[
+        bool, Meta(description="A tool needs at least one value here to be a public page.")
+    ]
+    values: list[FacetValueOut]
+
+
+class FacetVocabulary(Struct):
+    dimensions: list[FacetDimensionOut]
+
+
+FACET_DIMENSION = Annotated[
+    str, Meta(description="The dimension's code, e.g. 'media'. See catalog_list_facets.")
+]
+FACET_VALUE = Annotated[
+    str,
+    Meta(
+        description=(
+            "The value's code within that dimension, e.g. 'pdf' - the code, not "
+            "the slug, which differs for some (code 'api', slug 'api-tools')."
+        )
+    ),
+]
+EVIDENCE_URL = Annotated[str, Meta(description="The vendor page that backs the claim.")]
+VERIFIED_AT = Annotated[str, Meta(description="ISO date the claim was checked, e.g. '2026-09-01'.")]
+
+
+class ToolFacetParams(Struct):
+    slug: SLUG
+    dimension: FACET_DIMENSION
+    value: FACET_VALUE
+
+
+class AddToolFacetParams(Struct):
+    slug: SLUG
+    dimension: FACET_DIMENSION
+    value: FACET_VALUE
+    evidence_url: EVIDENCE_URL = ""
+    verified_at: VERIFIED_AT | UnsetType = UNSET
+
+
+class UpdateToolFacetParams(Struct):
+    """Only the fields you pass are written. Omit a field to leave it alone."""
+
+    slug: SLUG
+    dimension: FACET_DIMENSION
+    value: FACET_VALUE
+    evidence_url: EVIDENCE_URL | UnsetType = UNSET
+    verified_at: VERIFIED_AT | UnsetType = UNSET
+
+
+class AddToolFacetResult(Struct):
+    tool: str
+    facet: FacetOut
+    listable: bool
+    listability_reasons: list[str]
+
+
+class UpdateToolFacetResult(Struct):
+    tool: str
+    facet: FacetOut
+    changed: Annotated[
+        list[str], Meta(description="Fields that actually moved; empty if nothing did.")
+    ]
+
+
+class RemoveToolFacetResult(Struct):
+    tool: str
+    removed: FacetOut
+    listable: bool
+    listability_reasons: list[str]
 
 
 LOGO_IMAGE_URL = Annotated[
@@ -767,4 +855,95 @@ def register(server):
                     user=request.user, vendor=params.vendor, image_url=params.image_url
                 ),
                 SetVendorLogoResult,
+            )
+
+    @server.tool(
+        description=(
+            "List every facet dimension and its values - the vocabulary the "
+            "facet tools take. Dimensions marked required need at least one "
+            "value on a tool before it can be a public page."
+        ),
+        read_only=True,
+        idempotent=True,
+        open_world=False,
+        permission=is_staff,
+    )
+    def catalog_list_facets(request, params: NoParams) -> FacetVocabulary:
+        with _as_tool_error():
+            return msgspec.convert(staff.list_facets(), FacetVocabulary)
+
+    @server.tool(
+        description=(
+            "Put one facet value on a tool, e.g. dimension 'compliance', value "
+            "'hipaa'. Pass evidence_url for a claim a buyer would rely on. "
+            "Refused if the tool already has it; edit that with "
+            "catalog_update_tool_facet."
+        ),
+        read_only=False,
+        destructive=False,
+        idempotent=False,
+        open_world=False,
+        permission=is_staff,
+    )
+    def catalog_add_tool_facet(request, params: AddToolFacetParams) -> AddToolFacetResult:
+        with _as_tool_error():
+            return msgspec.convert(
+                staff.add_tool_facet(
+                    user=request.user,
+                    slug=params.slug,
+                    dimension=params.dimension,
+                    value=params.value,
+                    evidence_url=params.evidence_url,
+                    **_changes(params, "slug", "dimension", "value", "evidence_url"),
+                ),
+                AddToolFacetResult,
+            )
+
+    @server.tool(
+        description=(
+            "Edit the evidence behind one of a tool's facets: evidence_url and "
+            "verified_at. Only the fields you pass are written. To change the "
+            "value itself, add the new one and remove the old."
+        ),
+        read_only=False,
+        destructive=True,
+        idempotent=True,
+        open_world=False,
+        permission=is_staff,
+    )
+    def catalog_update_tool_facet(request, params: UpdateToolFacetParams) -> UpdateToolFacetResult:
+        with _as_tool_error():
+            return msgspec.convert(
+                staff.update_tool_facet(
+                    user=request.user,
+                    slug=params.slug,
+                    dimension=params.dimension,
+                    value=params.value,
+                    changes=_changes(params, "slug", "dimension", "value"),
+                ),
+                UpdateToolFacetResult,
+            )
+
+    @server.tool(
+        description=(
+            "Take one facet value off a tool. Refused when it is the last value "
+            "on a required dimension of a published tool, since that would take "
+            "the page down: add the replacement first."
+        ),
+        read_only=False,
+        destructive=True,
+        idempotent=False,
+        open_world=False,
+        permission=is_staff,
+    )
+    def catalog_remove_tool_facet(request, params: ToolFacetParams) -> RemoveToolFacetResult:
+        with _as_tool_error():
+            return msgspec.convert(
+                staff.remove_tool_facet(
+                    user=request.user,
+                    slug=params.slug,
+                    dimension=params.dimension,
+                    value=params.value,
+                ),
+                RemoveToolFacetResult,
             )
