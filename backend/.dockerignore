@@ -9,3 +9,6 @@ staticfiles/
 media/
 .env
 db.sqlite3
+vendor/*/.venv/
+vendor/*/benchmarks/
+vendor/*/.git

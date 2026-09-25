@@ -15,8 +15,14 @@ ENV UV_COMPILE_BYTECODE=1 \
 
 WORKDIR /app
 
-# Dependencies are their own layer so code changes do not re-resolve them.
+# Dependencies are their own layer so code changes do not re-resolve them. The
+# benchmark scorer is a path dependency on the git submodule, so it has to be here
+# before `uv sync` - build from a checkout with `--recurse-submodules`, or this COPY
+# brings an empty directory and the sync fails naming pdfredeval. It is installed
+# editable, so the venv points at /app/vendor/..., which the runtime stage's
+# `COPY . .` puts back at the same path.
 COPY pyproject.toml uv.lock ./
+COPY vendor/ vendor/
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-install-project --no-dev
 
@@ -30,6 +36,11 @@ ENV PYTHONUNBUFFERED=1 \
 # BusyBox adduser/addgroup, not the shadow-utils spelling: -S makes a system
 # account, -G sets the group, -H skips the home directory we do not use.
 RUN addgroup -S app && adduser -S -G app -H -h /app app
+
+# The benchmark scorer's OCR layer shells out to tesseract. Without it the layer
+# reports itself unavailable rather than failing, so a missing binary would quietly
+# publish scores that never checked what OCR can still read off the page.
+RUN apk add --no-cache tesseract-ocr tesseract-ocr-data-eng
 
 WORKDIR /app
 

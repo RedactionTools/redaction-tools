@@ -15,6 +15,13 @@ def test_operation_ids_are_view_names():
     assert schema["paths"]["/api/v1/catalog/tools"]["get"]["operationId"] == "list_tools"
     assert schema["paths"]["/api/v1/catalog/tools/{slug}"]["get"]["operationId"] == "get_tool"
     assert schema["paths"]["/api/v1/catalog/stats"]["get"]["operationId"] == "get_catalog_stats"
+    paths = schema["paths"]
+    assert paths["/api/v1/benchmarks/suites/{suite}"]["get"]["operationId"] == (
+        "get_benchmark_suite"
+    )
+    assert paths["/api/v1/benchmarks/submissions/{submission_id}/outputs"]["post"][
+        "operationId"
+    ] == ("upload_benchmark_output")
 
 
 def test_operation_ids_are_unique():

@@ -160,3 +160,23 @@ describe('the blog in the sitemap', () => {
     expect(urls).toContain(`${SITE}/blog`)
   })
 })
+
+describe('benchmark routes', () => {
+  it('lists every benchmark path it is handed, a leaderboard above the pages under it', () => {
+    const entries = buildSitemapEntries(
+      SITE,
+      [],
+      [],
+      [],
+      ['/benchmarks', '/benchmarks/pdf', '/benchmarks/pdf/tools/pdf-redaction'],
+    )
+
+    const benchmarks = entries.filter((entry) => entry.url.includes('/benchmarks'))
+    expect(benchmarks.map((entry) => entry.url)).toEqual([
+      `${SITE}/benchmarks`,
+      `${SITE}/benchmarks/pdf`,
+      `${SITE}/benchmarks/pdf/tools/pdf-redaction`,
+    ])
+    expect(benchmarks[1].priority).toBeGreaterThan(benchmarks[2].priority!)
+  })
+})

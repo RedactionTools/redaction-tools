@@ -32,6 +32,7 @@ export function buildSitemapEntries(
   tools: ToolListItemOut[],
   docPaths: readonly string[] = [],
   posts: readonly BlogPostMeta[] = [],
+  benchmarkPaths: readonly string[] = [],
 ): MetadataRoute.Sitemap {
   const staticRoutes: MetadataRoute.Sitemap = [
     // The hub is dated by the catalog beneath it. The others have only the
@@ -61,7 +62,29 @@ export function buildSitemapEntries(
     priority: 0.8,
   }))
 
-  return [...staticRoutes, ...docRoutes, ...blogRoutes(site, posts), ...toolRoutes]
+  return [
+    ...staticRoutes,
+    ...docRoutes,
+    ...blogRoutes(site, posts),
+    ...toolRoutes,
+    ...benchmarkRoutes(site, benchmarkPaths),
+  ]
+}
+
+/**
+ * The benchmark chapter, from the paths `fetchBenchmarkPaths` found. Undated: a
+ * leaderboard changes when a result is approved, which the paths alone cannot say.
+ * A suite's leaderboard ranks above the case and tool pages that are its evidence.
+ */
+function benchmarkRoutes(site: string, paths: readonly string[]): MetadataRoute.Sitemap {
+  return paths.map((path) => {
+    const depth = path.split('/').filter(Boolean).length
+    return {
+      url: `${site}${path}`,
+      changeFrequency: 'weekly' as const,
+      priority: depth <= 2 ? 0.8 : 0.6,
+    }
+  })
 }
 
 /**

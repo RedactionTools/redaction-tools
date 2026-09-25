@@ -19,6 +19,7 @@ backend:  ## Run the Django development server
 
 .PHONY: backend-install
 backend-install:  ## Install backend dependencies and git hooks
+	git submodule update --init --recursive
 	cd $(BACKEND) && uv sync && uv run pre-commit install
 
 .PHONY: backend-worker

@@ -5,6 +5,7 @@
  */
 export const NAV_LINKS = [
   { href: '/price-calculator', label: 'Price calculator' },
+  { href: '/benchmarks', label: 'Benchmarks' },
   { href: '/docs/methodology', label: 'Methodology' },
   { href: '/blog', label: 'Blog' },
   { href: '/submit', label: 'Submit a tool' },

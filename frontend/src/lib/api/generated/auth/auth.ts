@@ -6,21 +6,33 @@
  * OpenAPI spec version: 1.0.0
  */
 import {
+  useMutation,
   useQuery
 } from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
   DefinedUseQueryResult,
+  MutationFunction,
   QueryClient,
   QueryFunction,
   QueryKey,
   UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult
 } from '@tanstack/react-query';
 
 import type {
+  ApiKeyCreatedOut,
+  ApiKeyIn,
+  ApiKeyOut,
+  CliLoginIn,
+  CliLoginOut,
+  CliLoginStartOut,
+  CliLoginTokenIn,
+  CliLoginTokenOut,
   UserSchema
 } from '../model';
 
@@ -147,3 +159,758 @@ export function useGetMe<TData = Awaited<ReturnType<typeof getMe>>, TError = unk
 
 
 
+export const getListMyApiKeysUrl = () => {
+
+
+
+
+  return `/api/v1/auth/api-keys`
+}
+
+/**
+ * @summary Your API keys
+ */
+export const listMyApiKeys = async ( options?: Parameters<typeof customFetch>[1]): Promise<ApiKeyOut[]> => {
+
+  return customFetch<ApiKeyOut[]>(getListMyApiKeysUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListMyApiKeysQueryKey = () => {
+    return [
+    `/api/v1/auth/api-keys`
+    ] as const;
+    }
+
+
+export const getListMyApiKeysQueryOptions = <TData = Awaited<ReturnType<typeof listMyApiKeys>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyApiKeys>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListMyApiKeysQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listMyApiKeys>>> = ({ signal }) => listMyApiKeys({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listMyApiKeys>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListMyApiKeysQueryResult = NonNullable<Awaited<ReturnType<typeof listMyApiKeys>>>
+export type ListMyApiKeysQueryError = unknown
+
+
+export function useListMyApiKeys<TData = Awaited<ReturnType<typeof listMyApiKeys>>, TError = unknown>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyApiKeys>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMyApiKeys>>,
+          TError,
+          Awaited<ReturnType<typeof listMyApiKeys>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListMyApiKeys<TData = Awaited<ReturnType<typeof listMyApiKeys>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyApiKeys>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMyApiKeys>>,
+          TError,
+          Awaited<ReturnType<typeof listMyApiKeys>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListMyApiKeys<TData = Awaited<ReturnType<typeof listMyApiKeys>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyApiKeys>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Your API keys
+ */
+
+export function useListMyApiKeys<TData = Awaited<ReturnType<typeof listMyApiKeys>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyApiKeys>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListMyApiKeysQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export const getCreateApiKeyUrl = () => {
+
+
+
+
+  return `/api/v1/auth/api-keys`
+}
+
+/**
+ * @summary Create an API key
+ */
+export const createApiKey = async (apiKeyIn: ApiKeyIn, options?: Parameters<typeof customFetch>[1]): Promise<ApiKeyCreatedOut> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ApiKeyCreatedOut>(getCreateApiKeyUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(apiKeyIn)
+  }
+);}
+
+
+
+
+
+export const getCreateApiKeyMutationKey = () => ['createApiKey'] as const;
+
+export const getCreateApiKeyMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createApiKey>>, TError,CreateApiKeyMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createApiKey>>, TError,CreateApiKeyMutationVariables, TContext> => {
+
+const mutationKey = getCreateApiKeyMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createApiKey>>, CreateApiKeyMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  createApiKey(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateApiKeyMutationResult = NonNullable<Awaited<ReturnType<typeof createApiKey>>>
+    export type CreateApiKeyMutationBody = ApiKeyIn
+    export type CreateApiKeyMutationError = unknown
+    export type CreateApiKeyMutationVariables = {data: ApiKeyIn}
+
+    /**
+ * @summary Create an API key
+ */
+export const useCreateApiKey = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createApiKey>>, TError,CreateApiKeyMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createApiKey>>,
+        TError,
+        CreateApiKeyMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCreateApiKeyMutationOptions(options), queryClient);
+    }
+    export const getRevokeApiKeyUrl = (prefix: string,) => {
+
+
+
+
+  return `/api/v1/auth/api-keys/${prefix}`
+}
+
+/**
+ * Revoked rather than deleted, so the list still shows what was once issued.
+ * @summary Revoke an API key
+ */
+export const revokeApiKey = async (prefix: string, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getRevokeApiKeyUrl(prefix),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getRevokeApiKeyMutationKey = () => ['revokeApiKey'] as const;
+
+export const getRevokeApiKeyMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokeApiKey>>, TError,RevokeApiKeyMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof revokeApiKey>>, TError,RevokeApiKeyMutationVariables, TContext> => {
+
+const mutationKey = getRevokeApiKeyMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof revokeApiKey>>, RevokeApiKeyMutationVariables> = (props) => {
+          const {prefix} = props ?? {};
+
+          return  revokeApiKey(prefix,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RevokeApiKeyMutationResult = NonNullable<Awaited<ReturnType<typeof revokeApiKey>>>
+
+    export type RevokeApiKeyMutationError = unknown
+    export type RevokeApiKeyMutationVariables = {prefix: string}
+
+    /**
+ * @summary Revoke an API key
+ */
+export const useRevokeApiKey = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokeApiKey>>, TError,RevokeApiKeyMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof revokeApiKey>>,
+        TError,
+        RevokeApiKeyMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRevokeApiKeyMutationOptions(options), queryClient);
+    }
+    export const getRevokeCurrentApiKeyUrl = () => {
+
+
+
+
+  return `/api/v1/auth/api-keys/current/revoke`
+}
+
+/**
+ * `pdfredeval logout`. A key may end itself - never mint or touch another.
+ * @summary Revoke the API key this request is made with
+ */
+export const revokeCurrentApiKey = async ( options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getRevokeCurrentApiKeyUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getRevokeCurrentApiKeyMutationKey = () => ['revokeCurrentApiKey'] as const;
+
+export const getRevokeCurrentApiKeyMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokeCurrentApiKey>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof revokeCurrentApiKey>>, TError,void, TContext> => {
+
+const mutationKey = getRevokeCurrentApiKeyMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof revokeCurrentApiKey>>, void> = () => {
+
+
+          return  revokeCurrentApiKey(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RevokeCurrentApiKeyMutationResult = NonNullable<Awaited<ReturnType<typeof revokeCurrentApiKey>>>
+
+    export type RevokeCurrentApiKeyMutationError = unknown
+
+
+    /**
+ * @summary Revoke the API key this request is made with
+ */
+export const useRevokeCurrentApiKey = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokeCurrentApiKey>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof revokeCurrentApiKey>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getRevokeCurrentApiKeyMutationOptions(options), queryClient);
+    }
+    export const getStartCliLoginUrl = () => {
+
+
+
+
+  return `/api/v1/auth/cli-logins`
+}
+
+/**
+ * @summary Start a pdfredeval sign-in
+ */
+export const startCliLogin = async (cliLoginIn: CliLoginIn, options?: Parameters<typeof customFetch>[1]): Promise<CliLoginStartOut> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<CliLoginStartOut>(getStartCliLoginUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(cliLoginIn)
+  }
+);}
+
+
+
+
+
+export const getStartCliLoginMutationKey = () => ['startCliLogin'] as const;
+
+export const getStartCliLoginMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startCliLogin>>, TError,StartCliLoginMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof startCliLogin>>, TError,StartCliLoginMutationVariables, TContext> => {
+
+const mutationKey = getStartCliLoginMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof startCliLogin>>, StartCliLoginMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  startCliLogin(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type StartCliLoginMutationResult = NonNullable<Awaited<ReturnType<typeof startCliLogin>>>
+    export type StartCliLoginMutationBody = CliLoginIn
+    export type StartCliLoginMutationError = unknown
+    export type StartCliLoginMutationVariables = {data: CliLoginIn}
+
+    /**
+ * @summary Start a pdfredeval sign-in
+ */
+export const useStartCliLogin = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startCliLogin>>, TError,StartCliLoginMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof startCliLogin>>,
+        TError,
+        StartCliLoginMutationVariables,
+        TContext
+      > => {
+      return useMutation(getStartCliLoginMutationOptions(options), queryClient);
+    }
+    export const getPollCliLoginUrl = () => {
+
+
+
+
+  return `/api/v1/auth/cli-logins/token`
+}
+
+/**
+ * @summary Poll a pdfredeval sign-in
+ */
+export const pollCliLogin = async (cliLoginTokenIn: CliLoginTokenIn, options?: Parameters<typeof customFetch>[1]): Promise<CliLoginTokenOut> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<CliLoginTokenOut>(getPollCliLoginUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(cliLoginTokenIn)
+  }
+);}
+
+
+
+
+
+export const getPollCliLoginMutationKey = () => ['pollCliLogin'] as const;
+
+export const getPollCliLoginMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof pollCliLogin>>, TError,PollCliLoginMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof pollCliLogin>>, TError,PollCliLoginMutationVariables, TContext> => {
+
+const mutationKey = getPollCliLoginMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof pollCliLogin>>, PollCliLoginMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  pollCliLogin(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PollCliLoginMutationResult = NonNullable<Awaited<ReturnType<typeof pollCliLogin>>>
+    export type PollCliLoginMutationBody = CliLoginTokenIn
+    export type PollCliLoginMutationError = unknown
+    export type PollCliLoginMutationVariables = {data: CliLoginTokenIn}
+
+    /**
+ * @summary Poll a pdfredeval sign-in
+ */
+export const usePollCliLogin = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof pollCliLogin>>, TError,PollCliLoginMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof pollCliLogin>>,
+        TError,
+        PollCliLoginMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPollCliLoginMutationOptions(options), queryClient);
+    }
+    export const getGetCliLoginUrl = (userCode: string,) => {
+
+
+
+
+  return `/api/v1/auth/cli-logins/${userCode}`
+}
+
+/**
+ * @summary A pdfredeval sign-in awaiting your approval
+ */
+export const getCliLogin = async (userCode: string, options?: Parameters<typeof customFetch>[1]): Promise<CliLoginOut> => {
+
+  return customFetch<CliLoginOut>(getGetCliLoginUrl(userCode),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetCliLoginQueryKey = (userCode: string,) => {
+    return [
+    `/api/v1/auth/cli-logins/${userCode}`
+    ] as const;
+    }
+
+
+export const getGetCliLoginQueryOptions = <TData = Awaited<ReturnType<typeof getCliLogin>>, TError = unknown>(userCode: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCliLogin>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCliLoginQueryKey(userCode);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCliLogin>>> = ({ signal }) => getCliLogin(userCode, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: userCode !== null && userCode !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCliLogin>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetCliLoginQueryResult = NonNullable<Awaited<ReturnType<typeof getCliLogin>>>
+export type GetCliLoginQueryError = unknown
+
+
+export function useGetCliLogin<TData = Awaited<ReturnType<typeof getCliLogin>>, TError = unknown>(
+ userCode: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCliLogin>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCliLogin>>,
+          TError,
+          Awaited<ReturnType<typeof getCliLogin>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetCliLogin<TData = Awaited<ReturnType<typeof getCliLogin>>, TError = unknown>(
+ userCode: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCliLogin>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCliLogin>>,
+          TError,
+          Awaited<ReturnType<typeof getCliLogin>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetCliLogin<TData = Awaited<ReturnType<typeof getCliLogin>>, TError = unknown>(
+ userCode: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCliLogin>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary A pdfredeval sign-in awaiting your approval
+ */
+
+export function useGetCliLogin<TData = Awaited<ReturnType<typeof getCliLogin>>, TError = unknown>(
+ userCode: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCliLogin>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetCliLoginQueryOptions(userCode,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export const getApproveCliLoginUrl = (userCode: string,) => {
+
+
+
+
+  return `/api/v1/auth/cli-logins/${userCode}/approve`
+}
+
+/**
+ * @summary Approve a pdfredeval sign-in
+ */
+export const approveCliLogin = async (userCode: string, options?: Parameters<typeof customFetch>[1]): Promise<CliLoginOut> => {
+
+  return customFetch<CliLoginOut>(getApproveCliLoginUrl(userCode),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getApproveCliLoginMutationKey = () => ['approveCliLogin'] as const;
+
+export const getApproveCliLoginMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof approveCliLogin>>, TError,ApproveCliLoginMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof approveCliLogin>>, TError,ApproveCliLoginMutationVariables, TContext> => {
+
+const mutationKey = getApproveCliLoginMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof approveCliLogin>>, ApproveCliLoginMutationVariables> = (props) => {
+          const {userCode} = props ?? {};
+
+          return  approveCliLogin(userCode,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ApproveCliLoginMutationResult = NonNullable<Awaited<ReturnType<typeof approveCliLogin>>>
+
+    export type ApproveCliLoginMutationError = unknown
+    export type ApproveCliLoginMutationVariables = {userCode: string}
+
+    /**
+ * @summary Approve a pdfredeval sign-in
+ */
+export const useApproveCliLogin = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof approveCliLogin>>, TError,ApproveCliLoginMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof approveCliLogin>>,
+        TError,
+        ApproveCliLoginMutationVariables,
+        TContext
+      > => {
+      return useMutation(getApproveCliLoginMutationOptions(options), queryClient);
+    }
+    export const getDenyCliLoginUrl = (userCode: string,) => {
+
+
+
+
+  return `/api/v1/auth/cli-logins/${userCode}/deny`
+}
+
+/**
+ * @summary Deny a pdfredeval sign-in
+ */
+export const denyCliLogin = async (userCode: string, options?: Parameters<typeof customFetch>[1]): Promise<CliLoginOut> => {
+
+  return customFetch<CliLoginOut>(getDenyCliLoginUrl(userCode),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getDenyCliLoginMutationKey = () => ['denyCliLogin'] as const;
+
+export const getDenyCliLoginMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof denyCliLogin>>, TError,DenyCliLoginMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof denyCliLogin>>, TError,DenyCliLoginMutationVariables, TContext> => {
+
+const mutationKey = getDenyCliLoginMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof denyCliLogin>>, DenyCliLoginMutationVariables> = (props) => {
+          const {userCode} = props ?? {};
+
+          return  denyCliLogin(userCode,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DenyCliLoginMutationResult = NonNullable<Awaited<ReturnType<typeof denyCliLogin>>>
+
+    export type DenyCliLoginMutationError = unknown
+    export type DenyCliLoginMutationVariables = {userCode: string}
+
+    /**
+ * @summary Deny a pdfredeval sign-in
+ */
+export const useDenyCliLogin = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof denyCliLogin>>, TError,DenyCliLoginMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof denyCliLogin>>,
+        TError,
+        DenyCliLoginMutationVariables,
+        TContext
+      > => {
+      return useMutation(getDenyCliLoginMutationOptions(options), queryClient);
+    }

@@ -1,0 +1,62 @@
+---
+title: Publishing from the CLI
+description: Publish runs you scored with pdfredeval using an API key. We rescore every file and flag any number we cannot reproduce.
+---
+
+If you already run [pdfredeval](https://github.com/RedactionTools/pdf-redaction-benchmarks)
+yourself, you can publish scored runs straight from it.
+
+## Sign in
+
+```bash
+pdfredeval login
+```
+
+Your browser opens on this site. Sign in if you need to, check that the code matches the
+one in your terminal, and select **Approve**. The terminal picks up a new API key for this
+machine and stores it in `~/.config/pdfredeval/credentials.json`, readable by you only.
+Over SSH, or anywhere a browser cannot be opened, use `pdfredeval login --no-browser` and
+open the printed link on any device.
+
+The key appears on your [account page](/account), labelled with the machine's name.
+Revoke it there, or run `pdfredeval logout`, which revokes it and deletes the stored copy.
+
+### In CI
+
+A pipeline has no browser to sign in with. Create a key under **API keys** on your
+[account page](/account). The key is shown **once**. Set it as a secret:
+
+```bash
+export PDFREDEVAL_API_KEY=<prefix>.<secret>
+```
+
+When it is set, it takes precedence over a key stored by `pdfredeval login`.
+
+## Publish
+
+```bash
+pdfredeval score benchmarks/v0.1.1/runs/my-tool-web/
+pdfredeval publish benchmarks/v0.1.1/runs/my-tool-web/
+```
+
+`publish` groups your scored runs by tool and revision and opens one submission for each
+group. For each run it sends `manifest.json`, `score/report.json`, the overlay and the
+redacted PDF. It never sends the ground truth, `probes.csv`, screenshots or
+`entities.json`. It prints the link to your submission.
+
+A run is refused when its manifest:
+
+- is incomplete,
+- carries anything that looks like a credential,
+- names a different tool or dataset revision from the submission, or
+- does not match the case or the PDF it claims to describe.
+
+## We check your numbers
+
+A CLI result is scored by you, so we score the same PDF again. The result is badged:
+
+- **Self-scored · verified:** our rescore reproduced your counts.
+- **Disputed by our rescore:** it did not. The run page shows both sets of numbers, side by
+  side.
+
+The **Verified only** view of a leaderboard leaves out everything we could not reproduce.

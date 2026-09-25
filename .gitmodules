@@ -1,0 +1,3 @@
+[submodule "backend/vendor/pdf-redaction-benchmarks"]
+	path = backend/vendor/pdf-redaction-benchmarks
+	url = https://github.com/RedactionTools/pdf-redaction-benchmarks.git

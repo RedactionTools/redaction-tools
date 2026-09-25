@@ -70,7 +70,8 @@ export function MyListingsPanel() {
       {/* Stating the boundary plainly heads off the support thread. */}
       <p className="text-muted-foreground text-sm" data-testid="owner-readonly-note">
         Our editorial verdict, notes and any benchmark results are set by our own testing and cannot
-        be changed here. Neither can a listing&apos;s URL or its publication status.
+        be changed here - though you can submit benchmark runs, which we score and review. Neither
+        can a listing&apos;s URL or its publication status.
       </p>
     </div>
   )

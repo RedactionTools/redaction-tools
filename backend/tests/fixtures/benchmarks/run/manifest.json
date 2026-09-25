@@ -1,0 +1,63 @@
+{
+  "attempt": 1,
+  "capabilities": {
+    "categories": [],
+    "channels": [
+      "embedded_image",
+      "image_text",
+      "metadata",
+      "text_layer"
+    ],
+    "deterministic": true,
+    "formats": [
+      "pdf"
+    ],
+    "max_bytes": null,
+    "max_pages": null,
+    "mode": "sync",
+    "orientations": [
+      "horizontal",
+      "rot180",
+      "rot270",
+      "rot90",
+      "skew",
+      "vertical"
+    ],
+    "per_type_control": false,
+    "polarities": [
+      "highlighted",
+      "inverse",
+      "low-contrast",
+      "normal",
+      "on-image",
+      "screened"
+    ],
+    "provenances": [
+      "hand-block",
+      "hand-cursive",
+      "hand-mixed",
+      "print-clean",
+      "print-degraded",
+      "vector"
+    ],
+    "stages": [
+      "redaction"
+    ]
+  },
+  "case_id": "extraction-conditions-1",
+  "dataset_revision": "v0.1.1",
+  "input_sha256": "3d64a98df32c0a112c7301bb5f8a664f1864e5dc61d0328fc6dbcb31b1156a48",
+  "notes": null,
+  "observed_at": "2026-09-25T08:14:47+00:00",
+  "operator": null,
+  "output_name": "redacted-extraction-conditions-1.pdf",
+  "output_sha256": "4c271feece6f544315a30d4cb3884e8a10d9f5d88997c5230d69c7da175fdeb1",
+  "profile": {},
+  "run_id": "20260925T081446-pdf-redaction-web-extraction-conditions-1-a1-21dbff",
+  "tier": null,
+  "tool_id": "pdf-redaction:web",
+  "tool_version": null,
+  "transport": "manual",
+  "url": null,
+  "vendor_settings": {}
+}
