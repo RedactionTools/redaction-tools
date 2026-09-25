@@ -56,6 +56,299 @@
         ]
       }
     },
+    "/api/v1/auth/api-keys": {
+      "get": {
+        "operationId": "list_my_api_keys",
+        "summary": "Your API keys",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ApiKeyOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "auth"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "create_api_key",
+        "summary": "Create an API key",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiKeyCreatedOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "auth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiKeyIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/auth/api-keys/{prefix}": {
+      "delete": {
+        "operationId": "revoke_api_key",
+        "summary": "Revoke an API key",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "prefix",
+            "schema": {
+              "title": "Prefix",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "description": "Revoked rather than deleted, so the list still shows what was once issued.",
+        "tags": [
+          "auth"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/auth/api-keys/current/revoke": {
+      "post": {
+        "operationId": "revoke_current_api_key",
+        "summary": "Revoke the API key this request is made with",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "description": "`pdfredeval logout`. A key may end itself - never mint or touch another.",
+        "tags": [
+          "auth"
+        ],
+        "security": [
+          {
+            "APIKeyAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/auth/cli-logins": {
+      "post": {
+        "operationId": "start_cli_login",
+        "summary": "Start a pdfredeval sign-in",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CliLoginStartOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "auth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CliLoginIn"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/api/v1/auth/cli-logins/token": {
+      "post": {
+        "operationId": "poll_cli_login",
+        "summary": "Poll a pdfredeval sign-in",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CliLoginTokenOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "auth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CliLoginTokenIn"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/api/v1/auth/cli-logins/{user_code}": {
+      "get": {
+        "operationId": "get_cli_login",
+        "summary": "A pdfredeval sign-in awaiting your approval",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_code",
+            "schema": {
+              "title": "User Code",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CliLoginOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "auth"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/auth/cli-logins/{user_code}/approve": {
+      "post": {
+        "operationId": "approve_cli_login",
+        "summary": "Approve a pdfredeval sign-in",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_code",
+            "schema": {
+              "title": "User Code",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CliLoginOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "auth"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/auth/cli-logins/{user_code}/deny": {
+      "post": {
+        "operationId": "deny_cli_login",
+        "summary": "Deny a pdfredeval sign-in",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_code",
+            "schema": {
+              "title": "User Code",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CliLoginOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "auth"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
     "/api/v1/catalog/tools": {
       "get": {
         "operationId": "list_tools",
@@ -869,6 +1162,684 @@
           }
         ]
       }
+    },
+    "/api/v1/benchmarks/suites": {
+      "get": {
+        "operationId": "list_benchmark_suites",
+        "summary": "Benchmark suites, one per medium",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SuiteSummaryOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "benchmarks"
+        ]
+      }
+    },
+    "/api/v1/benchmarks/suites/{suite}": {
+      "get": {
+        "operationId": "get_benchmark_suite",
+        "summary": "A suite's cases and leaderboard",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "suite",
+            "schema": {
+              "title": "Suite",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "revision",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Revision"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "scope",
+            "schema": {
+              "default": "all",
+              "enum": [
+                "all",
+                "verified"
+              ],
+              "title": "Scope",
+              "type": "string"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuiteOut"
+                }
+              }
+            }
+          }
+        },
+        "description": "One revision's leaderboard - the current one unless `revision` names another.\nScores from different revisions never share a table.",
+        "tags": [
+          "benchmarks"
+        ]
+      }
+    },
+    "/api/v1/benchmarks/suites/{suite}/cases/{case_id}": {
+      "get": {
+        "operationId": "get_benchmark_case",
+        "summary": "One case and every approved run on it",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "suite",
+            "schema": {
+              "title": "Suite",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "case_id",
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "revision",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Revision"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaseDetailOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "benchmarks"
+        ]
+      }
+    },
+    "/api/v1/benchmarks/suites/{suite}/tools/{slug}": {
+      "get": {
+        "operationId": "get_benchmark_tool_report",
+        "summary": "One tool's pooled report, per surface",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "suite",
+            "schema": {
+              "title": "Suite",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "slug",
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "revision",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Revision"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "scope",
+            "schema": {
+              "default": "all",
+              "enum": [
+                "all",
+                "verified"
+              ],
+              "title": "Scope",
+              "type": "string"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ToolReportOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "benchmarks"
+        ]
+      }
+    },
+    "/api/v1/benchmarks/runs/{run_id}": {
+      "get": {
+        "operationId": "get_benchmark_run",
+        "summary": "One approved run, whole",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunDetailOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "benchmarks"
+        ]
+      }
+    },
+    "/api/v1/benchmarks/suites/{suite}/submissions": {
+      "post": {
+        "operationId": "create_benchmark_submission",
+        "summary": "Open a submission of one tool's results",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "suite",
+            "schema": {
+              "title": "Suite",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MySubmissionOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "benchmarks"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmissionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "APIKeyAuth": []
+          },
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/benchmarks/submissions/mine": {
+      "get": {
+        "operationId": "list_my_benchmark_submissions",
+        "summary": "Your benchmark submissions, newest first",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MySubmissionOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "benchmarks"
+        ],
+        "security": [
+          {
+            "APIKeyAuth": []
+          },
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/benchmarks/submissions/{submission_id}": {
+      "get": {
+        "operationId": "get_my_benchmark_submission",
+        "summary": "One of your submissions - poll it while it scores",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "submission_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Submission Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MySubmissionOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "benchmarks"
+        ],
+        "security": [
+          {
+            "APIKeyAuth": []
+          },
+          {
+            "JWTAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "withdraw_benchmark_submission",
+        "summary": "Withdraw a submission that is not yet published",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "submission_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Submission Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MySubmissionOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "benchmarks"
+        ],
+        "security": [
+          {
+            "APIKeyAuth": []
+          },
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/benchmarks/submissions/{submission_id}/outputs": {
+      "post": {
+        "operationId": "upload_benchmark_output",
+        "summary": "Upload one redacted PDF for us to score",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "submission_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Submission Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyRunOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "benchmarks"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "title": "MultiPartBodyParams",
+                "type": "object",
+                "properties": {
+                  "case_id": {
+                    "title": "Case Id",
+                    "type": "string"
+                  },
+                  "pdf": {
+                    "format": "binary",
+                    "title": "Pdf",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "case_id",
+                  "pdf"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "APIKeyAuth": []
+          },
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/benchmarks/submissions/{submission_id}/runs": {
+      "post": {
+        "operationId": "publish_benchmark_run",
+        "summary": "Publish one run scored with pdfredeval",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "submission_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Submission Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyRunOut"
+                }
+              }
+            }
+          }
+        },
+        "description": "`manifest.json`, `score/report.json`, the delivered PDF and (optionally) the\noverlay PNG - exactly the files `pdfredeval publish` sends. Never the ground truth.",
+        "tags": [
+          "benchmarks"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "properties": {
+                  "manifest": {
+                    "format": "binary",
+                    "title": "Manifest",
+                    "type": "string"
+                  },
+                  "report": {
+                    "format": "binary",
+                    "title": "Report",
+                    "type": "string"
+                  },
+                  "pdf": {
+                    "format": "binary",
+                    "title": "Pdf",
+                    "type": "string"
+                  },
+                  "overlay": {
+                    "format": "binary",
+                    "title": "Overlay",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "manifest",
+                  "report",
+                  "pdf"
+                ],
+                "title": "FileParams",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "APIKeyAuth": []
+          },
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/benchmarks/submissions/{submission_id}/finalize": {
+      "post": {
+        "operationId": "finalize_benchmark_submission",
+        "summary": "Send a submission for scoring and review",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "submission_id",
+            "schema": {
+              "format": "uuid",
+              "title": "Submission Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MySubmissionOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "benchmarks"
+        ],
+        "security": [
+          {
+            "APIKeyAuth": []
+          },
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/benchmarks/suites/{suite}/cases": {
+      "post": {
+        "operationId": "publish_benchmark_case",
+        "summary": "Publish a case and its ground truth (staff)",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "suite",
+            "schema": {
+              "title": "Suite",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaseOut"
+                }
+              }
+            }
+          }
+        },
+        "description": "What `pdfredeval publish-cases` sends. The ground truth is kept, never served.",
+        "tags": [
+          "benchmarks"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "title": "MultiPartBodyParams",
+                "type": "object",
+                "properties": {
+                  "visibility": {
+                    "default": "public",
+                    "enum": [
+                      "public",
+                      "holdout"
+                    ],
+                    "title": "Visibility",
+                    "type": "string"
+                  },
+                  "pdf": {
+                    "format": "binary",
+                    "title": "Pdf",
+                    "type": "string"
+                  },
+                  "ground_truth": {
+                    "format": "binary",
+                    "title": "Ground Truth",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "pdf",
+                  "ground_truth"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "APIKeyAuth": []
+          },
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -918,6 +1889,257 @@
           "is_staff"
         ],
         "title": "UserSchema",
+        "type": "object"
+      },
+      "ApiKeyOut": {
+        "properties": {
+          "prefix": {
+            "title": "Prefix",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          },
+          "revoked": {
+            "title": "Revoked",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "prefix",
+          "label",
+          "created_at",
+          "expires_at",
+          "revoked"
+        ],
+        "title": "ApiKeyOut",
+        "type": "object"
+      },
+      "ApiKeyCreatedOut": {
+        "properties": {
+          "prefix": {
+            "title": "Prefix",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          },
+          "revoked": {
+            "title": "Revoked",
+            "type": "boolean"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "prefix",
+          "label",
+          "created_at",
+          "expires_at",
+          "revoked",
+          "key"
+        ],
+        "title": "ApiKeyCreatedOut",
+        "type": "object"
+      },
+      "ApiKeyIn": {
+        "properties": {
+          "label": {
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label"
+        ],
+        "title": "ApiKeyIn",
+        "type": "object"
+      },
+      "CliLoginStartOut": {
+        "properties": {
+          "device_code": {
+            "title": "Device Code",
+            "type": "string"
+          },
+          "user_code": {
+            "title": "User Code",
+            "type": "string"
+          },
+          "verification_url": {
+            "title": "Verification Url",
+            "type": "string"
+          },
+          "verification_url_complete": {
+            "title": "Verification Url Complete",
+            "type": "string"
+          },
+          "expires_in": {
+            "title": "Expires In",
+            "type": "integer"
+          },
+          "interval": {
+            "title": "Interval",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "device_code",
+          "user_code",
+          "verification_url",
+          "verification_url_complete",
+          "expires_in",
+          "interval"
+        ],
+        "title": "CliLoginStartOut",
+        "type": "object"
+      },
+      "CliLoginIn": {
+        "properties": {
+          "client_name": {
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Client Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "client_name"
+        ],
+        "title": "CliLoginIn",
+        "type": "object"
+      },
+      "CliLoginTokenOut": {
+        "properties": {
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Key"
+          },
+          "user": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CliLoginUserOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "CliLoginTokenOut",
+        "type": "object"
+      },
+      "CliLoginUserOut": {
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "email"
+        ],
+        "title": "CliLoginUserOut",
+        "type": "object"
+      },
+      "CliLoginTokenIn": {
+        "properties": {
+          "device_code": {
+            "title": "Device Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "device_code"
+        ],
+        "title": "CliLoginTokenIn",
+        "type": "object"
+      },
+      "CliLoginOut": {
+        "properties": {
+          "user_code": {
+            "title": "User Code",
+            "type": "string"
+          },
+          "client_name": {
+            "title": "Client Name",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_code",
+          "client_name",
+          "status",
+          "expires_at"
+        ],
+        "title": "CliLoginOut",
         "type": "object"
       },
       "ToolFilters": {
@@ -2462,12 +3684,1265 @@
         ],
         "title": "ScreenshotUploadIn",
         "type": "object"
+      },
+      "SuiteSummaryOut": {
+        "properties": {
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "description_md": {
+            "title": "Description Md",
+            "type": "string"
+          },
+          "current_revision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Revision"
+          },
+          "case_count": {
+            "title": "Case Count",
+            "type": "integer"
+          },
+          "tool_count": {
+            "title": "Tool Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "slug",
+          "name",
+          "description_md",
+          "current_revision",
+          "case_count",
+          "tool_count"
+        ],
+        "title": "SuiteSummaryOut",
+        "type": "object"
+      },
+      "CaseOut": {
+        "properties": {
+          "case_id": {
+            "title": "Case Id",
+            "type": "string"
+          },
+          "family": {
+            "title": "Family",
+            "type": "string"
+          },
+          "page_count": {
+            "title": "Page Count",
+            "type": "integer"
+          },
+          "probe_count": {
+            "title": "Probe Count",
+            "type": "integer"
+          },
+          "probe_summary": {
+            "additionalProperties": true,
+            "title": "Probe Summary",
+            "type": "object"
+          },
+          "pdf_url": {
+            "title": "Pdf Url",
+            "type": "string"
+          },
+          "preview": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PreviewOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "case_id",
+          "family",
+          "page_count",
+          "probe_count",
+          "probe_summary",
+          "pdf_url",
+          "preview"
+        ],
+        "title": "CaseOut",
+        "type": "object"
+      },
+      "CountsOut": {
+        "properties": {
+          "TP": {
+            "title": "Tp",
+            "type": "integer"
+          },
+          "FN": {
+            "title": "Fn",
+            "type": "integer"
+          },
+          "FP": {
+            "title": "Fp",
+            "type": "integer"
+          },
+          "TN": {
+            "title": "Tn",
+            "type": "integer"
+          },
+          "unsupported": {
+            "title": "Unsupported",
+            "type": "integer"
+          },
+          "undecided": {
+            "title": "Undecided",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "TP",
+          "FN",
+          "FP",
+          "TN",
+          "unsupported",
+          "undecided"
+        ],
+        "title": "CountsOut",
+        "type": "object"
+      },
+      "LeaderboardRowOut": {
+        "properties": {
+          "leak_rate": {
+            "$ref": "#/components/schemas/RateOut"
+          },
+          "over_redaction_rate": {
+            "$ref": "#/components/schemas/RateOut"
+          },
+          "counts": {
+            "$ref": "#/components/schemas/CountsOut"
+          },
+          "cases": {
+            "title": "Cases",
+            "type": "integer"
+          },
+          "gates_failed": {
+            "title": "Gates Failed",
+            "type": "integer"
+          },
+          "lowest_text_retention": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lowest Text Retention"
+          },
+          "provenance": {
+            "enum": [
+              "server",
+              "verified",
+              "unverified",
+              "mismatch"
+            ],
+            "title": "Provenance",
+            "type": "string"
+          },
+          "tool": {
+            "$ref": "#/components/schemas/ToolRefOut"
+          },
+          "surface": {
+            "title": "Surface",
+            "type": "string"
+          },
+          "runs_excluded": {
+            "title": "Runs Excluded",
+            "type": "integer"
+          },
+          "submitters": {
+            "items": {
+              "$ref": "#/components/schemas/SubmitterOut"
+            },
+            "title": "Submitters",
+            "type": "array"
+          },
+          "last_reviewed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Reviewed At"
+          }
+        },
+        "required": [
+          "leak_rate",
+          "over_redaction_rate",
+          "counts",
+          "cases",
+          "gates_failed",
+          "lowest_text_retention",
+          "provenance",
+          "tool",
+          "surface",
+          "runs_excluded",
+          "submitters",
+          "last_reviewed_at"
+        ],
+        "title": "LeaderboardRowOut",
+        "type": "object"
+      },
+      "PreviewOut": {
+        "description": "A case's first page, rendered: the full-size PNG plus WebP thumbnails.",
+        "properties": {
+          "url": {
+            "title": "Url",
+            "type": "string"
+          },
+          "srcset": {
+            "title": "Srcset",
+            "type": "string"
+          },
+          "width": {
+            "title": "Width",
+            "type": "integer"
+          },
+          "height": {
+            "title": "Height",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "url",
+          "srcset",
+          "width",
+          "height"
+        ],
+        "title": "PreviewOut",
+        "type": "object"
+      },
+      "RateOut": {
+        "description": "A proportion with the counts it came from and its Wilson 95% interval.",
+        "properties": {
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "n": {
+            "title": "N",
+            "type": "integer"
+          },
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "ci95": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ci95"
+          }
+        },
+        "required": [
+          "value",
+          "n",
+          "count",
+          "ci95"
+        ],
+        "title": "RateOut",
+        "type": "object"
+      },
+      "RevisionOut": {
+        "properties": {
+          "revision": {
+            "title": "Revision",
+            "type": "string"
+          },
+          "generator_version": {
+            "title": "Generator Version",
+            "type": "string"
+          },
+          "is_current": {
+            "title": "Is Current",
+            "type": "boolean"
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published At"
+          },
+          "case_count": {
+            "title": "Case Count",
+            "type": "integer"
+          },
+          "case_pack_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Case Pack Url"
+          }
+        },
+        "required": [
+          "revision",
+          "generator_version",
+          "is_current",
+          "published_at",
+          "case_count",
+          "case_pack_url"
+        ],
+        "title": "RevisionOut",
+        "type": "object"
+      },
+      "SubmitterOut": {
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "staff",
+              "owner",
+              "community"
+            ],
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "role"
+        ],
+        "title": "SubmitterOut",
+        "type": "object"
+      },
+      "SuiteOut": {
+        "properties": {
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "description_md": {
+            "title": "Description Md",
+            "type": "string"
+          },
+          "revisions": {
+            "items": {
+              "$ref": "#/components/schemas/RevisionOut"
+            },
+            "title": "Revisions",
+            "type": "array"
+          },
+          "revision": {
+            "$ref": "#/components/schemas/RevisionOut"
+          },
+          "scope": {
+            "enum": [
+              "all",
+              "verified"
+            ],
+            "title": "Scope",
+            "type": "string"
+          },
+          "cases": {
+            "items": {
+              "$ref": "#/components/schemas/CaseOut"
+            },
+            "title": "Cases",
+            "type": "array"
+          },
+          "holdout_case_count": {
+            "title": "Holdout Case Count",
+            "type": "integer"
+          },
+          "leaderboard": {
+            "items": {
+              "$ref": "#/components/schemas/LeaderboardRowOut"
+            },
+            "title": "Leaderboard",
+            "type": "array"
+          }
+        },
+        "required": [
+          "slug",
+          "name",
+          "description_md",
+          "revisions",
+          "revision",
+          "scope",
+          "cases",
+          "holdout_case_count",
+          "leaderboard"
+        ],
+        "title": "SuiteOut",
+        "type": "object"
+      },
+      "ToolRefOut": {
+        "properties": {
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "logo_url": {
+            "title": "Logo Url",
+            "type": "string"
+          },
+          "listable": {
+            "title": "Listable",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "slug",
+          "name",
+          "logo_url",
+          "listable"
+        ],
+        "title": "ToolRefOut",
+        "type": "object"
+      },
+      "CaseDetailOut": {
+        "properties": {
+          "case_id": {
+            "title": "Case Id",
+            "type": "string"
+          },
+          "family": {
+            "title": "Family",
+            "type": "string"
+          },
+          "page_count": {
+            "title": "Page Count",
+            "type": "integer"
+          },
+          "probe_count": {
+            "title": "Probe Count",
+            "type": "integer"
+          },
+          "probe_summary": {
+            "additionalProperties": true,
+            "title": "Probe Summary",
+            "type": "object"
+          },
+          "pdf_url": {
+            "title": "Pdf Url",
+            "type": "string"
+          },
+          "preview": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PreviewOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "string"
+          },
+          "runs": {
+            "items": {
+              "$ref": "#/components/schemas/RunOut"
+            },
+            "title": "Runs",
+            "type": "array"
+          }
+        },
+        "required": [
+          "case_id",
+          "family",
+          "page_count",
+          "probe_count",
+          "probe_summary",
+          "pdf_url",
+          "preview",
+          "revision",
+          "runs"
+        ],
+        "title": "CaseDetailOut",
+        "type": "object"
+      },
+      "OverlayOut": {
+        "properties": {
+          "url": {
+            "title": "Url",
+            "type": "string"
+          },
+          "srcset": {
+            "title": "Srcset",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url",
+          "srcset"
+        ],
+        "title": "OverlayOut",
+        "type": "object"
+      },
+      "RunOut": {
+        "properties": {
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "case_id": {
+            "title": "Case Id",
+            "type": "string"
+          },
+          "family": {
+            "title": "Family",
+            "type": "string"
+          },
+          "holdout": {
+            "title": "Holdout",
+            "type": "boolean"
+          },
+          "tool": {
+            "$ref": "#/components/schemas/ToolRefOut"
+          },
+          "surface": {
+            "title": "Surface",
+            "type": "string"
+          },
+          "counts": {
+            "$ref": "#/components/schemas/CountsOut"
+          },
+          "leak_rate": {
+            "$ref": "#/components/schemas/RateOut"
+          },
+          "weighted_leak_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weighted Leak Rate"
+          },
+          "text_retention": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Text Retention"
+          },
+          "gates_passed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gates Passed"
+          },
+          "overlay": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OverlayOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "output_pdf_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Output Pdf Url"
+          },
+          "submitter": {
+            "$ref": "#/components/schemas/SubmitterOut"
+          },
+          "provenance": {
+            "enum": [
+              "server",
+              "verified",
+              "unverified",
+              "mismatch"
+            ],
+            "title": "Provenance",
+            "type": "string"
+          },
+          "scored_by": {
+            "enum": [
+              "server",
+              "submitter"
+            ],
+            "title": "Scored By",
+            "type": "string"
+          },
+          "reviewed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewed At"
+          }
+        },
+        "required": [
+          "run_id",
+          "case_id",
+          "family",
+          "holdout",
+          "tool",
+          "surface",
+          "counts",
+          "leak_rate",
+          "weighted_leak_rate",
+          "text_retention",
+          "gates_passed",
+          "overlay",
+          "output_pdf_url",
+          "submitter",
+          "provenance",
+          "scored_by",
+          "reviewed_at"
+        ],
+        "title": "RunOut",
+        "type": "object"
+      },
+      "PooledOut": {
+        "properties": {
+          "leak_rate": {
+            "$ref": "#/components/schemas/RateOut"
+          },
+          "over_redaction_rate": {
+            "$ref": "#/components/schemas/RateOut"
+          },
+          "counts": {
+            "$ref": "#/components/schemas/CountsOut"
+          },
+          "cases": {
+            "title": "Cases",
+            "type": "integer"
+          },
+          "gates_failed": {
+            "title": "Gates Failed",
+            "type": "integer"
+          },
+          "lowest_text_retention": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lowest Text Retention"
+          },
+          "provenance": {
+            "enum": [
+              "server",
+              "verified",
+              "unverified",
+              "mismatch"
+            ],
+            "title": "Provenance",
+            "type": "string"
+          }
+        },
+        "required": [
+          "leak_rate",
+          "over_redaction_rate",
+          "counts",
+          "cases",
+          "gates_failed",
+          "lowest_text_retention",
+          "provenance"
+        ],
+        "title": "PooledOut",
+        "type": "object"
+      },
+      "ToolReportOut": {
+        "properties": {
+          "tool": {
+            "$ref": "#/components/schemas/ToolRefOut"
+          },
+          "suite": {
+            "title": "Suite",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "string"
+          },
+          "scope": {
+            "enum": [
+              "all",
+              "verified"
+            ],
+            "title": "Scope",
+            "type": "string"
+          },
+          "case_count": {
+            "title": "Case Count",
+            "type": "integer"
+          },
+          "surfaces": {
+            "items": {
+              "$ref": "#/components/schemas/ToolSurfaceOut"
+            },
+            "title": "Surfaces",
+            "type": "array"
+          }
+        },
+        "required": [
+          "tool",
+          "suite",
+          "revision",
+          "scope",
+          "case_count",
+          "surfaces"
+        ],
+        "title": "ToolReportOut",
+        "type": "object"
+      },
+      "ToolSurfaceOut": {
+        "properties": {
+          "surface": {
+            "title": "Surface",
+            "type": "string"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/PooledOut"
+          },
+          "runs_excluded": {
+            "title": "Runs Excluded",
+            "type": "integer"
+          },
+          "breakdowns": {
+            "additionalProperties": true,
+            "title": "Breakdowns",
+            "type": "object"
+          },
+          "runs": {
+            "items": {
+              "$ref": "#/components/schemas/RunOut"
+            },
+            "title": "Runs",
+            "type": "array"
+          }
+        },
+        "required": [
+          "surface",
+          "summary",
+          "runs_excluded",
+          "breakdowns",
+          "runs"
+        ],
+        "title": "ToolSurfaceOut",
+        "type": "object"
+      },
+      "RunDetailOut": {
+        "properties": {
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "case_id": {
+            "title": "Case Id",
+            "type": "string"
+          },
+          "family": {
+            "title": "Family",
+            "type": "string"
+          },
+          "holdout": {
+            "title": "Holdout",
+            "type": "boolean"
+          },
+          "tool": {
+            "$ref": "#/components/schemas/ToolRefOut"
+          },
+          "surface": {
+            "title": "Surface",
+            "type": "string"
+          },
+          "counts": {
+            "$ref": "#/components/schemas/CountsOut"
+          },
+          "leak_rate": {
+            "$ref": "#/components/schemas/RateOut"
+          },
+          "weighted_leak_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weighted Leak Rate"
+          },
+          "text_retention": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Text Retention"
+          },
+          "gates_passed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gates Passed"
+          },
+          "overlay": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OverlayOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "output_pdf_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Output Pdf Url"
+          },
+          "submitter": {
+            "$ref": "#/components/schemas/SubmitterOut"
+          },
+          "provenance": {
+            "enum": [
+              "server",
+              "verified",
+              "unverified",
+              "mismatch"
+            ],
+            "title": "Provenance",
+            "type": "string"
+          },
+          "scored_by": {
+            "enum": [
+              "server",
+              "submitter"
+            ],
+            "title": "Scored By",
+            "type": "string"
+          },
+          "reviewed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewed At"
+          },
+          "report": {
+            "additionalProperties": true,
+            "title": "Report",
+            "type": "object"
+          },
+          "manifest": {
+            "additionalProperties": true,
+            "title": "Manifest",
+            "type": "object"
+          },
+          "verification": {
+            "title": "Verification",
+            "type": "string"
+          },
+          "verification_diff": {
+            "additionalProperties": true,
+            "title": "Verification Diff",
+            "type": "object"
+          },
+          "scorer_version": {
+            "title": "Scorer Version",
+            "type": "string"
+          },
+          "tool_version": {
+            "title": "Tool Version",
+            "type": "string"
+          },
+          "tier": {
+            "title": "Tier",
+            "type": "string"
+          },
+          "notes": {
+            "title": "Notes",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "case_id",
+          "family",
+          "holdout",
+          "tool",
+          "surface",
+          "counts",
+          "leak_rate",
+          "weighted_leak_rate",
+          "text_retention",
+          "gates_passed",
+          "overlay",
+          "output_pdf_url",
+          "submitter",
+          "provenance",
+          "scored_by",
+          "reviewed_at",
+          "report",
+          "manifest",
+          "verification",
+          "verification_diff",
+          "scorer_version",
+          "tool_version",
+          "tier",
+          "notes",
+          "revision"
+        ],
+        "title": "RunDetailOut",
+        "type": "object"
+      },
+      "MyRunOut": {
+        "properties": {
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "case_id": {
+            "title": "Case Id",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "queued",
+              "scored",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "error": {
+            "title": "Error",
+            "type": "string"
+          },
+          "verification": {
+            "title": "Verification",
+            "type": "string"
+          },
+          "counts": {
+            "$ref": "#/components/schemas/CountsOut"
+          },
+          "leak_rate": {
+            "$ref": "#/components/schemas/RateOut"
+          },
+          "overlay": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OverlayOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "run_id",
+          "case_id",
+          "status",
+          "error",
+          "verification",
+          "counts",
+          "leak_rate",
+          "overlay"
+        ],
+        "title": "MyRunOut",
+        "type": "object"
+      },
+      "MySubmissionOut": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "suite": {
+            "title": "Suite",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "string"
+          },
+          "tool": {
+            "$ref": "#/components/schemas/ToolRefOut"
+          },
+          "surface": {
+            "title": "Surface",
+            "type": "string"
+          },
+          "origin": {
+            "enum": [
+              "upload",
+              "cli"
+            ],
+            "title": "Origin",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "submitter": {
+            "$ref": "#/components/schemas/SubmitterOut"
+          },
+          "review_note": {
+            "title": "Review Note",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "submitted_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Submitted At"
+          },
+          "reviewed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewed At"
+          },
+          "runs": {
+            "items": {
+              "$ref": "#/components/schemas/MyRunOut"
+            },
+            "title": "Runs",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "suite",
+          "revision",
+          "tool",
+          "surface",
+          "origin",
+          "status",
+          "submitter",
+          "review_note",
+          "created_at",
+          "submitted_at",
+          "reviewed_at",
+          "runs"
+        ],
+        "title": "MySubmissionOut",
+        "type": "object"
+      },
+      "SubmissionIn": {
+        "properties": {
+          "tool": {
+            "title": "Tool",
+            "type": "string"
+          },
+          "surface": {
+            "enum": [
+              "web",
+              "api",
+              "desktop"
+            ],
+            "title": "Surface",
+            "type": "string"
+          },
+          "origin": {
+            "default": "upload",
+            "enum": [
+              "upload",
+              "cli"
+            ],
+            "title": "Origin",
+            "type": "string"
+          },
+          "tool_version": {
+            "default": "",
+            "title": "Tool Version",
+            "type": "string"
+          },
+          "tier": {
+            "default": "",
+            "title": "Tier",
+            "type": "string"
+          },
+          "notes": {
+            "default": "",
+            "title": "Notes",
+            "type": "string"
+          },
+          "revision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revision"
+          }
+        },
+        "required": [
+          "tool",
+          "surface"
+        ],
+        "title": "SubmissionIn",
+        "type": "object"
+      },
+      "CaseUploadIn": {
+        "properties": {
+          "case_id": {
+            "title": "Case Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "case_id"
+        ],
+        "title": "CaseUploadIn",
+        "type": "object"
+      },
+      "CasePublishIn": {
+        "properties": {
+          "visibility": {
+            "default": "public",
+            "enum": [
+              "public",
+              "holdout"
+            ],
+            "title": "Visibility",
+            "type": "string"
+          }
+        },
+        "title": "CasePublishIn",
+        "type": "object"
       }
     },
     "securitySchemes": {
       "JWTAuth": {
         "type": "http",
         "scheme": "bearer"
+      },
+      "APIKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key"
       }
     }
   },

@@ -19,6 +19,10 @@ describe('MobileNav', () => {
       'href',
       '/price-calculator',
     )
+    expect(within(drawer).getByRole('link', { name: 'Benchmarks' })).toHaveAttribute(
+      'href',
+      '/benchmarks',
+    )
     expect(within(drawer).getByRole('link', { name: 'Methodology' })).toHaveAttribute(
       'href',
       '/docs/methodology',

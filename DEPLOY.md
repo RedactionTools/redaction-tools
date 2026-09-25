@@ -48,6 +48,7 @@ locally, a matching `DEPLOY_STAGING_*` variable set, adding `staging` to the
    git fetch origin
    git checkout prod
    git reset --hard origin/prod
+   git submodule sync --recursive && git submodule update --init --recursive
    docker compose -f docker-compose-prod.yml up -d --build
    ```
 3. The compose file's `migrate` service runs `manage.py migrate --noinput` and

@@ -17,7 +17,6 @@ from apps.catalog import images
 from apps.catalog import screenshots as screenshot_service
 from apps.catalog.images import ImageRejected
 from apps.catalog.models import (
-    Benchmark,
     CrawlSource,
     FacetDimension,
     FacetValue,
@@ -388,12 +387,6 @@ class PriceReviewItemAdmin(ModelAdmin):
         "previous_currency",
         "previous_unit",
     )
-
-
-@admin.register(Benchmark)
-class BenchmarkAdmin(ModelAdmin):
-    list_display = ("name", "slug", "version", "is_public", "published_at")
-    prepopulated_fields = {"slug": ("name",)}
 
 
 @admin.register(ToolSubmission)

@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next'
 
+import { fetchBenchmarkPaths } from '@/lib/benchmarks/server'
 import { getPostMetas } from '@/lib/blog/source'
 import { buildSitemapEntries } from '@/lib/catalog/sitemap'
 import { fetchAllTools } from '@/lib/catalog/server'
@@ -19,5 +20,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     await fetchAllTools(),
     source.getPages().map((page) => page.url),
     getPostMetas(),
+    await fetchBenchmarkPaths(),
   )
 }

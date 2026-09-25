@@ -1,0 +1,647 @@
+{
+  "alignment": {
+    "confident": true,
+    "found": [
+      "bl",
+      "br",
+      "tl",
+      "tr"
+    ],
+    "matrix": [
+      [
+        0.9991845,
+        6.6e-06,
+        0.55968077
+      ],
+      [
+        -4.7e-06,
+        0.99889622,
+        1.58598618
+      ],
+      [
+        2e-08,
+        2e-08,
+        1.0
+      ]
+    ],
+    "method": "fiducial",
+    "mirrored": false,
+    "note": "",
+    "residual_px": 0.348,
+    "rotation_deg": -0.0,
+    "scale": 0.99904
+  },
+  "ambiguous": {
+    "agreed": 0,
+    "disagreements": [],
+    "n": 0,
+    "rate": null
+  },
+  "by_category": {
+    "PERSON": {
+      "leak_rate": {
+        "ci95": [
+          0.131953,
+          0.349389
+        ],
+        "count": 12,
+        "n": 54,
+        "value": 0.222222
+      },
+      "n": 54,
+      "over_redaction_rate": {
+        "ci95": null,
+        "count": 0,
+        "n": 0,
+        "value": null
+      }
+    }
+  },
+  "by_difficulty": {
+    "easy": {
+      "leak_rate": {
+        "ci95": [
+          0.0,
+          0.793457
+        ],
+        "count": 0,
+        "n": 1,
+        "value": 0.0
+      },
+      "n": 1,
+      "over_redaction_rate": {
+        "ci95": null,
+        "count": 0,
+        "n": 0,
+        "value": null
+      }
+    },
+    "hard": {
+      "leak_rate": {
+        "ci95": [
+          0.134545,
+          0.355265
+        ],
+        "count": 12,
+        "n": 53,
+        "value": 0.226415
+      },
+      "n": 53,
+      "over_redaction_rate": {
+        "ci95": null,
+        "count": 0,
+        "n": 0,
+        "value": null
+      }
+    }
+  },
+  "by_kind": {
+    "text_span": {
+      "leak_rate": {
+        "ci95": [
+          0.131953,
+          0.349389
+        ],
+        "count": 12,
+        "n": 54,
+        "value": 0.222222
+      },
+      "n": 54,
+      "over_redaction_rate": {
+        "ci95": null,
+        "count": 0,
+        "n": 0,
+        "value": null
+      }
+    }
+  },
+  "by_severity": {
+    "high": {
+      "leak_rate": {
+        "ci95": [
+          0.131953,
+          0.349389
+        ],
+        "count": 12,
+        "n": 54,
+        "value": 0.222222
+      },
+      "n": 54,
+      "over_redaction_rate": {
+        "ci95": null,
+        "count": 0,
+        "n": 0,
+        "value": null
+      }
+    }
+  },
+  "by_trap": {
+    "nan": {
+      "leak_rate": {
+        "ci95": [
+          0.131953,
+          0.349389
+        ],
+        "count": 12,
+        "n": 54,
+        "value": 0.222222
+      },
+      "n": 54,
+      "over_redaction_rate": {
+        "ci95": null,
+        "count": 0,
+        "n": 0,
+        "value": null
+      }
+    }
+  },
+  "case_id": "extraction-conditions-1",
+  "condition_cost": {
+    "orientation": {
+      "horizontal": 0.0,
+      "rot180": 0.056452,
+      "rot270": 0.056452,
+      "rot90": -0.193548,
+      "skew": -0.193548,
+      "vertical": 0.806452
+    },
+    "polarity": {
+      "highlighted": 0.046154,
+      "inverse": -0.010989,
+      "low-contrast": -0.153846,
+      "normal": 0.0,
+      "on-image": 0.346154,
+      "screened": 0.446154
+    },
+    "provenance": {
+      "hand-block": 0.251852,
+      "hand-cursive": 0.251852,
+      "hand-mixed": 0.185185,
+      "print-clean": 0.051852,
+      "print-degraded": 0.074074,
+      "vector": 0.0
+    },
+    "scale": {
+      "pt10": 0.0,
+      "pt4": -0.25,
+      "pt6": -0.068182
+    }
+  },
+  "dataset_revision": "v0.1.1",
+  "detection": {
+    "confusion": {},
+    "f1": null,
+    "matched": 0,
+    "mode": "inferred",
+    "note": "the tool reported no entity list, so detection is unidentifiable: a detection miss and a redaction failure are the same observation. Redaction outcomes are reported instead.",
+    "precision": null,
+    "recall": null,
+    "reported": 0,
+    "targets": 0,
+    "type_accuracy": null
+  },
+  "engines": {
+    "ocr": "tesseract",
+    "pdfium": "153.0.7999.0",
+    "pypdf": "6.19.0",
+    "pypdfium2": "5.13.0",
+    "renderer": "pypdfium2",
+    "tesseract": "tesseract 5.5.2"
+  },
+  "family": "extraction-conditions",
+  "incomplete_rows": 0,
+  "layers": {
+    "annotation": {
+      "exclusive_leak_rate": {
+        "ci95": [
+          0.0,
+          0.066416
+        ],
+        "count": 0,
+        "n": 54,
+        "value": 0.0
+      },
+      "if_it_survives": "shown by many viewers",
+      "layer_leak_rate": {
+        "ci95": [
+          0.0,
+          0.066416
+        ],
+        "count": 0,
+        "n": 54,
+        "value": 0.0
+      },
+      "severity": "high",
+      "unavailable": 0
+    },
+    "attachment": {
+      "exclusive_leak_rate": {
+        "ci95": [
+          0.0,
+          0.066416
+        ],
+        "count": 0,
+        "n": 54,
+        "value": 0.0
+      },
+      "if_it_survives": "one toggle away",
+      "layer_leak_rate": {
+        "ci95": [
+          0.0,
+          0.066416
+        ],
+        "count": 0,
+        "n": 54,
+        "value": 0.0
+      },
+      "severity": "high",
+      "unavailable": 0
+    },
+    "content_stream": {
+      "exclusive_leak_rate": {
+        "ci95": [
+          0.0,
+          0.066416
+        ],
+        "count": 0,
+        "n": 54,
+        "value": 0.0
+      },
+      "if_it_survives": "copy-paste, pdftotext, any parser",
+      "layer_leak_rate": {
+        "ci95": [
+          0.010216,
+          0.125354
+        ],
+        "count": 2,
+        "n": 54,
+        "value": 0.037037
+      },
+      "severity": "critical",
+      "unavailable": 0
+    },
+    "font_subset": {
+      "exclusive_leak_rate": {
+        "ci95": [
+          0.0,
+          0.066416
+        ],
+        "count": 0,
+        "n": 54,
+        "value": 0.0
+      },
+      "if_it_survives": "narrows the value; partial disclosure",
+      "layer_leak_rate": {
+        "ci95": [
+          0.0,
+          0.066416
+        ],
+        "count": 0,
+        "n": 54,
+        "value": 0.0
+      },
+      "severity": "low",
+      "unavailable": 0
+    },
+    "image_xobject": {
+      "exclusive_leak_rate": {
+        "ci95": [
+          0.0,
+          0.066416
+        ],
+        "count": 0,
+        "n": 54,
+        "value": 0.0
+      },
+      "if_it_survives": "a crop is a view, not a deletion",
+      "layer_leak_rate": {
+        "ci95": [
+          0.0,
+          0.066416
+        ],
+        "count": 0,
+        "n": 54,
+        "value": 0.0
+      },
+      "severity": "critical",
+      "unavailable": 0
+    },
+    "metadata": {
+      "exclusive_leak_rate": {
+        "ci95": [
+          0.0,
+          0.066416
+        ],
+        "count": 0,
+        "n": 54,
+        "value": 0.0
+      },
+      "if_it_survives": "invisible, survives forwarding",
+      "layer_leak_rate": {
+        "ci95": [
+          0.0,
+          0.066416
+        ],
+        "count": 0,
+        "n": 54,
+        "value": 0.0
+      },
+      "severity": "high",
+      "unavailable": 0
+    },
+    "ocr": {
+      "exclusive_leak_rate": {
+        "ci95": [
+          0.0,
+          0.066416
+        ],
+        "count": 0,
+        "n": 54,
+        "value": 0.0
+      },
+      "if_it_survives": "catches translucent or hairline covers",
+      "layer_leak_rate": {
+        "ci95": [
+          0.040201,
+          0.199101
+        ],
+        "count": 5,
+        "n": 54,
+        "value": 0.092593
+      },
+      "severity": "high",
+      "unavailable": 0
+    },
+    "optional_content": {
+      "exclusive_leak_rate": {
+        "ci95": [
+          0.0,
+          0.066416
+        ],
+        "count": 0,
+        "n": 54,
+        "value": 0.0
+      },
+      "if_it_survives": "one toggle away",
+      "layer_leak_rate": {
+        "ci95": [
+          0.0,
+          0.066416
+        ],
+        "count": 0,
+        "n": 54,
+        "value": 0.0
+      },
+      "severity": "high",
+      "unavailable": 0
+    },
+    "prior_revision": {
+      "exclusive_leak_rate": {
+        "ci95": [
+          0.0,
+          0.066416
+        ],
+        "count": 0,
+        "n": 54,
+        "value": 0.0
+      },
+      "if_it_survives": "'save' instead of export; trivially recovered",
+      "layer_leak_rate": {
+        "ci95": [
+          0.0,
+          0.066416
+        ],
+        "count": 0,
+        "n": 54,
+        "value": 0.0
+      },
+      "severity": "critical",
+      "unavailable": 0
+    },
+    "rendered_pixels": {
+      "exclusive_leak_rate": {
+        "ci95": [
+          0.05193,
+          0.221949
+        ],
+        "count": 6,
+        "n": 54,
+        "value": 0.111111
+      },
+      "if_it_survives": "visible to anyone who opens the file",
+      "layer_leak_rate": {
+        "ci95": [
+          0.131953,
+          0.349389
+        ],
+        "count": 12,
+        "n": 54,
+        "value": 0.222222
+      },
+      "severity": "critical",
+      "unavailable": 0
+    }
+  },
+  "manifest": {
+    "attempt": 1,
+    "capabilities": {
+      "categories": [],
+      "channels": [
+        "embedded_image",
+        "image_text",
+        "metadata",
+        "text_layer"
+      ],
+      "deterministic": true,
+      "formats": [
+        "pdf"
+      ],
+      "max_bytes": null,
+      "max_pages": null,
+      "mode": "sync",
+      "orientations": [
+        "horizontal",
+        "rot180",
+        "rot270",
+        "rot90",
+        "skew",
+        "vertical"
+      ],
+      "per_type_control": false,
+      "polarities": [
+        "highlighted",
+        "inverse",
+        "low-contrast",
+        "normal",
+        "on-image",
+        "screened"
+      ],
+      "provenances": [
+        "hand-block",
+        "hand-cursive",
+        "hand-mixed",
+        "print-clean",
+        "print-degraded",
+        "vector"
+      ],
+      "stages": [
+        "redaction"
+      ]
+    },
+    "case_id": "extraction-conditions-1",
+    "dataset_revision": "v0.1.1",
+    "input_sha256": "3d64a98df32c0a112c7301bb5f8a664f1864e5dc61d0328fc6dbcb31b1156a48",
+    "notes": null,
+    "observed_at": "2026-09-25T08:14:47+00:00",
+    "operator": null,
+    "output_name": "redacted-extraction-conditions-1.pdf",
+    "output_sha256": "4c271feece6f544315a30d4cb3884e8a10d9f5d88997c5230d69c7da175fdeb1",
+    "profile": {},
+    "run_id": "20260925T081446-pdf-redaction-web-extraction-conditions-1-a1-21dbff",
+    "tier": null,
+    "tool_id": "pdf-redaction:web",
+    "tool_version": null,
+    "transport": "manual",
+    "url": null,
+    "vendor_settings": {}
+  },
+  "notes": [],
+  "reach": {
+    "image_text": {
+      "ci95": [
+        0.51519,
+        0.841471
+      ],
+      "count": 19,
+      "n": 27,
+      "value": 0.703704
+    },
+    "text_layer": {
+      "ci95": [
+        0.675209,
+        0.940842
+      ],
+      "count": 23,
+      "n": 27,
+      "value": 0.851852
+    }
+  },
+  "run_id": "20260925T081446-pdf-redaction-web-extraction-conditions-1-a1-21dbff",
+  "summary": {
+    "area_over_coverage": 0.0,
+    "collateral": {
+      "ci95": null,
+      "count": 0,
+      "n": 0,
+      "value": null
+    },
+    "counts": {
+      "FN": 12,
+      "FP": 0,
+      "TN": 0,
+      "TP": 42,
+      "ambiguous": 0,
+      "undecided": 0,
+      "unsupported": 0
+    },
+    "leak_rate": {
+      "ci95": [
+        0.131953,
+        0.349389
+      ],
+      "count": 12,
+      "n": 54,
+      "value": 0.222222
+    },
+    "over_redaction_rate": {
+      "ci95": null,
+      "count": 0,
+      "n": 0,
+      "value": null
+    },
+    "pages": 1,
+    "privacy": 0.777778,
+    "probes": 54,
+    "rqs": null,
+    "spill": 0.137817,
+    "text_retention": 0.931835,
+    "utility": null,
+    "weighted_leak_rate": 0.222222
+  },
+  "survivability": {
+    "gates": [
+      {
+        "detail": "",
+        "gate": "opens",
+        "passed": true
+      },
+      {
+        "detail": "1 page(s); the case is a single page",
+        "gate": "pages",
+        "passed": true
+      },
+      {
+        "detail": "595.3x841.9pt against 595.3x841.9pt",
+        "gate": "geometry",
+        "passed": true
+      },
+      {
+        "detail": "TR = 0.932, floor 0.9",
+        "gate": "text_retained",
+        "passed": true
+      },
+      {
+        "detail": "1244 of 1676 extractable characters survive (74.2%); flattening the page to an image redacts everything perfectly and destroys the document",
+        "gate": "not_rasterised",
+        "passed": true
+      }
+    ],
+    "input_chars": 1676,
+    "output_chars": 1244,
+    "passed": true,
+    "text_retention": 0.9318
+  },
+  "thresholds": {
+    "beta": 2.0,
+    "delta_px": 24,
+    "disclosure_length": {
+      "ACCOUNT": 4,
+      "CARD": 4,
+      "EMAIL": 4,
+      "IBAN": 4,
+      "NATIONAL_ID": 4,
+      "PASSPORT": 4,
+      "PHONE": 4,
+      "PLATE": 4,
+      "POSTCODE": 4
+    },
+    "dpi": 300,
+    "geometry_tolerance": 0.01,
+    "glyph_floor": 0.25,
+    "glyph_legible": 0.5,
+    "glyph_merge_pt": 0.5,
+    "glyph_window_pt": 2.0,
+    "l_min": 4,
+    "locate_margin_pt": 2.0,
+    "max_residual_px": 6.0,
+    "min_char_survival": 0.05,
+    "min_ink_fraction": 0.01,
+    "min_text_retention": 0.9,
+    "morph_radius": 1,
+    "page_rewritten_fraction": 0.5,
+    "spill_epsilon_pt": 12.0,
+    "tau_cov": 0.98,
+    "tau_hash": 10,
+    "tau_iou": 0.5,
+    "tau_reveal": 0.02,
+    "tau_span": 0.5,
+    "tau_text": 0.5,
+    "z": 1.96
+  },
+  "unavailable_layers": {},
+  "undecided": 0,
+  "unsupported": {
+    "n": 0,
+    "reasons": {}
+  }
+}

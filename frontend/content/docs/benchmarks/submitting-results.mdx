@@ -1,0 +1,28 @@
+---
+title: Submitting results
+description: Run the public cases through a tool, upload what it returns, and we score it - credited to you, published after review.
+---
+
+Anyone with an account can add a tool to the leaderboard. You do not need to own the tool.
+
+1. Open the benchmark, for example [PDF](/benchmarks/pdf), and download the cases. Use
+   **Download all** to get one zip.
+2. Run each case through the tool exactly as a user would. Record the plan or tier you used.
+3. Go to **Submit results**, choose the tool and how you ran it (web app, desktop app or API),
+   and upload the files the tool returned, **unchanged**. Files named after their case are
+   matched automatically.
+4. Select **Send for scoring**.
+
+We score every file ourselves with the same scorer the CLI uses. Scoring takes a minute or
+two per case. After scoring, an editor reviews the submission, and it joins the leaderboard
+once approved. You can follow its progress, and read any review note, on
+[your submissions](/benchmarks/submissions).
+
+## What gets refused
+
+- A file that is not a PDF, or is larger than 20 MB.
+- A file whose page count is not the case's page count.
+- A tool that is not in the catalog. [Submit it](/submit) first.
+
+You do not have to cover every case. The leaderboard shows how many cases a result covers,
+so a tool tested on one case is never read as tested on all of them.

@@ -285,3 +285,41 @@ export function blogJsonLd(site: string, posts: readonly BlogPostMeta[]) {
 export function combineJsonLd(nodes: unknown[]): string {
   return JSON.stringify({ '@context': 'https://schema.org', '@graph': nodes })
 }
+
+/**
+ * A benchmark suite as a `Dataset`: the case set we publish, at one revision.
+ *
+ * The tools it measures are referenced by `@id` only - the entity is defined on its
+ * own page, as the note at the top of this file requires of every other page.
+ */
+export function benchmarkDatasetJsonLd(
+  site: string,
+  suite: {
+    slug: string
+    name: string
+    description: string
+    revision: string
+    casePackUrl: string | null
+    tools: { slug: string; name: string }[]
+  },
+) {
+  return {
+    '@type': 'Dataset',
+    name: `${suite.name} benchmark`,
+    description: suite.description,
+    url: `${site}/benchmarks/${suite.slug}`,
+    version: suite.revision,
+    creator: { '@id': organizationId(site) },
+    isAccessibleForFree: true,
+    about: suite.tools.map((tool) => ({ '@id': toolId(site, tool.slug) })),
+    distribution: suite.casePackUrl
+      ? [
+          {
+            '@type': 'DataDownload',
+            encodingFormat: 'application/zip',
+            contentUrl: suite.casePackUrl,
+          },
+        ]
+      : undefined,
+  }
+}

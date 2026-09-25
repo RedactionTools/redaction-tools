@@ -68,6 +68,7 @@ INSTALLED_APPS = [
     "apps.core",
     "apps.accounts",
     "apps.catalog",
+    "apps.benchmarks",
 ]
 
 MIDDLEWARE = [
@@ -284,6 +285,24 @@ CATALOG_SCREENSHOT_RATE = env("CATALOG_SCREENSHOT_RATE", default="20/day")
 # Per listing, counting everything not yet rejected. A profile is a page about a
 # tool, not a gallery, and an owner with an unbounded upload slot will fill it.
 CATALOG_MAX_SCREENSHOTS = env.int("CATALOG_MAX_SCREENSHOTS", default=8)
+
+# Live API keys one account may hold (the pdfredeval CLI authenticates with one).
+MAX_API_KEYS_PER_USER = env.int("MAX_API_KEYS_PER_USER", default=10)
+# Per IP: how often `pdfredeval login` may open a sign-in. It needs no account.
+CLI_LOGIN_START_RATE = env("CLI_LOGIN_START_RATE", default="20/hour")
+
+# --- Benchmarks ------------------------------------------------------------
+# A redacted one-page case is a few hundred KB; a tool that rasterises every page
+# at print resolution can reach a few MB. Well above that is not a redaction.
+BENCHMARK_MAX_PDF_BYTES = env.int("BENCHMARK_MAX_PDF_BYTES", default=20 * 1024 * 1024)
+# Per account, counting every write to a submission: opening one, each file sent
+# to it, finalizing it. A full case set is a few dozen writes.
+BENCHMARK_SUBMIT_RATE = env("BENCHMARK_SUBMIT_RATE", default="200/day")
+# How long one run may take to score in the worker. OCR at 300 dpi is most of it.
+BENCHMARK_SCORE_TIMEOUT = env.int("BENCHMARK_SCORE_TIMEOUT", default=300)
+# Off only where tesseract is absent and the suite has to run anyway; a score
+# computed without OCR says so in its report notes.
+BENCHMARK_OCR = env.bool("BENCHMARK_OCR", default=True)
 
 # --- Staff MCP server ------------------------------------------------------
 # The MCP endpoint is /mcp; its OAuth authorization server is /oauth/. Claude's

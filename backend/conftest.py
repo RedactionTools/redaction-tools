@@ -106,3 +106,82 @@ def call_tool(mcp):
         return response.json()["result"]
 
     return call
+
+
+# --- Benchmarks --------------------------------------------------------------
+# One real case and one real scored run, copied out of pdf-redaction-benchmarks
+# (`benchmarks/v0.1.1`). The run is pdf-redaction:web, a seeded catalog tool.
+
+BENCHMARK_FIXTURES = PROJECT_ROOT / "backend" / "tests" / "fixtures" / "benchmarks"
+BENCHMARK_CASE_ID = "extraction-conditions-1"
+
+
+@pytest.fixture
+def case_files():
+    """`(pdf bytes, ground truth dict)` for the fixture case."""
+    import json
+
+    case = BENCHMARK_FIXTURES / "case"
+    return (
+        (case / f"{BENCHMARK_CASE_ID}.pdf").read_bytes(),
+        json.loads((case / "ground_truth.json").read_text()),
+    )
+
+
+@pytest.fixture
+def run_files():
+    """What `pdfredeval publish` sends for the fixture run."""
+    import json
+
+    run = BENCHMARK_FIXTURES / "run"
+    return {
+        "manifest": json.loads((run / "manifest.json").read_text()),
+        "report": json.loads((run / "report.json").read_text()),
+        "overlay": (run / "overlay.png").read_bytes(),
+        "pdf": (run / f"redacted-{BENCHMARK_CASE_ID}.pdf").read_bytes(),
+    }
+
+
+@pytest.fixture
+def benchmark_case(staff_user, case_files):
+    """The fixture case, published into the seeded `pdf` suite as revision v0.1.1."""
+    from apps.benchmarks import services
+
+    pdf, truth = case_files
+    return services.publish_case(user=staff_user, suite="pdf", pdf=pdf, ground_truth=truth)
+
+
+@pytest.fixture
+def owner(db):
+    """An account with an approved claim on pdf-redaction."""
+    from apps.catalog.models import Tool, ToolClaim
+
+    account = get_user_model().objects.create_user(email="owner@example.com", name="Tool Owner")
+    ToolClaim.objects.create(
+        tool=Tool.objects.get(slug="pdf-redaction"),
+        user=account,
+        work_email="owner@pdf-redaction.example",
+        email_domain="pdf-redaction.example",
+        status="approved",
+    )
+    return account
+
+
+def _api_key_headers(account):
+    from ninja_apikey.models import APIKey
+    from ninja_apikey.security import generate_key
+
+    key = generate_key()
+    APIKey.objects.create(prefix=key.prefix, hashed_key=key.hashed_key, user=account, label="t")
+    return {"headers": {"X-API-Key": f"{key.prefix}.{key.key}"}}
+
+
+@pytest.fixture
+def api_key(user):
+    """Headers that authenticate `user` with an API key, as the pdfredeval CLI does."""
+    return _api_key_headers(user)
+
+
+@pytest.fixture
+def staff_api_key(staff_user):
+    return _api_key_headers(staff_user)

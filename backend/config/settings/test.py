@@ -34,3 +34,7 @@ SOCIALACCOUNT_PROVIDERS = {
         "APPS": [{"client_id": GOOGLE_CLIENT_ID, "secret": "test-secret", "key": ""}],
     },
 }
+
+# The OCR layer is ~25 s per scored page; the parity test in test_benchmarks_scorer.py
+# still runs it, by calling pdfredeval directly.
+BENCHMARK_OCR = False

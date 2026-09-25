@@ -41,6 +41,12 @@ describe('SiteHeader', () => {
     )
   })
 
+  it('links to the benchmarks', () => {
+    render(<SiteHeader />)
+
+    expect(screen.getByRole('link', { name: 'Benchmarks' })).toHaveAttribute('href', '/benchmarks')
+  })
+
   it('links to the blog', () => {
     render(<SiteHeader />)
 

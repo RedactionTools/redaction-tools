@@ -807,64 +807,6 @@ class PriceReviewItem(TimeStampedModel):
         return f"{self.plan} ({self.reason})"
 
 
-# --- Benchmark -------------------------------------------------------------
-# Schema only in phase 1; the leaderboard ships in phase 4.
-
-
-class Benchmark(TimeStampedModel):
-    slug = models.SlugField(unique=True, validators=[validate_catalog_slug])
-    name = models.CharField(max_length=200)
-    version = models.CharField(max_length=32, blank=True)
-    methodology_url = models.URLField(blank=True, validators=[validate_external_url])
-    dataset_size = models.PositiveIntegerField(null=True, blank=True)
-    metric_definitions = models.JSONField(
-        default=dict, blank=True, help_text="{recall: {label, unit, higher_is_better}}"
-    )
-    license = models.CharField(max_length=64, blank=True)
-    is_public = models.BooleanField(default=False)
-    published_at = models.DateTimeField(null=True, blank=True)
-
-    class Meta:
-        db_table = "catalog_benchmark"
-        ordering = ["name"]
-
-    def __str__(self):
-        return self.name
-
-
-class BenchmarkRun(TimeStampedModel):
-    benchmark = models.ForeignKey(Benchmark, on_delete=models.CASCADE, related_name="runs")
-    run_label = models.CharField(max_length=64)
-    environment = models.JSONField(default=dict, blank=True)
-    is_published = models.BooleanField(default=False, db_index=True)
-    started_at = models.DateTimeField(default=timezone.now)
-    published_at = models.DateTimeField(null=True, blank=True)
-
-    class Meta:
-        db_table = "catalog_benchmark_run"
-        ordering = ["-started_at"]
-
-    def __str__(self):
-        return f"{self.benchmark.name} {self.run_label}"
-
-
-class BenchmarkScore(TimeStampedModel):
-    run = models.ForeignKey(BenchmarkRun, on_delete=models.CASCADE, related_name="scores")
-    tool = models.ForeignKey(Tool, on_delete=models.CASCADE, related_name="benchmark_scores")
-    overall = models.DecimalField(max_digits=5, decimal_places=2)
-    rank = models.PositiveSmallIntegerField()
-    metrics = models.JSONField(default=dict, blank=True)
-    sample_count = models.PositiveIntegerField(default=0)
-
-    class Meta:
-        db_table = "catalog_benchmark_score"
-        ordering = ["run", "rank"]
-        constraints = [models.UniqueConstraint(fields=["run", "tool"], name="uniq_run_tool_score")]
-
-    def __str__(self):
-        return f"{self.tool.name} #{self.rank}"
-
-
 # --- Submission ------------------------------------------------------------
 
 

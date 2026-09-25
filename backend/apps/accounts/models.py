@@ -1,5 +1,6 @@
 import uuid
 
+from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
 from django.utils import timezone
@@ -69,3 +70,43 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def get_short_name(self):
         return self.name.split(" ")[0] if self.name else self.email
+
+
+class CliLoginStatus(models.TextChoices):
+    PENDING = "pending", "Waiting for approval"
+    APPROVED = "approved", "Approved"
+    DENIED = "denied", "Denied"
+    CONSUMED = "consumed", "Key issued"
+
+
+class CliLogin(models.Model):
+    """One `pdfredeval login`, from the code the CLI shows to the key it receives.
+
+    A device-code flow (RFC 8628 in spirit): the CLI never sees a password or a browser
+    session, and the key never passes through a URL. `device_code` is the CLI's secret
+    for polling, stored as a SHA-256 like a password would be; `user_code` is the short
+    code a person reads off the terminal and confirms in the browser.
+    """
+
+    device_code_hash = models.CharField(max_length=64, unique=True)
+    user_code = models.CharField(max_length=9, db_index=True)
+    client_name = models.CharField(max_length=80)
+    status = models.CharField(
+        max_length=16, choices=CliLoginStatus.choices, default=CliLoginStatus.PENDING
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.CASCADE
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+
+    class Meta:
+        db_table = "accounts_cli_login"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.user_code} ({self.client_name}, {self.status})"
+
+    @property
+    def expired(self):
+        return self.expires_at <= timezone.now()

@@ -20,6 +20,9 @@ jobs:
         working-directory: backend
     steps:
       - uses: actions/checkout@v5
+        with:
+          # pdfredeval, the benchmark scorer, is a submodule under backend/vendor.
+          submodules: recursive
       - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
@@ -52,10 +55,16 @@ jobs:
       SECRET_KEY: github-actions-insecure-key-for-tests-only
     steps:
       - uses: actions/checkout@v5
+        with:
+          # pdfredeval, the benchmark scorer, is a submodule under backend/vendor.
+          submodules: recursive
       - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
           cache-dependency-glob: backend/uv.lock
+      # The scorer's OCR layer; without it every benchmark test scores with one layer
+      # reported unavailable, and the parity test against the CLI's report fails.
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends tesseract-ocr
       - run: uv sync --all-groups
       - name: Check for missing migrations
         run: uv run manage.py makemigrations --check --dry-run
@@ -106,6 +115,9 @@ jobs:
         context: [backend, frontend]
     steps:
       - uses: actions/checkout@v5
+        with:
+          # pdfredeval, the benchmark scorer, is a submodule under backend/vendor.
+          submodules: recursive
       - uses: docker/setup-buildx-action@v3
       - uses: docker/build-push-action@v6
         with:

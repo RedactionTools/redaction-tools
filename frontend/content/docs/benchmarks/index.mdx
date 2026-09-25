@@ -1,0 +1,62 @@
+---
+title: How we score
+description: What the redaction benchmarks measure, how a leak is decided layer by layer, and why every rate comes with its interval and its n.
+---
+
+Each benchmark case is a synthetic document with sensitive values planted in it: names,
+account numbers and addresses in the text layer, inside images, in metadata, behind
+annotations, in earlier revisions of the file. We know where every value is, because we
+put it there. A tool redacts the document, and we check what can still be recovered from
+the file it hands back.
+
+The scorer is [pdfredeval](https://github.com/RedactionTools/pdf-redaction-benchmarks),
+which is open source. The site runs the same code the CLI does, pinned to the same version.
+
+## What counts as a leak
+
+Every planted value, a **probe**, is checked on up to ten layers of the output file:
+
+| Layer                                          | If a value survives here                            |
+| ---------------------------------------------- | --------------------------------------------------- |
+| `rendered_pixels`                              | Anyone who opens the file can see it                |
+| `content_stream`                               | It can be copied or extracted as text               |
+| `prior_revision`                               | An earlier version of the file still holds it       |
+| `image_xobject`                                | It is inside an embedded image                      |
+| `metadata`                                     | It is in the document properties or XMP             |
+| `annotation`, `attachment`, `optional_content` | It is in a comment, an attachment or a hidden layer |
+| `ocr`                                          | OCR can read it off the page                        |
+| `font_subset`                                  | Glyphs that spell it are still embedded             |
+
+A probe **leaks** if any layer still carries it. A layer that could not be read is reported
+as not measured, never counted as clean.
+
+## The numbers
+
+- **Leak rate:** sensitive values that survived, out of all sensitive values in scope. Lower
+  is better.
+- **Over-redaction rate:** values that should have been kept (distractors such as order
+  numbers) but were destroyed. It is undefined, shown as a dash, when a case has no
+  distractors.
+- **Weighted leak rate:** the leak rate with each value weighted by severity: critical 8,
+  high 4, medium 2, low 1.
+- **Text kept:** how much of the document's extractable text survived. A tool that turns
+  every page into a picture "redacts" everything and leaves a useless file.
+
+Every rate is shown with its **95% Wilson interval** and the **n** it was computed from.
+Two tools whose intervals overlap have not been shown to differ.
+
+## Pooling
+
+A leaderboard row pools a tool's runs across cases. We add up the **counts** and compute
+the rate again from the totals. We never average rates, because an average would let a
+2-probe case weigh as much as a 90-probe one. Each case contributes only its latest approved
+run. Scores computed under a different threshold table are a different measurement: they
+are left out, and the row says how many runs were left out.
+
+Results from different **dataset revisions** are never mixed. Each revision has its own
+leaderboard.
+
+## Holdout cases
+
+Some cases are scored but not published. They keep the leaderboard honest, because no tool
+can be tuned against a document nobody outside has seen.

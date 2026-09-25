@@ -51,7 +51,7 @@ case "$repo_url" in
 	https://*) ;;
 	*) echo "error: cannot derive an HTTPS clone URL from '$repo_url'" >&2; exit 1 ;;
 esac
-remote_ssh "test -d '${DEPLOY_DIR}/.git' || git clone --branch '${server}' '${repo_url}' '${DEPLOY_DIR}'"
+remote_ssh "test -d '${DEPLOY_DIR}/.git' || git clone --recurse-submodules --branch '${server}' '${repo_url}' '${DEPLOY_DIR}'"
 
 env_file="$DEPLOY_ROOT/../.env.${server}"
 if [[ ! -f "$env_file" ]]; then

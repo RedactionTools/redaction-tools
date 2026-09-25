@@ -44,4 +44,7 @@ jobs:
             git fetch origin
             git checkout ${{ steps.cfg.outputs.server }}
             git reset --hard origin/${{ steps.cfg.outputs.server }}
+            # The backend image builds pdfredeval from the backend/vendor submodule.
+            git submodule sync --recursive
+            git submodule update --init --recursive
             docker compose -f ${{ vars[format('DEPLOY_{0}_COMPOSE_FILE', steps.cfg.outputs.server)] || 'docker-compose-prod.yml' }} up -d --build

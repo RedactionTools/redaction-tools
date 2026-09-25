@@ -19,7 +19,13 @@ dependencies = [
     "django-mcpz>=1.0.3,<2",
     "msgspec>=0.20",
     "pillow>=12.0",
+    # The benchmark scorer, vendored as a git submodule so the backend scores uploads with
+    # exactly the code the CLI publishes with. Bump it with the submodule, never alone.
+    "pdfredeval[score]",
 ]
+
+[tool.uv.sources]
+pdfredeval = { path = "vendor/pdf-redaction-benchmarks", editable = true }
 
 [dependency-groups]
 dev = [
@@ -34,7 +40,7 @@ dev = [
 [tool.ruff]
 line-length = 100
 target-version = "py313"
-extend-exclude = ["*/migrations/*"]
+extend-exclude = ["*/migrations/*", "vendor/"]  # vendor/: submodules lint in their own repo
 
 [tool.ruff.lint]
 select = [
