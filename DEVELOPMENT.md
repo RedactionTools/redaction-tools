@@ -223,9 +223,25 @@ anyone's mark.
 `backend/tests/test_catalog_seed.py` asserts every recorded path resolves to a file that exists,
 so a missing or misspelled logo fails the suite rather than appearing as a broken image.
 
+## Logos
+
+A tool's or vendor's `logo_url` is either a site-relative path to a file in the frontend's
+`public/images/tools/`, or a logo uploaded to us. Uploads go through `apps/catalog/logos.py`,
+whose `write()` returns the URL to store and leaves saving the row to the caller:
+
+| Surface | Route |
+| --- | --- |
+| Django admin | "Upload logo" on the Tool and Vendor pages, with a preview beside `logo_url` |
+| Staff MCP | `catalog_set_tool_logo`, `catalog_set_vendor_logo` (fetch a URL) |
+
+A logo gets the same checks as a screenshot (PNG, JPEG or WebP; SVG refused; metadata stripped).
+It is scaled down to at most 512px wide and stored as `media/logos/<sha256>.<ext>`. The URL is
+absolute, under `PUBLIC_MEDIA_URL`, which `validate_logo_url` accepts without the SSRF check: we
+created that URL and never fetch it. A replaced logo's file is not deleted, because another row may share it.
+
 ## Tool screenshots
 
-Logos are files in the repo; screenshots are uploads. `ToolScreenshot` holds one picture of a
+Screenshots are uploads. `ToolScreenshot` holds one picture of a
 tool, and `apps/catalog/screenshots.py` is the single gate every upload passes through, whichever
 surface it arrived from:
 

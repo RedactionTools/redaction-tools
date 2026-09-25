@@ -18,6 +18,7 @@ catalog_list_tools        catalog_get_tool         catalog_update_tool
 catalog_list_plans        catalog_create_plan      catalog_update_plan
 catalog_set_plan_limit    catalog_set_plan_price
 catalog_add_screenshot    catalog_list_screenshots catalog_review_screenshot
+catalog_set_tool_logo     catalog_set_vendor_logo
 ```
 
 ## One tool per table
@@ -52,7 +53,8 @@ corrects. Every write records who made it.
 
 ## Fetching a URL is the dangerous tool
 
-MCP carries no files, so `catalog_add_screenshot` takes a URL and fetches it. That makes it
+MCP carries no files, so `catalog_add_screenshot` and the two logo tools take a URL and
+fetch it. That makes it
 a **server-side fetch initiated by a model**, from inside our network — which is the
 classic SSRF shape.
 

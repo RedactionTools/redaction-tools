@@ -6,14 +6,16 @@ each published figure came from.
 """
 
 from django import forms
+from django.conf import settings
 from django.contrib import admin
 from django.db import transaction
 from django.utils import timezone
 from django.utils.html import format_html
 from django.utils.text import slugify
 from unfold.admin import ModelAdmin, TabularInline
+from unfold.widgets import UnfoldAdminFileFieldWidget
 
-from apps.catalog import images
+from apps.catalog import images, logos
 from apps.catalog import screenshots as screenshot_service
 from apps.catalog.images import ImageRejected
 from apps.catalog.models import (
@@ -60,8 +62,80 @@ def unique_tool_slug(name):
     return slug
 
 
+class LogoUploadForm(forms.ModelForm):
+    """A model form plus a way to upload a logo instead of typing a path.
+
+    The upload is not a model field: `logo_url` stays the one place a logo
+    lives, and an upload is just another way of filling it in.
+    """
+
+    logo_upload = forms.FileField(
+        required=False,
+        label="Upload logo",
+        widget=UnfoldAdminFileFieldWidget,
+        help_text=(
+            "PNG, JPEG or WebP. Replaces the logo URL on save. SVG is refused: it can carry script."
+        ),
+    )
+
+    def clean_logo_upload(self):
+        upload = self.cleaned_data.get("logo_upload")
+        if not upload:
+            return None
+        data = upload.read()
+        # Checked here as well as in `logos.write` so that a bad file is a form
+        # error an editor can read, before anything on the page is saved.
+        try:
+            images.load_logo(data)
+        except ImageRejected as exc:
+            raise forms.ValidationError(str(exc)) from exc
+        return data
+
+
+class LogoAdminMixin:
+    """Logo upload and preview for any admin whose model has a `logo_url`."""
+
+    form = LogoUploadForm
+
+    def get_readonly_fields(self, request, obj=None):
+        return (*super().get_readonly_fields(request, obj), "logo_preview")
+
+    def get_fields(self, request, obj=None):
+        """Every field in model order, with the upload and preview moved up
+        beside `logo_url` - left alone, both would land at the very bottom."""
+        fields = [
+            f for f in super().get_fields(request, obj) if f not in ("logo_upload", "logo_preview")
+        ]
+        at = fields.index("logo_url") + 1
+        return [*fields[:at], "logo_upload", "logo_preview", *fields[at:]]
+
+    @admin.display(description="Logo preview")
+    def logo_preview(self, obj):
+        """The logo as the site shows it, on the same white plate.
+
+        A site-relative path is a file in the frontend's `public/`, which this
+        origin does not serve - so it is reached through FRONTEND_URL.
+        """
+        if not obj.logo_url:
+            return "—"
+        src = obj.logo_url
+        if src.startswith("/") and not src.startswith("//"):
+            src = f"{settings.FRONTEND_URL}{src}"
+        return format_html(
+            '<span style="display:inline-block;background:#fff;padding:4px;border-radius:4px">'
+            '<img src="{}" style="height:40px;max-width:176px;object-fit:contain" alt="" />'
+            "</span>",
+            src,
+        )
+
+    def save_model(self, request, obj, form, change):
+        if data := form.cleaned_data.get("logo_upload"):
+            obj.logo_url = logos.write(data)
+        super().save_model(request, obj, form, change)
+
+
 @admin.register(Vendor)
-class VendorAdmin(ModelAdmin):
+class VendorAdmin(LogoAdminMixin, ModelAdmin):
     list_display = ("name", "slug", "hq_country", "is_active")
     list_filter = ("is_active", "hq_country")
     search_fields = ("name", "slug")
@@ -271,7 +345,7 @@ class ToolScreenshotAdmin(ModelAdmin):
 
 
 @admin.register(Tool)
-class ToolAdmin(ModelAdmin):
+class ToolAdmin(LogoAdminMixin, ModelAdmin):
     list_display = ("name", "vendor", "status", "listable", "is_first_party", "last_verified_at")
     list_filter = ("status", "is_first_party", "price_is_stale", "vendor")
     search_fields = ("name", "slug", "tagline", "summary")

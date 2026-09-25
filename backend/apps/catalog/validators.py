@@ -79,4 +79,10 @@ def validate_logo_url(value: str) -> None:
     """
     if value.startswith("/") and not value.startswith("//"):
         return
+    # A logo uploaded through the admin lives on our own media origin, which is
+    # localhost in development. We minted that URL and never fetch it, so the
+    # guard has nothing to guard. PUBLIC_MEDIA_URL ends in "/", so a lookalike
+    # host such as "localhost:8007.evil.test" cannot share the prefix.
+    if value.startswith(settings.PUBLIC_MEDIA_URL):
+        return
     validate_external_url(value)

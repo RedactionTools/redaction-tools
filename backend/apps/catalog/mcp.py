@@ -436,6 +436,42 @@ class ReviewScreenshotParams(Struct):
     ] = ""
 
 
+LOGO_IMAGE_URL = Annotated[
+    str,
+    Meta(
+        description=(
+            "A public http(s) URL of a PNG, JPEG or WebP logo - not SVG, which is "
+            "refused. Fetched server-side, so it must resolve to a public address."
+        )
+    ),
+]
+
+
+class SetToolLogoParams(Struct):
+    slug: SLUG
+    image_url: LOGO_IMAGE_URL
+
+
+class SetToolLogoResult(Struct):
+    slug: str
+    logo_url: Annotated[str, Meta(description="Where the site now serves the logo from.")]
+    changed: Annotated[
+        list[str], Meta(description="['logo_url'], or empty if it was already this picture.")
+    ]
+    listable: bool
+    listability_reasons: list[str]
+
+
+class SetVendorLogoParams(Struct):
+    vendor: Annotated[str, Meta(description="The company's name, as catalog_get_tool reports it.")]
+    image_url: LOGO_IMAGE_URL
+
+
+class SetVendorLogoResult(Struct):
+    vendor: str
+    logo_url: Annotated[str, Meta(description="Where the site now serves the logo from.")]
+
+
 def register(server):
     """Attach the staff catalog tools to `server`."""
 
@@ -689,4 +725,46 @@ def register(server):
                     note=params.note,
                 ),
                 ScreenshotOut,
+            )
+
+    @server.tool(
+        description=(
+            "Set a listing's logo from a public image URL. The server fetches it, "
+            "strips its metadata and re-hosts it, so the listing never hotlinks "
+            "the vendor. Use this rather than writing logo_url with "
+            "catalog_update_tool."
+        ),
+        read_only=False,
+        destructive=True,
+        idempotent=True,
+        open_world=True,
+        permission=is_staff,
+    )
+    def catalog_set_tool_logo(request, params: SetToolLogoParams) -> SetToolLogoResult:
+        with _as_tool_error():
+            return msgspec.convert(
+                staff.set_tool_logo(
+                    user=request.user, slug=params.slug, image_url=params.image_url
+                ),
+                SetToolLogoResult,
+            )
+
+    @server.tool(
+        description=(
+            "Set a vendor's logo from a public image URL, re-hosted the same way "
+            "as catalog_set_tool_logo. The vendor is named, not slugged."
+        ),
+        read_only=False,
+        destructive=True,
+        idempotent=True,
+        open_world=True,
+        permission=is_staff,
+    )
+    def catalog_set_vendor_logo(request, params: SetVendorLogoParams) -> SetVendorLogoResult:
+        with _as_tool_error():
+            return msgspec.convert(
+                staff.set_vendor_logo(
+                    user=request.user, vendor=params.vendor, image_url=params.image_url
+                ),
+                SetVendorLogoResult,
             )

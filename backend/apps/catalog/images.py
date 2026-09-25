@@ -26,6 +26,10 @@ MAX_UPLOAD_BYTES = 12 * 1024 * 1024
 # wider rendition can be added later without re-collecting every screenshot.
 MAX_SOURCE_WIDTH = 2560
 
+# The widest a logo is stored at: twice the widest slot one renders in, so it
+# stays sharp on a high-density display.
+MAX_LOGO_WIDTH = 512
+
 # A decompression-bomb guard, checked against the header rather than the file
 # size: a few hundred KB of PNG can declare 900 million pixels, and it is
 # decoding that allocates them. Generous enough for any real capture - a 6K
@@ -61,6 +65,19 @@ class LoadedScreenshot:
 
 def load_screenshot(data: bytes) -> LoadedScreenshot:
     """Read `data` as an image and report what it is."""
+    return _load(data, max_width=MAX_SOURCE_WIDTH)
+
+
+def load_logo(data: bytes) -> LoadedScreenshot:
+    """Read `data` as a logo: the same gate as a screenshot, kept narrower.
+
+    Logos render at most 176 CSS pixels wide, so anything past
+    `MAX_LOGO_WIDTH` is bytes every visitor downloads for nothing.
+    """
+    return _load(data, max_width=MAX_LOGO_WIDTH)
+
+
+def _load(data, *, max_width):
     if len(data) > MAX_UPLOAD_BYTES:
         # Before Pillow touches it: decoding is the expensive part, and a size
         # check costs nothing.
@@ -90,7 +107,7 @@ def load_screenshot(data: bytes) -> LoadedScreenshot:
         )
 
     source_format = image.format
-    image = _fit(image, MAX_SOURCE_WIDTH)
+    image = _fit(image, max_width)
     return LoadedScreenshot(
         data=_encode(image, source_format),
         format=source_format,

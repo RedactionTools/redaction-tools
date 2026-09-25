@@ -19,6 +19,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_date
 from django.utils.text import slugify
 
+from apps.catalog import logos
 from apps.catalog import screenshots as screenshot_service
 from apps.catalog.constants import (
     PLAN_URL_FIELDS,
@@ -534,6 +535,51 @@ def _price(price):
         "source": price.source,
         "source_note": price.source_note,
     }
+
+
+# --- Logos -----------------------------------------------------------------
+
+
+def _fetch_logo(image_url):
+    """Fetch, re-encode and store a logo, returning the URL we now serve it at.
+
+    Through the screenshot fetcher on purpose: it is the one that re-checks
+    every redirect hop against the SSRF guard.
+    """
+    try:
+        return logos.write(screenshot_service.fetch(image_url))
+    except ImageRejected as exc:
+        raise StaffError(str(exc)) from exc
+
+
+def set_tool_logo(*, user, slug, image_url):
+    """Re-host the logo at `image_url` and point the listing at it.
+
+    Applied through `update_tool`, so it lands in the revision trail like any
+    other staff edit and a repeat call with the same picture changes nothing.
+    """
+    # Looked up before the fetch, so a mistyped slug costs no download and
+    # leaves no orphaned file.
+    if not Tool.objects.filter(slug=slug).exists():
+        raise StaffError(f"No tool with slug {slug!r}.")
+    logo_url = _fetch_logo(image_url)
+    result = update_tool(user=user, slug=slug, changes={"logo_url": logo_url})
+    return {"logo_url": logo_url, **result}
+
+
+def set_vendor_logo(*, user, vendor, image_url):
+    """Re-host the logo at `image_url` and point the vendor at it.
+
+    The vendor is found by the slug of its name, the way `create_tool` finds
+    one - a caller sees vendor names, never their slugs. `user` is unused but
+    taken, so every write in this module is attributable in the same shape.
+    """
+    row = Vendor.objects.filter(slug=slugify(vendor)[:80]).first()
+    if row is None:
+        raise StaffError(f"No vendor named {vendor!r}.")
+    row.logo_url = _fetch_logo(image_url)
+    row.save(update_fields=["logo_url", "updated_at"])
+    return {"vendor": row.name, "logo_url": row.logo_url}
 
 
 # --- Screenshots -----------------------------------------------------------
