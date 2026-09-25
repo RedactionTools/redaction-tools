@@ -22,6 +22,7 @@ from apps.catalog.models import (
 from apps.catalog.staff import (
     StaffError,
     create_plan,
+    create_tool,
     set_plan_limit,
     set_plan_price,
     update_plan,
@@ -114,6 +115,79 @@ def test_update_tool_reports_whether_the_tool_now_clears_the_bar(staff_user, too
 
     assert result["listable"] is False
     assert any("description_md" in reason for reason in result["listability_reasons"])
+
+
+def test_create_tool_adds_a_draft_under_its_vendor(staff_user):
+    result = create_tool(
+        user=staff_user,
+        slug="ai-redact",
+        name="AI-Redact",
+        vendor="SOKT Technologies",
+        website_url=SAFE_URL,
+    )
+
+    tool = Tool.objects.get(slug="ai-redact")
+    assert tool.name == "AI-Redact"
+    assert tool.vendor.name == "SOKT Technologies"
+    # DRAFT, never published: the copy is written after the row exists.
+    assert tool.status == "draft"
+    assert result["slug"] == "ai-redact"
+    assert result["listable"] is False
+
+
+def test_create_tool_refuses_a_slug_already_taken(staff_user):
+    with pytest.raises(StaffError) as exc:
+        create_tool(
+            user=staff_user, slug=SEEDED, name="Again", vendor="Anyone", website_url=SAFE_URL
+        )
+
+    assert "catalog_update_tool" in str(exc.value)
+
+
+@pytest.mark.parametrize("slug", ["AI Redact", "pricing"])
+def test_create_tool_refuses_a_slug_that_cannot_be_a_url(staff_user, slug):
+    with pytest.raises(StaffError):
+        create_tool(user=staff_user, slug=slug, name="X", vendor="X", website_url=SAFE_URL)
+
+    assert not Tool.objects.filter(slug=slug).exists()
+
+
+def test_create_tool_refuses_a_website_pointing_inward(staff_user):
+    with pytest.raises(StaffError):
+        create_tool(
+            user=staff_user, slug="ai-redact", name="X", vendor="X", website_url=METADATA_URL
+        )
+
+    assert not Tool.objects.filter(slug="ai-redact").exists()
+
+
+def test_create_tool_takes_the_listing_fields_in_the_same_call(staff_user):
+    create_tool(
+        user=staff_user,
+        slug="ai-redact",
+        name="AI-Redact",
+        vendor="SOKT Technologies",
+        website_url=SAFE_URL,
+        changes={"tagline": "Redaction by the page", "pricing_url": SAFE_URL},
+    )
+
+    tool = Tool.objects.get(slug="ai-redact")
+    assert tool.tagline == "Redaction by the page"
+    assert tool.pricing_url == SAFE_URL
+
+
+def test_create_tool_refuses_a_field_that_is_not_staff_editable(staff_user):
+    with pytest.raises(StaffError):
+        create_tool(
+            user=staff_user,
+            slug="ai-redact",
+            name="X",
+            vendor="X",
+            website_url=SAFE_URL,
+            changes={"status": "published"},
+        )
+
+    assert not Tool.objects.filter(slug="ai-redact").exists()
 
 
 def test_update_plan_applies_the_change(staff_user):

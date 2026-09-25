@@ -17,6 +17,7 @@ from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.utils import timezone
 from django.utils.dateparse import parse_date
+from django.utils.text import slugify
 
 from apps.catalog import screenshots as screenshot_service
 from apps.catalog.constants import (
@@ -43,6 +44,7 @@ from apps.catalog.models import (
     ToolScreenshotSource,
     ToolScreenshotStatus,
     ToolStatus,
+    Vendor,
     listability_blockers,
 )
 from apps.catalog.services import external_url_errors
@@ -198,6 +200,54 @@ def _plan(plan):
 
 def _stamp(value):
     return value.isoformat() if value else None
+
+
+def create_tool(*, user, slug, name, vendor, website_url, changes=None):
+    """Add a listing as a DRAFT, under the vendor of that name.
+
+    The vendor is matched the way approving a submission matches it, on the
+    slug of its name, so a second tool from the same company joins its row
+    rather than forking it.
+
+    DRAFT, never published: publishing is a lifecycle step an editor takes once
+    the copy, facets and a pricing position are in, and the result's
+    `listability_reasons` says which of those are still missing.
+    """
+    changes = dict(changes or {})
+    # `name` and `website_url` are arguments already; taking them twice would
+    # leave the caller guessing which one won.
+    _reject_unknown_fields(
+        changes, STAFF_EDITABLE_TOOL_FIELDS - {"name", "website_url"}, "new tool"
+    )
+    # The slug is the public URL and cannot be edited afterwards, so it is
+    # checked here rather than left to the column.
+    try:
+        validate_slug(slug)
+    except DjangoValidationError as exc:
+        raise StaffError(f"slug {slug!r}: {exc.messages[0]}") from exc
+    _reject_bad_urls({**changes, "website_url": website_url}, URL_FIELDS)
+
+    try:
+        with transaction.atomic():
+            if Tool.objects.filter(slug=slug).exists():
+                raise StaffError(
+                    f"A tool with slug {slug!r} already exists. Edit it with catalog_update_tool."
+                )
+            vendor_row, _ = Vendor.objects.get_or_create(
+                slug=slugify(vendor)[:80], defaults={"name": vendor, "website_url": website_url}
+            )
+            tool = Tool.objects.create(
+                vendor=vendor_row,
+                slug=slug,
+                name=name,
+                website_url=website_url,
+                status=ToolStatus.DRAFT,
+                **changes,
+            )
+    except IntegrityError as exc:
+        raise StaffError(f"That tool conflicts with an existing row: {exc}") from exc
+
+    return {"slug": tool.slug, "vendor": vendor_row.name, **_summary(tool)}
 
 
 def update_tool(*, user, slug, changes):

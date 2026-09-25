@@ -151,12 +151,12 @@ class PlanList(Struct):
     plans: list[PlanOut]
 
 
-class UpdateToolParams(Struct):
-    """Only the fields you pass are written. Omit a field to leave it alone."""
+class _ListingFields(Struct, kw_only=True):
+    """The optional listing fields, shared by creating a tool and editing one.
 
-    slug: SLUG
-    name: str | UnsetType = UNSET
-    website_url: str | UnsetType = UNSET
+    `kw_only` so a subclass can put required fields beside these defaulted ones.
+    """
+
     pricing_url: str | UnsetType = UNSET
     docs_url: str | UnsetType = UNSET
     logo_url: Annotated[
@@ -190,6 +190,48 @@ class UpdateToolParams(Struct):
     editor_verdict: str | UnsetType = UNSET
     editor_notes: str | UnsetType = UNSET
     sort_order: Annotated[int, Meta(ge=0)] | UnsetType = UNSET
+
+
+class UpdateToolParams(_ListingFields, kw_only=True):
+    """Only the fields you pass are written. Omit a field to leave it alone."""
+
+    slug: SLUG
+    name: str | UnsetType = UNSET
+    website_url: str | UnsetType = UNSET
+
+
+class CreateToolParams(_ListingFields, kw_only=True):
+    """A new listing. Only the first four are required; the rest can follow later."""
+
+    slug: Annotated[
+        str,
+        Meta(
+            description=(
+                "The public URL segment, e.g. 'ai-redact'. Lowercase words and "
+                "hyphens. It cannot be changed afterwards, so choose it with care."
+            )
+        ),
+    ]
+    name: str
+    vendor: Annotated[
+        str,
+        Meta(
+            description=(
+                "The company's name. An existing vendor of that name is reused; "
+                "otherwise one is created."
+            )
+        ),
+    ]
+    website_url: str
+
+
+class CreateToolResult(Struct):
+    slug: str
+    vendor: str
+    listable: Annotated[bool, Meta(description="Always false for a new draft.")]
+    listability_reasons: Annotated[
+        list[str], Meta(description="What is still missing before it can be published.")
+    ]
 
 
 class UpdateToolResult(Struct):
@@ -458,6 +500,34 @@ def register(server):
                     user=request.user, slug=params.slug, changes=_changes(params, "slug")
                 ),
                 UpdateToolResult,
+            )
+
+    @server.tool(
+        description=(
+            "Add a new tool to the catalog as a draft. Call catalog_list_tools "
+            "first so you do not create a duplicate. Only slug, name, vendor and "
+            "website_url are required. Then add plans with catalog_create_plan. "
+            "The result's listability_reasons shows what is still missing. "
+            "Publishing is done in the admin, not here."
+        ),
+        read_only=False,
+        destructive=False,
+        idempotent=False,
+        open_world=False,
+        permission=is_staff,
+    )
+    def catalog_create_tool(request, params: CreateToolParams) -> CreateToolResult:
+        with _as_tool_error():
+            return msgspec.convert(
+                staff.create_tool(
+                    user=request.user,
+                    slug=params.slug,
+                    name=params.name,
+                    vendor=params.vendor,
+                    website_url=params.website_url,
+                    changes=_changes(params, "slug", "name", "vendor", "website_url"),
+                ),
+                CreateToolResult,
             )
 
     @server.tool(
