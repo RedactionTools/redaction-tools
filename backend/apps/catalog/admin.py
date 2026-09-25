@@ -10,7 +10,7 @@ from django.conf import settings
 from django.contrib import admin
 from django.db import transaction
 from django.utils import timezone
-from django.utils.html import format_html
+from django.utils.html import format_html, format_html_join
 from django.utils.text import slugify
 from unfold.admin import ModelAdmin, TabularInline
 from unfold.widgets import UnfoldAdminFileFieldWidget
@@ -42,6 +42,7 @@ from apps.catalog.models import (
     ToolSubmission,
     ToolSubmissionStatus,
     Vendor,
+    listability_blockers,
 )
 from apps.catalog.slugs import MAX_SLUG_LENGTH, RESERVED_CATALOG_SEGMENTS
 
@@ -346,18 +347,42 @@ class ToolScreenshotAdmin(ModelAdmin):
 
 @admin.register(Tool)
 class ToolAdmin(LogoAdminMixin, ModelAdmin):
-    list_display = ("name", "vendor", "status", "listable", "is_first_party", "last_verified_at")
+    list_display = (
+        "name",
+        "vendor",
+        "status",
+        "listable",
+        "listing_blockers",
+        "is_first_party",
+        "last_verified_at",
+    )
     list_filter = ("status", "is_first_party", "price_is_stale", "vendor")
     search_fields = ("name", "slug", "tagline", "summary")
     prepopulated_fields = {"slug": ("name",)}
     autocomplete_fields = ("vendor",)
     inlines = (ToolFacetInline, ToolScreenshotInline, PlanInline)
-    readonly_fields = ("created_at", "updated_at")
+    readonly_fields = ("listing_blockers", "created_at", "updated_at")
+
+    def get_fields(self, request, obj=None):
+        """Blockers first: they are the reason an editor opens a draft."""
+        fields = [f for f in super().get_fields(request, obj) if f != "listing_blockers"]
+        return ["listing_blockers", *fields]
 
     @admin.display(boolean=True, description="Listable")
     def listable(self, obj):
         """Whether this tool is a public page yet. See Tool.is_listable."""
         return obj.is_listable()
+
+    @admin.display(description="Listing blockers")
+    def listing_blockers(self, obj):
+        """Everything that keeps this tool a row rather than a page."""
+        blockers = list(listability_blockers(obj))
+        if not blockers:
+            return "—"
+        return format_html(
+            '<ul style="list-style:disc;margin:0;padding-left:1.25em">{}</ul>',
+            format_html_join("", "<li>{}</li>", ((b,) for b in blockers)),
+        )
 
 
 @admin.register(FacetDimension)

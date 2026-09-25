@@ -19,6 +19,7 @@ from apps.catalog.models import (
     ToolStatus,
     ToolSubmission,
     ToolSubmissionStatus,
+    Vendor,
 )
 
 
@@ -494,3 +495,29 @@ def test_the_vendor_page_previews_its_logo_beside_the_url(rf, staff_user):
     at = fields.index("logo_url")
     assert fields[at + 1 : at + 3] == ["logo_upload", "logo_preview"]
     assert "<img" in vendor_admin.logo_preview(Vendor(logo_url="/images/vendors/acme.png"))
+
+
+@pytest.mark.django_db
+def test_a_tool_that_is_not_listable_names_what_blocks_it():
+    """The boolean alone sends an editor hunting; the blockers say what to fix."""
+    from apps.catalog.admin import ToolAdmin
+
+    blockers = ToolAdmin(Tool, admin.site).listing_blockers(
+        Tool.objects.create(name="Acme", slug="acme", status="draft", vendor=Vendor.objects.first())
+    )
+
+    assert "Status is draft, not published." in blockers
+    assert "Missing: website_url, logo_url." in blockers
+
+
+@pytest.mark.django_db
+def test_the_tool_page_and_list_show_the_listing_blockers(admin_client):
+    tool = Tool.objects.get(slug="adobe-acrobat")
+    tool.status = ToolStatus.DRAFT
+    tool.save()
+
+    page = admin_client.get(f"/admin/catalog/tool/{tool.pk}/change/")
+    listing = admin_client.get("/admin/catalog/tool/")
+
+    assert b"not published." in page.content
+    assert b"not published." in listing.content
