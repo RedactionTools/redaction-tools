@@ -356,3 +356,141 @@ def test_deleting_a_screenshot_in_the_admin_takes_its_files_too(admin_client):
     )
 
     assert [path for path in paths if default_storage.exists(path)] == []
+
+
+# --- Logos -----------------------------------------------------------------
+
+
+def _change_form_data(admin_client, url):
+    """What the browser would send back for an untouched change form.
+
+    Read from the rendered form rather than written out, so the test does not
+    have to know every field and inline on the Tool page.
+    """
+    response = admin_client.get(url)
+    data = {}
+    forms = [response.context["adminform"].form]
+    for inline in response.context["inline_admin_formsets"]:
+        formset = inline.formset
+        forms.append(formset.management_form)
+        forms.extend(formset.forms)
+    for form in forms:
+        for name in form.fields:
+            value = form[name].value()
+            if value is None or value is False:
+                continue
+            data[form.add_prefix(name)] = "on" if value is True else value
+    return data
+
+
+@pytest.mark.django_db
+def test_an_editor_can_upload_a_logo_from_the_tool_page(admin_client):
+    from django.conf import settings
+    from django.core.files.storage import default_storage
+
+    tool = Tool.objects.get(slug="adobe-acrobat")
+    url = f"/admin/catalog/tool/{tool.pk}/change/"
+    data = _change_form_data(admin_client, url)
+    data["logo_upload"] = _image_file(600, 200)
+
+    response = admin_client.post(url, data)
+
+    assert response.status_code == 302, response.context["errors"]
+    tool.refresh_from_db()
+    assert tool.logo_url.startswith(settings.PUBLIC_MEDIA_URL + "logos/")
+    assert default_storage.exists(tool.logo_url.removeprefix(settings.PUBLIC_MEDIA_URL))
+
+
+@pytest.mark.django_db
+def test_an_svg_logo_is_a_form_error_and_the_old_logo_stays(admin_client):
+    from django.core.files.uploadedfile import SimpleUploadedFile
+
+    tool = Tool.objects.get(slug="adobe-acrobat")
+    url = f"/admin/catalog/tool/{tool.pk}/change/"
+    data = _change_form_data(admin_client, url)
+    data["logo_upload"] = SimpleUploadedFile(
+        "logo.svg", b'<svg xmlns="http://www.w3.org/2000/svg"/>', content_type="image/svg+xml"
+    )
+
+    response = admin_client.post(url, data)
+
+    assert response.status_code == 200
+    assert b"not an image we can read" in response.content
+    tool.refresh_from_db()
+    assert tool.logo_url == "/images/tools/adobe-acrobat.svg"
+
+
+@pytest.mark.django_db
+def test_the_tool_page_previews_the_current_logo(admin_client, settings):
+    """A site-relative logo is a file in the frontend's `public/`, so the admin -
+    on the API's origin - has to reach it through FRONTEND_URL."""
+    settings.FRONTEND_URL = "http://localhost:3007"
+    tool = Tool.objects.get(slug="adobe-acrobat")
+
+    response = admin_client.get(f"/admin/catalog/tool/{tool.pk}/change/")
+
+    assert b'src="http://localhost:3007/images/tools/adobe-acrobat.svg"' in response.content
+
+
+@pytest.mark.django_db
+def test_an_uploaded_logo_is_previewed_at_its_own_url():
+    from apps.catalog.admin import ToolAdmin
+
+    tool = Tool(name="Acme", logo_url="http://localhost:8007/media/logos/abc.png")
+
+    preview = ToolAdmin(Tool, admin.site).logo_preview(tool)
+
+    assert 'src="http://localhost:8007/media/logos/abc.png"' in preview
+
+
+def test_a_tool_without_a_logo_previews_as_a_dash():
+    from apps.catalog.admin import ToolAdmin
+
+    assert ToolAdmin(Tool, admin.site).logo_preview(Tool(name="Acme")) == "—"
+
+
+@pytest.mark.django_db
+def test_the_logo_upload_and_preview_sit_beside_the_logo_url(rf, staff_user):
+    from apps.catalog.admin import ToolAdmin
+
+    request = rf.get("/")
+    request.user = staff_user
+    fields = list(ToolAdmin(Tool, admin.site).get_fields(request, Tool.objects.first()))
+
+    at = fields.index("logo_url")
+    assert fields[at + 1 : at + 3] == ["logo_upload", "logo_preview"]
+
+
+@pytest.mark.django_db
+def test_an_editor_can_upload_a_vendor_logo(admin_client):
+    from django.conf import settings
+    from django.core.files.storage import default_storage
+
+    from apps.catalog.models import Vendor
+
+    vendor = Tool.objects.get(slug="adobe-acrobat").vendor
+    url = f"/admin/catalog/vendor/{vendor.pk}/change/"
+    data = _change_form_data(admin_client, url)
+    data["logo_upload"] = _image_file(600, 200)
+
+    response = admin_client.post(url, data)
+
+    assert response.status_code == 302, response.context["errors"]
+    vendor = Vendor.objects.get(pk=vendor.pk)
+    assert vendor.logo_url.startswith(settings.PUBLIC_MEDIA_URL + "logos/")
+    assert default_storage.exists(vendor.logo_url.removeprefix(settings.PUBLIC_MEDIA_URL))
+
+
+@pytest.mark.django_db
+def test_the_vendor_page_previews_its_logo_beside_the_url(rf, staff_user):
+    from apps.catalog.admin import VendorAdmin
+    from apps.catalog.models import Vendor
+
+    request = rf.get("/")
+    request.user = staff_user
+    vendor_admin = VendorAdmin(Vendor, admin.site)
+    fields = list(vendor_admin.get_fields(request, Vendor.objects.first()))
+
+    at = fields.index("logo_url")
+    assert fields[at + 1 : at + 3] == ["logo_upload", "logo_preview"]
+    assert "<img" in vendor_admin.logo_preview(Vendor(logo_url="/images/vendors/acme.png"))

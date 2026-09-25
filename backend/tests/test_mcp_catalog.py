@@ -31,6 +31,8 @@ TOOLS = {
     "catalog_add_screenshot",
     "catalog_list_screenshots",
     "catalog_review_screenshot",
+    "catalog_set_tool_logo",
+    "catalog_set_vendor_logo",
 }
 
 
@@ -383,3 +385,60 @@ def test_a_screenshot_with_no_alt_text_is_refused(call_tool, served_image):
 
     assert result["isError"] is True
     assert "alt" in result["content"][0]["text"].lower()
+
+
+# --- Logos -----------------------------------------------------------------
+
+
+def test_setting_a_tool_logo_rehosts_it_and_records_the_edit(call_tool, served_image, staff_user):
+    """Re-hosted, not hotlinked: the listing points at our copy, and the change
+    lands in the same revision trail as any other staff edit."""
+    from django.conf import settings
+
+    from apps.catalog.models import Tool, ToolRevision
+
+    body = payload(call_tool("catalog_set_tool_logo", {"slug": SEEDED, "image_url": served_image}))
+
+    tool = Tool.objects.get(slug=SEEDED)
+    assert body["logo_url"] == tool.logo_url
+    assert tool.logo_url.startswith(settings.PUBLIC_MEDIA_URL + "logos/")
+    assert body["changed"] == ["logo_url"]
+    revision = ToolRevision.objects.filter(tool=tool).latest("pk")
+    assert revision.author == staff_user
+    assert revision.changes == {"logo_url": tool.logo_url}
+
+
+def test_a_logo_url_that_points_inward_is_refused(call_tool):
+    from apps.catalog.models import Tool
+
+    before = Tool.objects.get(slug=SEEDED).logo_url
+
+    result = call_tool("catalog_set_tool_logo", {"slug": SEEDED, "image_url": METADATA_URL})
+
+    assert result["isError"] is True
+    assert Tool.objects.get(slug=SEEDED).logo_url == before
+
+
+def test_setting_a_vendor_logo_finds_the_vendor_by_name(call_tool, served_image):
+    """By name, the way catalog_create_tool takes a vendor: a caller only ever
+    sees vendor names, never their slugs."""
+    from apps.catalog.models import Tool
+
+    vendor = Tool.objects.get(slug=SEEDED).vendor
+
+    body = payload(
+        call_tool("catalog_set_vendor_logo", {"vendor": vendor.name, "image_url": served_image})
+    )
+
+    vendor.refresh_from_db()
+    assert body == {"vendor": vendor.name, "logo_url": vendor.logo_url}
+    assert "/logos/" in vendor.logo_url
+
+
+def test_an_unknown_vendor_is_an_error_the_caller_can_correct(call_tool, served_image):
+    result = call_tool(
+        "catalog_set_vendor_logo", {"vendor": "No Such Company", "image_url": served_image}
+    )
+
+    assert result["isError"] is True
+    assert "No Such Company" in result["content"][0]["text"]
