@@ -23,6 +23,7 @@ TOOLS = {
     "catalog_get_tool",
     "catalog_list_plans",
     "catalog_update_tool",
+    "catalog_create_tool",
     "catalog_create_plan",
     "catalog_update_plan",
     "catalog_set_plan_limit",
@@ -239,6 +240,37 @@ def test_a_whole_new_plan_can_be_built_over_three_calls(call_tool):
     by_overage = {price["is_overage"]: price["amount"] for price in plan["prices"]}
     assert by_overage == {False: "45.0000", True: "0.0100"}
     assert [limit["value"] for limit in plan["limits"]] == ["4500 pages"]
+
+
+def test_a_new_tool_starts_as_a_draft_that_says_what_it_lacks(call_tool):
+    body = payload(
+        call_tool(
+            "catalog_create_tool",
+            {
+                "slug": "ai-redact",
+                "name": "AI-Redact",
+                "vendor": "SOKT Technologies",
+                "website_url": "https://93.184.216.34/",
+                "tagline": "Redaction by the page",
+            },
+        )
+    )
+
+    assert body["slug"] == "ai-redact"
+    assert body["listable"] is False
+    assert body["listability_reasons"]
+    tool = Tool.objects.get(slug="ai-redact")
+    assert (tool.status, tool.tagline) == ("draft", "Redaction by the page")
+
+
+def test_creating_a_tool_on_a_taken_slug_is_a_correctable_error(call_tool):
+    result = call_tool(
+        "catalog_create_tool",
+        {"slug": SEEDED, "name": "X", "vendor": "X", "website_url": "https://93.184.216.34/"},
+    )
+
+    assert result["isError"] is True
+    assert "catalog_update_tool" in result["content"][0]["text"]
 
 
 def test_creating_a_plan_twice_is_a_correctable_error(call_tool):

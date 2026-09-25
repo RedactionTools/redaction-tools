@@ -11,6 +11,14 @@ given in brackets.
 
 ### Added
 
+- **Creating tools over MCP.** `catalog_create_tool` adds a listing as a DRAFT. It
+  requires a slug, name, vendor and website, and optionally takes the same fields as
+  `catalog_update_tool`. The vendor is matched on the slug of its name, the same way
+  approving a submission matches it. A known vendor is reused and an unknown one is created.
+  Before this, the staff MCP could only edit tools that already existed, so a new listing
+  had to be started in the admin. The slug is checked as a public URL before anything is
+  written. A taken slug is refused and the error points to `catalog_update_tool`.
+  Publishing stays in the admin.
 - **A blog at `/blog`**. Posts are MDX in `content/blog/`, compiled by the same Fumadocs
   macro as the docs, so every post, tag page, archive page, RSS feed and share card is
   prerendered in the image CI builds with no API reachable. The content model follows
