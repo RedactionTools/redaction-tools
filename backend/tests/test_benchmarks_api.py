@@ -145,3 +145,19 @@ def test_no_public_response_carries_the_ground_truth(client, published):
         assert '"seed"' not in text
         assert "Freya Yamamoto" not in text
         assert '"probes": [' not in text
+
+
+def test_a_tool_page_names_the_suites_it_has_results_in(client, published):
+    """So the catalog profile can link to the tool's benchmark report."""
+    body = client.get("/api/v1/catalog/tools/pdf-redaction").json()
+
+    assert body["benchmarks"] == [{"suite": "pdf", "name": body["benchmarks"][0]["name"]}]
+
+
+def test_a_tool_page_names_no_suite_before_a_result_is_approved(client, published):
+    published.submission.status = SubmissionStatus.PENDING_REVIEW
+    published.submission.save()
+
+    body = client.get("/api/v1/catalog/tools/pdf-redaction").json()
+
+    assert body["benchmarks"] == []

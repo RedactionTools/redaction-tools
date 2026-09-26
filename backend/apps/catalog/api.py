@@ -20,6 +20,7 @@ from ninja.errors import HttpError, ValidationError
 from ninja.files import UploadedFile
 
 from apps.accounts.api import JWTAuth
+from apps.benchmarks import leaderboard
 from apps.catalog import images
 from apps.catalog import screenshots as screenshot_service
 from apps.catalog.claims import domain_matches, issue_claim_code, verify_claim_code
@@ -261,6 +262,10 @@ def get_tool(request: HttpRequest, slug: str):
             "facets": _facets(tool),
             "screenshots": _screenshots(tool),
             "plans": plans,
+            "benchmarks": [
+                {"suite": suite.slug, "name": suite.name}
+                for suite in leaderboard.suites_for_tool(tool)
+            ],
             "updated_at": tool.updated_at,
         },
     )
