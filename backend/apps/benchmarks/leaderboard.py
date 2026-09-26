@@ -15,7 +15,7 @@ which a run's headline does not carry. The tool report shows it case by case.
 
 from collections import defaultdict
 
-from apps.benchmarks.models import Run, ScoredBy, SubmissionStatus, Verification
+from apps.benchmarks.models import Run, ScoredBy, SubmissionStatus, Suite, Verification
 
 SCOPES = ("all", "verified")
 
@@ -59,6 +59,23 @@ def approved_runs(revision, *, scope="all"):
     if scope == "verified":
         runs = [run for run in runs if provenance(run) in ("server", "verified")]
     return list(runs)
+
+
+def suites_for_tool(tool):
+    """The public suites whose current revision holds an approved result for `tool`.
+
+    The same bar `approved_runs` draws, so every suite named here has a tool report
+    that renders rather than 404s - which is what the catalog links to.
+    """
+    return list(
+        Suite.objects.filter(
+            is_public=True,
+            revisions__is_current=True,
+            revisions__submissions__tool=tool,
+            revisions__submissions__status=SubmissionStatus.APPROVED,
+            revisions__submissions__runs__status="scored",
+        ).distinct()
+    )
 
 
 def latest_per_case(runs):

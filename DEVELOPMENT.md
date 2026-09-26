@@ -28,6 +28,7 @@ backend/            Django project
   apps/accounts/    user model, JWT, allauth glue, admin, MCP auth
   apps/catalog/     the catalog: models, API, filters, admin, seed migrations
                     staff.py (staff writes) + mcp.py (the MCP tool surface)
+                    + staff_api.py (the same writes over HTTP, for the tool page)
   tests/
   openapi.json      committed schema; the Orval input
 frontend/           Next.js app
@@ -187,6 +188,37 @@ Two things that bite:
   which msgspec rejects at import.
 - After installing, the first test run needs `--create-db`: `--reuse-db` is in `addopts` and a
   cached test database has no `django_mcpz_*` tables.
+
+## Inline staff editing
+
+A staff user signed in on the site sees a pencil icon on each block of a tool page (name,
+tagline, assessment, strengths and limitations, vendor copy, FAQ, facets, plans with their prices
+and caps, logo and screenshots), plus a staff panel at the foot of the page. The icon is
+positioned over its block rather than laid out after it, so staff see the layout readers do. The panel shows whether the listing
+is listable and why not, and holds the fields the page never renders (summary, editor verdict and
+notes, URLs, sort order).
+
+| Where | What |
+| --- | --- |
+| `apps/catalog/staff_api.py` | `/api/v1/catalog/staff/...`, one thin route per `staff.py` service |
+| `apps/accounts/api.py` | `StaffJWTAuth`: the normal bearer, 403 for a non-staff account |
+| `config/api.py` | `StaffError` becomes a 422 with the message as `detail` |
+| `frontend/src/features/catalog/staff/` | `Editable`, `useIsStaff` and one editor per block |
+
+Unlike the MCP server, this router **is** part of the generated contract. Change a route and run
+`make schema`. The rules still live in `staff.py`, so the page and the MCP cannot drift apart. Do
+not add logic to `staff_api.py` that a model calling the MCP would also need.
+
+Things to know:
+
+- The staff check on the page is advisory, because the page is public and cached. `useIsStaff`
+  asks `/auth/me` for signed-in readers only, and the API refuses every write from a non-staff
+  account.
+- Every save invalidates the public tool query and the staff record. An edit that unlists a
+  published tool makes the public read 404. TanStack keeps the last good data, so the page stays
+  up and the staff panel explains what went wrong.
+- Uploads are files (`upload_screenshot`, `upload_tool_logo`). The MCP's URL-fetching variants
+  share the same code underneath.
 
 ## OpenAPI schema for the frontend
 

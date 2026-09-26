@@ -4,12 +4,15 @@ Endpoints are open by default; protect one by passing `auth=JWTAuth()` (a user
 bearer token) or `auth=APIKeyAuth()` from `ninja_apikey.security` (a service key).
 """
 
+from django.http import HttpRequest
 from ninja import NinjaAPI
 from ninja.operation import Operation
 
 from apps.accounts.api import router as accounts_router
 from apps.benchmarks.api import router as benchmarks_router
 from apps.catalog.api import router as catalog_router
+from apps.catalog.staff import StaffError
+from apps.catalog.staff_api import router as catalog_staff_router
 from apps.core.api import router as core_router
 
 
@@ -41,4 +44,11 @@ api = RedactionAPI(
 api.add_router("/", core_router)
 api.add_router("/auth/", accounts_router)
 api.add_router("/catalog/", catalog_router)
+api.add_router("/catalog/staff/", catalog_staff_router)
 api.add_router("/benchmarks/", benchmarks_router)
+
+
+@api.exception_handler(StaffError)
+def staff_error(request: HttpRequest, exc: StaffError):
+    """A refusal the editor can act on: shown to them verbatim, as `detail`."""
+    return api.create_response(request, {"detail": str(exc)}, status=422)

@@ -41,6 +41,21 @@ class JWTAuth(HttpBearer):
         return user
 
 
+class StaffJWTAuth(JWTAuth):
+    """The same bearer, admitted only for staff.
+
+    A good token on a non-staff account is refused with 403 rather than
+    returned as `None`: ninja would turn that into a 401, and a 401 sends the
+    frontend off to refresh a token that was never the problem.
+    """
+
+    def authenticate(self, request: HttpRequest, token: str):
+        user = super().authenticate(request, token)
+        if user is not None and not user.is_staff:
+            raise HttpError(403, "Staff only.")
+        return user
+
+
 @router.get("/me", response=UserSchema, auth=JWTAuth(), summary="Current user")
 def get_me(request: HttpRequest):
     """Echo back the user the bearer token belongs to."""
