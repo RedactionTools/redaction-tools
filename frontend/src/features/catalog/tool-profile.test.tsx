@@ -21,6 +21,17 @@ function render(tool: ToolDetailOut = makeToolDetail()) {
 }
 
 describe('ToolProfile', () => {
+  // The page is a comparison, and the reader who has decided needs the way out
+  // to the tool itself. Nofollow: it is a reference, not an endorsement we pass
+  // ranking through - and the same link every listing carries, ours included.
+  it('links to the tool itself from the top of the page, nofollow', () => {
+    render()
+
+    const link = screen.getByRole('link', { name: /visit adobe acrobat/i })
+    expect(link).toHaveAttribute('href', 'https://www.adobe.com/acrobat.html')
+    expect(link.getAttribute('rel')?.split(' ')).toContain('nofollow')
+  })
+
   // The listing is the vendor's page too, and the profile is where they arrive.
   // Anywhere else and the claim flow is a route only staff know about.
   it('lets the vendor claim the listing from the page itself', () => {

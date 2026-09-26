@@ -1,6 +1,7 @@
 'use client'
 
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Card, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -12,6 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { analytics } from '@/lib/analytics'
 import { useGetTool } from '@/lib/api/generated/catalog/catalog'
 import type { PlanOut, ToolDetailOut } from '@/lib/api/generated/model'
 import { basePrice, overagePrice } from '@/lib/catalog/document-cost'
@@ -126,6 +128,7 @@ function ToolHeader({ tool }: { tool: ToolDetailOut }) {
             </h1>
           </Editable>
         </div>
+        <VisitWebsite tool={tool} />
       </div>
       <Editable
         label="tagline"
@@ -153,6 +156,31 @@ function ToolHeader({ tool }: { tool: ToolDetailOut }) {
         </p>
       ) : null}
     </header>
+  )
+}
+
+/**
+ * The way out to the tool itself, for the reader who has decided.
+ *
+ * `nofollow`: the catalog is a reference, not a vote, and every listing gets
+ * the same link on the same terms - ours included. A new tab, because the
+ * comparison is what they will come back to.
+ */
+function VisitWebsite({ tool }: { tool: ToolDetailOut }) {
+  if (!tool.website_url) return null
+
+  return (
+    <Button asChild variant="outline" className="shrink-0 self-start sm:ml-auto sm:self-center">
+      <a
+        href={tool.website_url}
+        target="_blank"
+        rel="nofollow noopener noreferrer"
+        onClick={() => analytics.capture('tool_website_visited', { tool_slug: tool.slug })}
+      >
+        Visit {tool.name}
+        <span aria-hidden="true">↗</span>
+      </a>
+    </Button>
   )
 }
 
