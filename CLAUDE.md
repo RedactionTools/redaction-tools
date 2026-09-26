@@ -106,6 +106,20 @@ The parts that bite if you miss them:
   a price carries provenance a plan does not. `create_plan` reports
   `has_pricing_position` so a caller can tell it has not finished.
 
+## Staff edit the tool page in place
+
+`/api/v1/catalog/staff/` (`apps/catalog/staff_api.py`) serves the tool page's inline editors.
+`DEVELOPMENT.md` has the details. What bites:
+
+- **Unlike the MCP, it is in the generated contract.** Change a route and run `make schema`. View
+  names carry a `staff_` prefix to stay unique.
+- **Same rule as the MCP: every write goes through `staff.py`.** The routes only translate, and
+  `StaffError` becomes a 422 `detail` through the handler in `config/api.py`.
+- **`StaffJWTAuth` returns 403, not 401, for a non-staff account.** A 401 would send the
+  frontend off to refresh a token that was never the problem.
+- The frontend check (`useIsStaff`) is only cosmetic. The page is public and cached, so the API
+  is what actually refuses writes.
+
 ## Conventions
 
 - Tests come first; the repo carries tdd-guard's rulebook in
