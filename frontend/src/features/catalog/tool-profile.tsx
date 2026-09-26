@@ -22,6 +22,7 @@ import { DocumentCostCalculator } from './document-cost-calculator'
 import { PriceProvenanceBadge } from './price-provenance-badge'
 import { Editable } from './staff/editable'
 import { FaqEditor } from './staff/faq-editor'
+import { PlansEditor } from './staff/plans-editor'
 import { StaffPanel } from './staff/staff-panel'
 import { ToolFieldEditor } from './staff/tool-field-editor'
 import { useIsStaff } from './staff/use-is-staff'
@@ -252,6 +253,7 @@ function PlanTable({ tool }: { tool: ToolDetailOut }) {
       </div>
 
       <ProvenanceLegend tool={tool} />
+      <Editable label="plans" editor={(done) => <PlansEditor slug={tool.slug} onDone={done} />} />
     </section>
   )
 }

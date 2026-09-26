@@ -165,4 +165,100 @@ describe('ToolProfile for staff', () => {
 
     expect(screen.queryByText('Recheck the trial.')).not.toBeInTheDocument()
   })
+
+  describe('plans', () => {
+    async function openPlan(user: ReturnType<typeof userEvent.setup>, action: RegExp) {
+      await user.click(screen.getByRole('button', { name: 'Edit plans' }))
+      await user.click(screen.getByRole('button', { name: action }))
+    }
+
+    it('renames a plan without touching its price', async () => {
+      const fetchSpy = stubFetch(200, { tool: TOOL.slug, code: 'pro', changed: ['name'] })
+      const user = userEvent.setup()
+      render({ staff: true })
+
+      await openPlan(user, /details of acrobat pro/i)
+      const name = screen.getByLabelText('Plan name')
+      await user.clear(name)
+      await user.type(name, 'Acrobat Pro DC')
+      await user.click(screen.getByRole('button', { name: 'Save' }))
+
+      await waitFor(() => expect(fetchSpy).toHaveBeenCalled())
+      const [url, init] = fetchSpy.mock.calls[0]
+      expect(String(url)).toContain('/api/v1/catalog/staff/tools/adobe-acrobat/plans/pro')
+      expect(JSON.parse(String(init?.body))).toEqual({ changes: { name: 'Acrobat Pro DC' } })
+    })
+    // A price is published, never edited: the form starts from today's figure
+    // and saving opens a new current row in that slot, closing the old one.
+    it('publishes a new price for a plan, starting from the current one', async () => {
+      const fetchSpy = stubFetch(201, { changed: true, price: {}, previous: null })
+      const user = userEvent.setup()
+      render({ staff: true })
+
+      await openPlan(user, /price of acrobat pro/i)
+      const amount = screen.getByLabelText('Amount')
+      expect(amount).toHaveValue('22.9900')
+      await user.clear(amount)
+      await user.type(amount, '24.99')
+      await user.click(screen.getByRole('button', { name: 'Publish price' }))
+
+      await waitFor(() => expect(fetchSpy).toHaveBeenCalled())
+      const [url, init] = fetchSpy.mock.calls[0]
+      expect(String(url)).toContain('/plans/pro/prices')
+      expect(JSON.parse(String(init?.body))).toMatchObject({
+        amount: '24.99',
+        unit: 'month',
+        billing_period: 'monthly',
+        currency: 'USD',
+        is_overage: false,
+      })
+    })
+    it('sets a cap on a plan', async () => {
+      const fetchSpy = stubFetch(200, {
+        tool: TOOL.slug,
+        code: 'pro',
+        kind: 'pages_per_month',
+        label: 'Pages per month',
+        display: '500 pages',
+        created: true,
+      })
+      const user = userEvent.setup()
+      render({ staff: true })
+
+      await openPlan(user, /cap on acrobat pro/i)
+      await user.selectOptions(screen.getByLabelText('Kind'), 'pages_per_month')
+      await user.type(screen.getByLabelText('Value'), '500')
+      await user.click(screen.getByRole('button', { name: 'Save' }))
+
+      await waitFor(() => expect(fetchSpy).toHaveBeenCalled())
+      const [url, init] = fetchSpy.mock.calls[0]
+      expect(String(url)).toContain('/plans/pro/limits/pages_per_month')
+      expect(init?.method).toBe('PUT')
+      expect(JSON.parse(String(init?.body))).toEqual({ value: 500, is_unlimited: false, note: '' })
+    })
+
+    it('adds a plan', async () => {
+      const fetchSpy = stubFetch(201, {
+        tool: TOOL.slug,
+        code: 'team',
+        name: 'Team',
+        has_pricing_position: false,
+      })
+      const user = userEvent.setup()
+      render({ staff: true })
+
+      await user.click(screen.getByRole('button', { name: 'Edit plans' }))
+      await user.click(screen.getByRole('button', { name: 'Add a plan' }))
+      await user.type(screen.getByLabelText('Code'), 'team')
+      await user.type(screen.getByLabelText('New plan name'), 'Team')
+      await user.click(screen.getByRole('button', { name: 'Create plan' }))
+
+      await waitFor(() => expect(fetchSpy).toHaveBeenCalled())
+      expect(JSON.parse(String(fetchSpy.mock.calls[0][1]?.body))).toEqual({
+        code: 'team',
+        name: 'Team',
+        changes: {},
+      })
+    })
+  })
 })
