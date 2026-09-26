@@ -1163,6 +1163,638 @@
         ]
       }
     },
+    "/api/v1/catalog/staff/tools/{slug}": {
+      "get": {
+        "operationId": "staff_get_tool",
+        "summary": "A listing's whole editable record",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffToolOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "catalog-staff"
+        ],
+        "security": [
+          {
+            "StaffJWTAuth": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "staff_update_tool",
+        "summary": "Edit a listing's fields",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffToolUpdateOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "catalog-staff"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StaffChangesIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "StaffJWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/catalog/staff/tools/{slug}/plans": {
+      "post": {
+        "operationId": "staff_create_plan",
+        "summary": "Add a plan",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffPlanCreateOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "catalog-staff"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StaffPlanCreateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "StaffJWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/catalog/staff/tools/{slug}/plans/{code}": {
+      "patch": {
+        "operationId": "staff_update_plan",
+        "summary": "Edit a plan's fields",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "code",
+            "schema": {
+              "title": "Code",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffPlanUpdateOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "catalog-staff"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StaffChangesIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "StaffJWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/catalog/staff/tools/{slug}/plans/{code}/limits/{kind}": {
+      "put": {
+        "operationId": "staff_set_plan_limit",
+        "summary": "Set a plan's cap of one kind",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "code",
+            "schema": {
+              "title": "Code",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "kind",
+            "schema": {
+              "title": "Kind",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffPlanLimitOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "catalog-staff"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StaffPlanLimitIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "StaffJWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/catalog/staff/tools/{slug}/plans/{code}/prices": {
+      "post": {
+        "operationId": "staff_set_plan_price",
+        "summary": "Publish a plan's price, replacing the figure in the same slot",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "code",
+            "schema": {
+              "title": "Code",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffPlanPriceOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "catalog-staff"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StaffPlanPriceIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "StaffJWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/catalog/staff/tools/{slug}/facets": {
+      "post": {
+        "operationId": "staff_add_tool_facet",
+        "summary": "Put a facet on a listing",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffToolFacetOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "catalog-staff"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StaffToolFacetIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "StaffJWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/catalog/staff/tools/{slug}/facets/{dimension}/{value}": {
+      "delete": {
+        "operationId": "staff_remove_tool_facet",
+        "summary": "Take a facet off a listing",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "dimension",
+            "schema": {
+              "title": "Dimension",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "value",
+            "schema": {
+              "title": "Value",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffToolFacetRemovedOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "catalog-staff"
+        ],
+        "security": [
+          {
+            "StaffJWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/catalog/staff/tools/{slug}/screenshots": {
+      "post": {
+        "operationId": "staff_upload_screenshot",
+        "summary": "Upload a screenshot, published on arrival",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffScreenshotOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "catalog-staff"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "title": "MultiPartBodyParams",
+                "type": "object",
+                "properties": {
+                  "alt_text": {
+                    "title": "Alt Text",
+                    "type": "string"
+                  },
+                  "caption": {
+                    "default": "",
+                    "title": "Caption",
+                    "type": "string"
+                  },
+                  "captured_at": {
+                    "anyOf": [
+                      {
+                        "format": "date",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Captured At"
+                  },
+                  "image": {
+                    "format": "binary",
+                    "title": "Image",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "alt_text",
+                  "image"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "StaffJWTAuth": []
+          }
+        ]
+      },
+      "get": {
+        "operationId": "staff_list_screenshots",
+        "summary": "Every screenshot on a listing, at any status",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StaffScreenshotOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "catalog-staff"
+        ],
+        "security": [
+          {
+            "StaffJWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/catalog/staff/screenshots/{screenshot_id}/review": {
+      "post": {
+        "operationId": "staff_review_screenshot",
+        "summary": "Publish or reject a screenshot",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "screenshot_id",
+            "schema": {
+              "title": "Screenshot Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffScreenshotOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "catalog-staff"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StaffScreenshotReviewIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "StaffJWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/catalog/staff/tools/{slug}/logo": {
+      "post": {
+        "operationId": "staff_upload_tool_logo",
+        "summary": "Upload a listing's logo",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffToolLogoOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "catalog-staff"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "properties": {
+                  "image": {
+                    "format": "binary",
+                    "title": "Image",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "image"
+                ],
+                "title": "FileParams",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "StaffJWTAuth": []
+          }
+        ]
+      }
+    },
     "/api/v1/benchmarks/suites": {
       "get": {
         "operationId": "list_benchmark_suites",
@@ -3685,6 +4317,881 @@
         "title": "ScreenshotUploadIn",
         "type": "object"
       },
+      "StaffFacetOut": {
+        "properties": {
+          "dimension": {
+            "title": "Dimension",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "string"
+          },
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "evidence_url": {
+            "title": "Evidence Url",
+            "type": "string"
+          },
+          "verified_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verified At"
+          }
+        },
+        "required": [
+          "dimension",
+          "value",
+          "slug",
+          "evidence_url",
+          "verified_at"
+        ],
+        "title": "StaffFacetOut",
+        "type": "object"
+      },
+      "StaffLimitOut": {
+        "properties": {
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "label",
+          "value"
+        ],
+        "title": "StaffLimitOut",
+        "type": "object"
+      },
+      "StaffPlanOut": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "tier_order": {
+            "title": "Tier Order",
+            "type": "integer"
+          },
+          "is_public": {
+            "title": "Is Public",
+            "type": "boolean"
+          },
+          "is_free_tier": {
+            "title": "Is Free Tier",
+            "type": "boolean"
+          },
+          "is_trial": {
+            "title": "Is Trial",
+            "type": "boolean"
+          },
+          "trial_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trial Days"
+          },
+          "is_enterprise_quote": {
+            "title": "Is Enterprise Quote",
+            "type": "boolean"
+          },
+          "min_seats": {
+            "title": "Min Seats",
+            "type": "integer"
+          },
+          "highlights": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Highlights",
+            "type": "array"
+          },
+          "source_url": {
+            "title": "Source Url",
+            "type": "string"
+          },
+          "prices": {
+            "items": {
+              "$ref": "#/components/schemas/StaffPriceOut"
+            },
+            "title": "Prices",
+            "type": "array"
+          },
+          "limits": {
+            "items": {
+              "$ref": "#/components/schemas/StaffLimitOut"
+            },
+            "title": "Limits",
+            "type": "array"
+          }
+        },
+        "required": [
+          "code",
+          "name",
+          "tier_order",
+          "is_public",
+          "is_free_tier",
+          "is_trial",
+          "trial_days",
+          "is_enterprise_quote",
+          "min_seats",
+          "highlights",
+          "source_url",
+          "prices",
+          "limits"
+        ],
+        "title": "StaffPlanOut",
+        "type": "object"
+      },
+      "StaffPriceOut": {
+        "properties": {
+          "amount": {
+            "title": "Amount",
+            "type": "string"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          },
+          "billing_period": {
+            "title": "Billing Period",
+            "type": "string"
+          },
+          "is_overage": {
+            "title": "Is Overage",
+            "type": "boolean"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "source_note": {
+            "title": "Source Note",
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "currency",
+          "unit",
+          "billing_period",
+          "is_overage",
+          "source",
+          "source_note"
+        ],
+        "title": "StaffPriceOut",
+        "type": "object"
+      },
+      "StaffToolOut": {
+        "properties": {
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "vendor": {
+            "title": "Vendor",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "website_url": {
+            "title": "Website Url",
+            "type": "string"
+          },
+          "pricing_url": {
+            "title": "Pricing Url",
+            "type": "string"
+          },
+          "docs_url": {
+            "title": "Docs Url",
+            "type": "string"
+          },
+          "logo_url": {
+            "title": "Logo Url",
+            "type": "string"
+          },
+          "is_first_party": {
+            "title": "Is First Party",
+            "type": "boolean"
+          },
+          "tagline": {
+            "title": "Tagline",
+            "type": "string"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          },
+          "description_md": {
+            "title": "Description Md",
+            "type": "string"
+          },
+          "vendor_copy_md": {
+            "title": "Vendor Copy Md",
+            "type": "string"
+          },
+          "pros": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Pros",
+            "type": "array"
+          },
+          "cons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Cons",
+            "type": "array"
+          },
+          "faq": {
+            "items": {
+              "$ref": "#/components/schemas/FaqItemOut"
+            },
+            "title": "Faq",
+            "type": "array"
+          },
+          "editor_verdict": {
+            "title": "Editor Verdict",
+            "type": "string"
+          },
+          "editor_notes": {
+            "title": "Editor Notes",
+            "type": "string"
+          },
+          "sort_order": {
+            "title": "Sort Order",
+            "type": "integer"
+          },
+          "last_verified_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Verified At"
+          },
+          "prices_changed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prices Changed At"
+          },
+          "facets": {
+            "items": {
+              "$ref": "#/components/schemas/StaffFacetOut"
+            },
+            "title": "Facets",
+            "type": "array"
+          },
+          "plans": {
+            "items": {
+              "$ref": "#/components/schemas/StaffPlanOut"
+            },
+            "title": "Plans",
+            "type": "array"
+          },
+          "open_revisions": {
+            "title": "Open Revisions",
+            "type": "integer"
+          },
+          "open_price_proposals": {
+            "title": "Open Price Proposals",
+            "type": "integer"
+          },
+          "listable": {
+            "title": "Listable",
+            "type": "boolean"
+          },
+          "listability_reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Listability Reasons",
+            "type": "array"
+          }
+        },
+        "required": [
+          "slug",
+          "name",
+          "vendor",
+          "status",
+          "website_url",
+          "pricing_url",
+          "docs_url",
+          "logo_url",
+          "is_first_party",
+          "tagline",
+          "summary",
+          "description_md",
+          "vendor_copy_md",
+          "pros",
+          "cons",
+          "faq",
+          "editor_verdict",
+          "editor_notes",
+          "sort_order",
+          "last_verified_at",
+          "prices_changed_at",
+          "facets",
+          "plans",
+          "open_revisions",
+          "open_price_proposals",
+          "listable",
+          "listability_reasons"
+        ],
+        "title": "StaffToolOut",
+        "type": "object"
+      },
+      "StaffToolUpdateOut": {
+        "properties": {
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "changed": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Changed",
+            "type": "array"
+          },
+          "listable": {
+            "title": "Listable",
+            "type": "boolean"
+          },
+          "listability_reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Listability Reasons",
+            "type": "array"
+          }
+        },
+        "required": [
+          "slug",
+          "changed",
+          "listable",
+          "listability_reasons"
+        ],
+        "title": "StaffToolUpdateOut",
+        "type": "object"
+      },
+      "StaffChangesIn": {
+        "properties": {
+          "changes": {
+            "additionalProperties": true,
+            "title": "Changes",
+            "type": "object"
+          }
+        },
+        "required": [
+          "changes"
+        ],
+        "title": "StaffChangesIn",
+        "type": "object"
+      },
+      "StaffPlanCreateOut": {
+        "properties": {
+          "tool": {
+            "title": "Tool",
+            "type": "string"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "has_pricing_position": {
+            "title": "Has Pricing Position",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "tool",
+          "code",
+          "name",
+          "has_pricing_position"
+        ],
+        "title": "StaffPlanCreateOut",
+        "type": "object"
+      },
+      "StaffPlanCreateIn": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "changes": {
+            "additionalProperties": true,
+            "default": {},
+            "title": "Changes",
+            "type": "object"
+          }
+        },
+        "required": [
+          "code",
+          "name"
+        ],
+        "title": "StaffPlanCreateIn",
+        "type": "object"
+      },
+      "StaffPlanUpdateOut": {
+        "properties": {
+          "tool": {
+            "title": "Tool",
+            "type": "string"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "changed": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Changed",
+            "type": "array"
+          }
+        },
+        "required": [
+          "tool",
+          "code",
+          "changed"
+        ],
+        "title": "StaffPlanUpdateOut",
+        "type": "object"
+      },
+      "StaffPlanLimitOut": {
+        "properties": {
+          "tool": {
+            "title": "Tool",
+            "type": "string"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "display": {
+            "title": "Display",
+            "type": "string"
+          },
+          "created": {
+            "title": "Created",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "tool",
+          "code",
+          "kind",
+          "label",
+          "display",
+          "created"
+        ],
+        "title": "StaffPlanLimitOut",
+        "type": "object"
+      },
+      "StaffPlanLimitIn": {
+        "properties": {
+          "value": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "is_unlimited": {
+            "default": false,
+            "title": "Is Unlimited",
+            "type": "boolean"
+          },
+          "note": {
+            "default": "",
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "title": "StaffPlanLimitIn",
+        "type": "object"
+      },
+      "StaffPlanPriceOut": {
+        "properties": {
+          "changed": {
+            "title": "Changed",
+            "type": "boolean"
+          },
+          "price": {
+            "$ref": "#/components/schemas/StaffPriceOut"
+          },
+          "previous": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StaffPriceOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "changed",
+          "price",
+          "previous"
+        ],
+        "title": "StaffPlanPriceOut",
+        "type": "object"
+      },
+      "StaffPlanPriceIn": {
+        "properties": {
+          "amount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "title": "Amount"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          },
+          "billing_period": {
+            "title": "Billing Period",
+            "type": "string"
+          },
+          "currency": {
+            "default": "USD",
+            "title": "Currency",
+            "type": "string"
+          },
+          "is_overage": {
+            "default": false,
+            "title": "Is Overage",
+            "type": "boolean"
+          },
+          "source_note": {
+            "default": "",
+            "title": "Source Note",
+            "type": "string"
+          },
+          "source_evidence_url": {
+            "default": "",
+            "title": "Source Evidence Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "unit",
+          "billing_period"
+        ],
+        "title": "StaffPlanPriceIn",
+        "type": "object"
+      },
+      "StaffToolFacetOut": {
+        "properties": {
+          "tool": {
+            "title": "Tool",
+            "type": "string"
+          },
+          "facet": {
+            "$ref": "#/components/schemas/StaffFacetOut"
+          },
+          "listable": {
+            "title": "Listable",
+            "type": "boolean"
+          },
+          "listability_reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Listability Reasons",
+            "type": "array"
+          }
+        },
+        "required": [
+          "tool",
+          "facet",
+          "listable",
+          "listability_reasons"
+        ],
+        "title": "StaffToolFacetOut",
+        "type": "object"
+      },
+      "StaffToolFacetIn": {
+        "properties": {
+          "dimension": {
+            "title": "Dimension",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "string"
+          },
+          "evidence_url": {
+            "default": "",
+            "title": "Evidence Url",
+            "type": "string"
+          },
+          "verified_at": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verified At"
+          }
+        },
+        "required": [
+          "dimension",
+          "value"
+        ],
+        "title": "StaffToolFacetIn",
+        "type": "object"
+      },
+      "StaffToolFacetRemovedOut": {
+        "properties": {
+          "tool": {
+            "title": "Tool",
+            "type": "string"
+          },
+          "removed": {
+            "$ref": "#/components/schemas/StaffFacetOut"
+          },
+          "listable": {
+            "title": "Listable",
+            "type": "boolean"
+          },
+          "listability_reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Listability Reasons",
+            "type": "array"
+          }
+        },
+        "required": [
+          "tool",
+          "removed",
+          "listable",
+          "listability_reasons"
+        ],
+        "title": "StaffToolFacetRemovedOut",
+        "type": "object"
+      },
+      "StaffScreenshotOut": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "tool": {
+            "title": "Tool",
+            "type": "string"
+          },
+          "alt_text": {
+            "title": "Alt Text",
+            "type": "string"
+          },
+          "caption": {
+            "title": "Caption",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "source_url": {
+            "title": "Source Url",
+            "type": "string"
+          },
+          "width": {
+            "title": "Width",
+            "type": "integer"
+          },
+          "height": {
+            "title": "Height",
+            "type": "integer"
+          },
+          "rendition_widths": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Rendition Widths",
+            "type": "array"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          },
+          "captured_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Captured At"
+          },
+          "review_note": {
+            "title": "Review Note",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "tool",
+          "alt_text",
+          "caption",
+          "status",
+          "source",
+          "source_url",
+          "width",
+          "height",
+          "rendition_widths",
+          "url",
+          "captured_at",
+          "review_note"
+        ],
+        "title": "StaffScreenshotOut",
+        "type": "object"
+      },
+      "StaffScreenshotReviewIn": {
+        "properties": {
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "note": {
+            "default": "",
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "StaffScreenshotReviewIn",
+        "type": "object"
+      },
+      "StaffToolLogoOut": {
+        "properties": {
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "changed": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Changed",
+            "type": "array"
+          },
+          "listable": {
+            "title": "Listable",
+            "type": "boolean"
+          },
+          "listability_reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Listability Reasons",
+            "type": "array"
+          },
+          "logo_url": {
+            "title": "Logo Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slug",
+          "changed",
+          "listable",
+          "listability_reasons",
+          "logo_url"
+        ],
+        "title": "StaffToolLogoOut",
+        "type": "object"
+      },
       "SuiteSummaryOut": {
         "properties": {
           "slug": {
@@ -4943,6 +6450,10 @@
         "type": "apiKey",
         "in": "header",
         "name": "X-API-Key"
+      },
+      "StaffJWTAuth": {
+        "type": "http",
+        "scheme": "bearer"
       }
     }
   },

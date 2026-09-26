@@ -138,6 +138,7 @@ def tool_detail(slug):
         "vendor_copy_md": tool.vendor_copy_md,
         "pros": tool.pros,
         "cons": tool.cons,
+        "faq": tool.faq,
         "editor_verdict": tool.editor_verdict,
         "editor_notes": tool.editor_notes,
         "sort_order": tool.sort_order,
@@ -698,8 +699,12 @@ def _fetch_logo(image_url):
     Through the screenshot fetcher on purpose: it is the one that re-checks
     every redirect hop against the SSRF guard.
     """
+    return _store_logo(screenshot_service.fetch(image_url))
+
+
+def _store_logo(data):
     try:
-        return logos.write(screenshot_service.fetch(image_url))
+        return logos.write(data)
     except ImageRejected as exc:
         raise StaffError(str(exc)) from exc
 
@@ -710,11 +715,20 @@ def set_tool_logo(*, user, slug, image_url):
     Applied through `update_tool`, so it lands in the revision trail like any
     other staff edit and a repeat call with the same picture changes nothing.
     """
-    # Looked up before the fetch, so a mistyped slug costs no download and
+    return _set_tool_logo(user=user, slug=slug, load=lambda: _fetch_logo(image_url))
+
+
+def upload_tool_logo(*, user, slug, data):
+    """The same for a file the editor already holds."""
+    return _set_tool_logo(user=user, slug=slug, load=lambda: _store_logo(data))
+
+
+def _set_tool_logo(*, user, slug, load):
+    # Looked up before the load, so a mistyped slug costs no download and
     # leaves no orphaned file.
     if not Tool.objects.filter(slug=slug).exists():
         raise StaffError(f"No tool with slug {slug!r}.")
-    logo_url = _fetch_logo(image_url)
+    logo_url = load()
     result = update_tool(user=user, slug=slug, changes={"logo_url": logo_url})
     return {"logo_url": logo_url, **result}
 
@@ -743,6 +757,34 @@ def set_vendor_logo(*, user, vendor, image_url):
 
 def add_screenshot(*, user, slug, image_url, alt_text, caption="", captured_at=None, status=None):
     """Fetch `image_url`, render it, and put it on the listing."""
+    return _add_screenshot(
+        user=user,
+        slug=slug,
+        load=lambda: screenshot_service.fetch(image_url),
+        source_url=image_url,
+        alt_text=alt_text,
+        caption=caption,
+        captured_at=captured_at,
+        status=status,
+    )
+
+
+def upload_screenshot(*, user, slug, data, alt_text, caption="", captured_at=None, status=None):
+    """The same for a file the editor already holds - the tool page's path."""
+    return _add_screenshot(
+        user=user,
+        slug=slug,
+        load=lambda: data,
+        source_url="",
+        alt_text=alt_text,
+        caption=caption,
+        captured_at=captured_at,
+        status=status,
+    )
+
+
+def _add_screenshot(*, user, slug, load, source_url, alt_text, caption, captured_at, status):
+    # `load` rather than bytes, so every refusal below costs no download.
     tool = Tool.objects.filter(slug=slug).first()
     if tool is None:
         raise StaffError(f"No tool with slug {slug!r}.")
@@ -758,13 +800,13 @@ def add_screenshot(*, user, slug, image_url, alt_text, caption="", captured_at=N
     try:
         shot = screenshot_service.store(
             tool=tool,
-            data=screenshot_service.fetch(image_url),
+            data=load(),
             alt_text=alt_text.strip(),
             caption=caption,
             captured_at=captured_at,
             source=ToolScreenshotSource.STAFF,
             status=status,
-            source_url=image_url,
+            source_url=source_url,
             uploaded_by=user,
         )
     except ImageRejected as exc:

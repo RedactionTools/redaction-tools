@@ -325,3 +325,189 @@ class PriceProposalOut(Schema):
     billing_period: str
     status: str
     created_at: datetime
+
+
+# --- Staff -------------------------------------------------------------------
+# The shapes `apps.catalog.staff` already returns, declared so the tool page's
+# inline editors get a typed client.
+
+
+class StaffChangesIn(Schema):
+    # A dict rather than a field per column: `staff.update_tool` owns the
+    # allowlist and names every field it refuses.
+    changes: dict
+
+
+class StaffToolUpdateOut(Schema):
+    slug: str
+    changed: list[str]
+    listable: bool
+    listability_reasons: list[str]
+
+
+class StaffPriceOut(Schema):
+    amount: str
+    currency: str
+    unit: str
+    billing_period: str
+    is_overage: bool
+    source: str
+    source_note: str
+
+
+class StaffLimitOut(Schema):
+    kind: str
+    label: str
+    value: str
+
+
+class StaffPlanOut(Schema):
+    code: str
+    name: str
+    tier_order: int
+    is_public: bool
+    is_free_tier: bool
+    is_trial: bool
+    trial_days: int | None
+    is_enterprise_quote: bool
+    min_seats: int
+    highlights: list[str]
+    source_url: str
+    prices: list[StaffPriceOut]
+    limits: list[StaffLimitOut]
+
+
+class StaffFacetOut(Schema):
+    dimension: str
+    value: str
+    slug: str
+    evidence_url: str
+    verified_at: str | None
+
+
+class StaffToolOut(Schema):
+    slug: str
+    name: str
+    vendor: str
+    status: str
+    website_url: str
+    pricing_url: str
+    docs_url: str
+    logo_url: str
+    is_first_party: bool
+    tagline: str
+    summary: str
+    description_md: str
+    vendor_copy_md: str
+    pros: list[str]
+    cons: list[str]
+    faq: list[FaqItemOut]
+    editor_verdict: str
+    editor_notes: str
+    sort_order: int
+    last_verified_at: str | None
+    prices_changed_at: str | None
+    facets: list[StaffFacetOut]
+    plans: list[StaffPlanOut]
+    open_revisions: int
+    open_price_proposals: int
+    listable: bool
+    listability_reasons: list[str]
+
+
+class StaffPlanCreateIn(Schema):
+    code: str
+    name: str
+    changes: dict = {}
+
+
+class StaffPlanCreateOut(Schema):
+    tool: str
+    code: str
+    name: str
+    has_pricing_position: bool
+
+
+class StaffPlanUpdateOut(Schema):
+    tool: str
+    code: str
+    changed: list[str]
+
+
+class StaffPlanLimitIn(Schema):
+    value: int | None = None
+    is_unlimited: bool = False
+    note: str = ""
+
+
+class StaffPlanLimitOut(Schema):
+    tool: str
+    code: str
+    kind: str
+    label: str
+    display: str
+    created: bool
+
+
+class StaffPlanPriceIn(Schema):
+    amount: Decimal
+    unit: str
+    billing_period: str
+    currency: str = "USD"
+    is_overage: bool = False
+    source_note: str = ""
+    source_evidence_url: str = ""
+
+
+class StaffPlanPriceOut(Schema):
+    changed: bool
+    price: StaffPriceOut
+    previous: StaffPriceOut | None
+
+
+class StaffToolFacetIn(Schema):
+    # Codes, not slugs: the pair `GET /catalog/facets` reports, and the one a
+    # slug-less value (`api`) still has.
+    dimension: str
+    value: str
+    evidence_url: str = ""
+    verified_at: date | None = None
+
+
+class StaffToolFacetOut(Schema):
+    tool: str
+    facet: StaffFacetOut
+    listable: bool
+    listability_reasons: list[str]
+
+
+class StaffToolFacetRemovedOut(Schema):
+    tool: str
+    removed: StaffFacetOut
+    listable: bool
+    listability_reasons: list[str]
+
+
+class StaffScreenshotOut(Schema):
+    id: int
+    tool: str
+    alt_text: str
+    caption: str
+    status: str
+    source: str
+    source_url: str
+    width: int
+    height: int
+    rendition_widths: list[int]
+    url: str
+    captured_at: str | None
+    review_note: str
+
+
+class StaffScreenshotReviewIn(Schema):
+    status: str
+    note: str = ""
+
+
+class StaffToolLogoOut(StaffToolUpdateOut):
+    logo_url: str
