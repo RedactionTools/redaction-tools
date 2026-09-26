@@ -191,9 +191,10 @@ Two things that bite:
 
 ## Inline staff editing
 
-A staff user signed in on the site sees an **Edit** button on each block of a tool page (name,
+A staff user signed in on the site sees a pencil icon on each block of a tool page (name,
 tagline, assessment, strengths and limitations, vendor copy, FAQ, facets, plans with their prices
-and caps, logo and screenshots), plus a staff panel at the top. The panel shows whether the listing
+and caps, logo and screenshots), plus a staff panel at the foot of the page. The icon is
+positioned over its block rather than laid out after it, so staff see the layout readers do. The panel shows whether the listing
 is listable and why not, and holds the fields the page never renders (summary, editor verdict and
 notes, URLs, sort order).
 
