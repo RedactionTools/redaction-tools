@@ -24,12 +24,16 @@ from apps.catalog import screenshots as screenshot_service
 from apps.catalog.constants import (
     PLAN_URL_FIELDS,
     STAFF_EDITABLE_PLAN_FIELDS,
+    STAFF_EDITABLE_TOOL_FACET_FIELDS,
     STAFF_EDITABLE_TOOL_FIELDS,
     URL_FIELDS,
 )
 from apps.catalog.images import ImageRejected
 from apps.catalog.models import (
+    REQUIRED_FACET_DIMENSIONS,
     BillingPeriod,
+    FacetDimension,
+    FacetValue,
     Plan,
     PlanLimit,
     PlanLimitKind,
@@ -38,6 +42,7 @@ from apps.catalog.models import (
     PriceSource,
     PriceUnit,
     Tool,
+    ToolFacet,
     ToolRevision,
     ToolRevisionOrigin,
     ToolRevisionStatus,
@@ -138,10 +143,7 @@ def tool_detail(slug):
         "sort_order": tool.sort_order,
         "last_verified_at": _stamp(tool.last_verified_at),
         "prices_changed_at": _stamp(tool.prices_changed_at),
-        "facets": [
-            {"dimension": facet.value.dimension.code, "value": facet.value.code}
-            for facet in tool.facets.all()
-        ],
+        "facets": [_facet(facet) for facet in tool.facets.all()],
         "plans": [_plan(plan) for plan in tool.plans.all()],
         "open_revisions": tool.revisions.filter(status=ToolRevisionStatus.SUBMITTED).count(),
         "open_price_proposals": tool.price_proposals.filter(
@@ -280,26 +282,33 @@ def update_tool(*, user, slug, changes):
                 # columns written - so it has to be named or the row's mtime
                 # silently goes stale.
                 tool.save(update_fields=[*applied, "updated_at"])
-                now = timezone.now()
-                # Staff edits are applied, not proposed. The row records that as
-                # fact so every MCP edit surfaces in the queue staff already read.
-                ToolRevision.objects.create(
-                    tool=tool,
-                    author=user,
-                    origin=ToolRevisionOrigin.STAFF,
-                    changes=applied,
-                    base_snapshot=before,
-                    status=ToolRevisionStatus.APPROVED,
-                    reviewed_by=user,
-                    reviewed_at=now,
-                    applied_at=now,
-                )
+                _record_revision(tool=tool, user=user, changes=applied, before=before)
     except IntegrityError as exc:
         # Caught outside the atomic block: inside it the connection is already
         # aborted and every later query fails too.
         raise StaffError(f"That edit conflicts with an existing row: {exc}") from exc
 
     return {"slug": tool.slug, "changed": sorted(applied), **_summary(tool)}
+
+
+def _record_revision(*, tool, user, changes, before):
+    """Record an edit staff already applied.
+
+    Staff edits are applied, not proposed. The row records that as fact so
+    every MCP edit surfaces in the queue staff already read.
+    """
+    now = timezone.now()
+    ToolRevision.objects.create(
+        tool=tool,
+        author=user,
+        origin=ToolRevisionOrigin.STAFF,
+        changes=changes,
+        base_snapshot=before,
+        status=ToolRevisionStatus.APPROVED,
+        reviewed_by=user,
+        reviewed_at=now,
+        applied_at=now,
+    )
 
 
 def update_plan(*, user, slug, code, changes):
@@ -537,6 +546,149 @@ def _price(price):
     }
 
 
+# --- Facets ----------------------------------------------------------------
+# A facet is addressed as (dimension code, value code) - the pair
+# `tool_detail` reports - never by its slug, which is only a URL segment and
+# differs from the code where the code was too generic to own one (`api`).
+
+
+def list_facets():
+    """The whole vocabulary, so a caller picks a value rather than guessing one."""
+    dimensions = FacetDimension.objects.prefetch_related("values")
+    return {
+        "dimensions": [
+            {
+                "code": dimension.code,
+                "label": dimension.label,
+                "required": dimension.code in REQUIRED_FACET_DIMENSIONS,
+                "values": [
+                    {"code": value.code, "slug": value.slug, "label": value.label}
+                    for value in dimension.values.all()
+                ],
+            }
+            for dimension in dimensions
+        ]
+    }
+
+
+def add_tool_facet(*, user, slug, dimension, value, evidence_url="", verified_at=None):
+    """Put one facet value on a listing."""
+    _reject_bad_urls({"evidence_url": evidence_url}, {"evidence_url"})
+    verified_at = _date(verified_at, "verified_at")
+    tool = _tool(slug)
+    facet_value = _facet_value(dimension, value)
+    if tool.facets.filter(value=facet_value).exists():
+        raise StaffError(
+            f"{slug!r} already has {dimension} {value!r}. "
+            "Change its evidence with catalog_update_tool_facet."
+        )
+    before = tool.facet_slugs
+    with transaction.atomic():
+        facet = ToolFacet.objects.create(
+            tool=tool, value=facet_value, evidence_url=evidence_url, verified_at=verified_at
+        )
+        _record_facet_revision(tool=tool, user=user, before=before)
+    return {"tool": tool.slug, "facet": _facet(facet), **_summary(tool)}
+
+
+def update_tool_facet(*, user, slug, dimension, value, changes):
+    """Edit the evidence behind one of a listing's facets.
+
+    Not in the revision trail: that records what a page says, and the evidence
+    changes nothing a reader sees. `user` is taken so every write here has the
+    same shape.
+    """
+    changes = dict(changes)
+    _reject_unknown_fields(changes, STAFF_EDITABLE_TOOL_FACET_FIELDS, "tool facet")
+    _reject_bad_urls(changes, {"evidence_url"})
+    if "verified_at" in changes:
+        changes["verified_at"] = _date(changes["verified_at"], "verified_at")
+    facet = _tool_facet(_tool(slug), dimension, value)
+    applied = {f: v for f, v in changes.items() if getattr(facet, f) != v}
+    if applied:
+        for field, new in applied.items():
+            setattr(facet, field, new)
+        facet.save(update_fields=[*applied, "updated_at"])
+    return {"tool": slug, "facet": _facet(facet), "changed": sorted(applied)}
+
+
+def remove_tool_facet(*, user, slug, dimension, value):
+    """Take one facet value off a listing.
+
+    Refused when it is the last value on a required dimension of a published
+    listing: that would unlist a live page as a side effect of a tidy-up. Add
+    the replacement first, or archive the tool in the admin.
+    """
+    tool = _tool(slug)
+    facet = _tool_facet(tool, dimension, value)
+    if (
+        tool.status == ToolStatus.PUBLISHED
+        and dimension in REQUIRED_FACET_DIMENSIONS
+        and not tool.facets.filter(value__dimension__code=dimension).exclude(pk=facet.pk).exists()
+    ):
+        raise StaffError(
+            f"{value!r} is {slug!r}'s only {dimension} facet, and the published page "
+            f"needs one. Add the replacement with catalog_add_tool_facet first."
+        )
+    removed = _facet(facet)
+    before = tool.facet_slugs
+    with transaction.atomic():
+        facet.delete()
+        _record_facet_revision(tool=tool, user=user, before=before)
+    return {"tool": slug, "removed": removed, **_summary(tool)}
+
+
+def _tool_facet(tool, dimension, value):
+    facet_value = _facet_value(dimension, value)
+    facet = tool.facets.select_related("value__dimension").filter(value=facet_value).first()
+    if facet is None:
+        raise StaffError(
+            f"{tool.slug!r} has no {dimension} {value!r}. Add it with catalog_add_tool_facet."
+        )
+    return facet
+
+
+def _record_facet_revision(*, tool, user, before):
+    """Facets are rows, so the trail records them the way a proposal carries
+    them - as `facet_slugs`, the whole list, which the admin knows how to apply."""
+    _record_revision(
+        tool=tool,
+        user=user,
+        changes={"facet_slugs": tool.facet_slugs},
+        before={"facet_slugs": before},
+    )
+
+
+def _tool(slug):
+    tool = Tool.objects.filter(slug=slug).first()
+    if tool is None:
+        raise StaffError(f"No tool with slug {slug!r}.")
+    return tool
+
+
+def _facet_value(dimension, value):
+    values = FacetValue.objects.select_related("dimension").filter(dimension__code=dimension)
+    found = next((row for row in values if row.code == value), None)
+    if not values:
+        codes = FacetDimension.objects.values_list("code", flat=True)
+        raise StaffError(f"No facet dimension {dimension!r}. Valid: {', '.join(codes)}.")
+    if found is None:
+        raise StaffError(
+            f"No {dimension} facet {value!r}. Valid: {', '.join(row.code for row in values)}."
+        )
+    return found
+
+
+def _facet(facet):
+    return {
+        "dimension": facet.value.dimension.code,
+        "value": facet.value.code,
+        "slug": facet.value.slug,
+        "evidence_url": facet.evidence_url,
+        "verified_at": _stamp(facet.verified_at),
+    }
+
+
 # --- Logos -----------------------------------------------------------------
 
 
@@ -646,7 +798,7 @@ def review_screenshot(*, user, screenshot_id, status, note=""):
     )
 
 
-def _date(value):
+def _date(value, field="captured_at"):
     """An ISO date string as a date, because MCP has no date type.
 
     Parsed here rather than left to the ORM: assigning a string to a DateField
@@ -656,7 +808,7 @@ def _date(value):
     if not value or not isinstance(value, str):
         return value or None
     if (parsed := parse_date(value)) is None:
-        raise StaffError(f"captured_at must be an ISO date like 2026-09-01, not {value!r}.")
+        raise StaffError(f"{field} must be an ISO date like 2026-09-01, not {value!r}.")
     return parsed
 
 

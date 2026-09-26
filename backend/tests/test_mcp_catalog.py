@@ -33,6 +33,10 @@ TOOLS = {
     "catalog_review_screenshot",
     "catalog_set_tool_logo",
     "catalog_set_vendor_logo",
+    "catalog_list_facets",
+    "catalog_add_tool_facet",
+    "catalog_update_tool_facet",
+    "catalog_remove_tool_facet",
 }
 
 
@@ -442,3 +446,56 @@ def test_an_unknown_vendor_is_an_error_the_caller_can_correct(call_tool, served_
 
     assert result["isError"] is True
     assert "No Such Company" in result["content"][0]["text"]
+
+
+def test_list_facets_offers_the_vocabulary(call_tool):
+    body = payload(call_tool("catalog_list_facets"))
+
+    media = next(d for d in body["dimensions"] if d["code"] == "media")
+    assert media["required"] is True
+    assert {"code": "pdf", "slug": "pdf", "label": "PDF"} in media["values"]
+
+
+def test_a_facet_added_over_mcp_shows_on_the_tool(call_tool):
+    added = payload(
+        call_tool(
+            "catalog_add_tool_facet",
+            {
+                "slug": SEEDED,
+                "dimension": "compliance",
+                "value": "hipaa",
+                "evidence_url": "https://93.184.216.34/trust",
+                "verified_at": "2026-09-01",
+            },
+        )
+    )
+
+    assert added["listable"] is True
+    facets = payload(call_tool("catalog_get_tool", {"slug": SEEDED}))["facets"]
+    assert added["facet"] in facets
+
+
+def test_update_tool_facet_writes_only_what_was_passed(call_tool):
+    body = payload(
+        call_tool(
+            "catalog_update_tool_facet",
+            {"slug": SEEDED, "dimension": "media", "value": "pdf", "verified_at": "2026-09-01"},
+        )
+    )
+
+    assert body["changed"] == ["verified_at"]
+
+
+def test_removing_a_facet_that_would_unlist_the_page_is_correctable(call_tool):
+    payload(
+        call_tool(
+            "catalog_remove_tool_facet", {"slug": SEEDED, "dimension": "media", "value": "image"}
+        )
+    )
+
+    result = call_tool(
+        "catalog_remove_tool_facet", {"slug": SEEDED, "dimension": "media", "value": "pdf"}
+    )
+
+    assert result["isError"] is True
+    assert "catalog_add_tool_facet" in result["content"][0]["text"]

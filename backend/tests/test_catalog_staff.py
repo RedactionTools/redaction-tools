@@ -21,12 +21,16 @@ from apps.catalog.models import (
 )
 from apps.catalog.staff import (
     StaffError,
+    add_tool_facet,
     create_plan,
     create_tool,
+    list_facets,
+    remove_tool_facet,
     set_plan_limit,
     set_plan_price,
     update_plan,
     update_tool,
+    update_tool_facet,
 )
 
 pytestmark = pytest.mark.django_db
@@ -460,3 +464,207 @@ def test_set_plan_limit_refuses_a_cap_with_neither_number_nor_note(staff_user):
     """An unpublished cap is recorded as a note, never as a guessed number."""
     with pytest.raises(StaffError):
         set_plan_limit(user=staff_user, slug=SEEDED, code="pro", kind="file_size_mb")
+
+
+# --- Facets ------------------------------------------------------------------
+
+
+def test_list_facets_offers_every_value_by_dimension():
+    dimensions = {d["code"]: d for d in list_facets()["dimensions"]}
+
+    # `api` is the code staff pass; `api-tools` is only its URL segment.
+    assert {"code": "api", "slug": "api-tools", "label": "API"} in dimensions["deployment"][
+        "values"
+    ]
+    assert dimensions["media"]["required"] is True
+    assert dimensions["compliance"]["required"] is False
+
+
+def test_add_tool_facet_puts_the_value_on_the_tool(staff_user, tool):
+    result = add_tool_facet(user=staff_user, slug=SEEDED, dimension="compliance", value="hipaa")
+
+    assert "hipaa" in tool.facet_slugs
+    assert result["facet"] == {
+        "dimension": "compliance",
+        "value": "hipaa",
+        "slug": "hipaa",
+        "evidence_url": "",
+        "verified_at": None,
+    }
+
+
+def test_add_tool_facet_names_the_valid_values_when_one_is_unknown(staff_user):
+    with pytest.raises(StaffError) as exc:
+        add_tool_facet(user=staff_user, slug=SEEDED, dimension="media", value="papyrus")
+
+    assert "papyrus" in str(exc.value)
+    assert "pdf" in str(exc.value)
+
+
+def test_add_tool_facet_names_the_valid_dimensions_when_one_is_unknown(staff_user):
+    with pytest.raises(StaffError) as exc:
+        add_tool_facet(user=staff_user, slug=SEEDED, dimension="flavour", value="pdf")
+
+    assert "flavour" in str(exc.value)
+    assert "compliance" in str(exc.value)
+
+
+def test_add_tool_facet_on_an_unknown_tool_is_refused(staff_user):
+    with pytest.raises(StaffError) as exc:
+        add_tool_facet(user=staff_user, slug="no-such-tool", dimension="media", value="pdf")
+
+    assert "no-such-tool" in str(exc.value)
+
+
+def test_add_tool_facet_refuses_a_facet_the_tool_already_has(staff_user):
+    with pytest.raises(StaffError) as exc:
+        add_tool_facet(user=staff_user, slug=SEEDED, dimension="media", value="pdf")
+
+    assert "update_tool_facet" in str(exc.value)
+
+
+def test_add_tool_facet_refuses_evidence_pointing_inward(staff_user, tool):
+    with pytest.raises(StaffError) as exc:
+        add_tool_facet(
+            user=staff_user,
+            slug=SEEDED,
+            dimension="compliance",
+            value="hipaa",
+            evidence_url=METADATA_URL,
+        )
+
+    assert "evidence_url" in str(exc.value)
+    assert "hipaa" not in tool.facet_slugs
+
+
+def test_add_tool_facet_records_its_evidence(staff_user):
+    result = add_tool_facet(
+        user=staff_user,
+        slug=SEEDED,
+        dimension="compliance",
+        value="hipaa",
+        evidence_url=SAFE_URL,
+        verified_at="2026-09-01",
+    )
+
+    assert result["facet"]["evidence_url"] == SAFE_URL
+    assert result["facet"]["verified_at"] == "2026-09-01"
+
+
+def test_add_tool_facet_refuses_a_date_it_cannot_read(staff_user):
+    with pytest.raises(StaffError) as exc:
+        add_tool_facet(
+            user=staff_user,
+            slug=SEEDED,
+            dimension="compliance",
+            value="hipaa",
+            verified_at="last tuesday",
+        )
+
+    assert "verified_at" in str(exc.value)
+
+
+def test_add_tool_facet_records_an_applied_staff_revision(staff_user, tool):
+    before = tool.facet_slugs
+
+    add_tool_facet(user=staff_user, slug=SEEDED, dimension="compliance", value="hipaa")
+
+    revision = ToolRevision.objects.get(tool=tool)
+    assert revision.origin == ToolRevisionOrigin.STAFF
+    assert revision.status == ToolRevisionStatus.APPROVED
+    assert revision.author == staff_user
+    assert revision.base_snapshot == {"facet_slugs": before}
+    assert revision.changes == {"facet_slugs": sorted([*before, "hipaa"])}
+
+
+def test_update_tool_facet_changes_only_what_was_passed(staff_user):
+    add_tool_facet(
+        user=staff_user,
+        slug=SEEDED,
+        dimension="compliance",
+        value="hipaa",
+        evidence_url=SAFE_URL,
+    )
+
+    result = update_tool_facet(
+        user=staff_user,
+        slug=SEEDED,
+        dimension="compliance",
+        value="hipaa",
+        changes={"verified_at": "2026-09-01"},
+    )
+
+    assert result["changed"] == ["verified_at"]
+    assert result["facet"]["verified_at"] == "2026-09-01"
+    assert result["facet"]["evidence_url"] == SAFE_URL
+
+
+def test_update_tool_facet_refuses_a_facet_the_tool_does_not_have(staff_user):
+    with pytest.raises(StaffError) as exc:
+        update_tool_facet(
+            user=staff_user,
+            slug=SEEDED,
+            dimension="compliance",
+            value="hipaa",
+            changes={"evidence_url": SAFE_URL},
+        )
+
+    assert "add_tool_facet" in str(exc.value)
+
+
+def test_update_tool_facet_refuses_evidence_pointing_inward(staff_user):
+    with pytest.raises(StaffError) as exc:
+        update_tool_facet(
+            user=staff_user,
+            slug=SEEDED,
+            dimension="media",
+            value="pdf",
+            changes={"evidence_url": METADATA_URL},
+        )
+
+    assert "evidence_url" in str(exc.value)
+
+
+def test_update_tool_facet_refuses_a_field_it_does_not_edit(staff_user):
+    with pytest.raises(StaffError) as exc:
+        update_tool_facet(
+            user=staff_user,
+            slug=SEEDED,
+            dimension="media",
+            value="pdf",
+            changes={"value": "video"},
+        )
+
+    assert "value" in str(exc.value)
+
+
+def test_remove_tool_facet_takes_it_off_and_records_the_edit(staff_user, tool):
+    before = tool.facet_slugs
+
+    result = remove_tool_facet(user=staff_user, slug=SEEDED, dimension="media", value="image")
+
+    assert "image" not in tool.facet_slugs
+    assert result["removed"]["slug"] == "image"
+    revision = ToolRevision.objects.get(tool=tool)
+    assert revision.base_snapshot == {"facet_slugs": before}
+    assert revision.changes == {"facet_slugs": [s for s in before if s != "image"]}
+
+
+def test_remove_tool_facet_will_not_take_a_published_page_down(staff_user, tool):
+    """The last value on a required dimension is what keeps the page listable."""
+    remove_tool_facet(user=staff_user, slug=SEEDED, dimension="media", value="image")
+
+    with pytest.raises(StaffError) as exc:
+        remove_tool_facet(user=staff_user, slug=SEEDED, dimension="media", value="pdf")
+
+    assert "media" in str(exc.value)
+    assert "pdf" in tool.facet_slugs
+
+
+def test_remove_tool_facet_lets_a_draft_lose_its_last_value(staff_user, tool):
+    Tool.objects.filter(slug=SEEDED).update(status="draft")
+    remove_tool_facet(user=staff_user, slug=SEEDED, dimension="media", value="image")
+
+    result = remove_tool_facet(user=staff_user, slug=SEEDED, dimension="media", value="pdf")
+
+    assert "No facet on: media." in result["listability_reasons"]

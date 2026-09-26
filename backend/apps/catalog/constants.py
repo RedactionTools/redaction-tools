@@ -75,6 +75,10 @@ STAFF_EDITABLE_TOOL_FIELDS = frozenset(
     }
 )
 
+# The evidence behind a facet. The value itself is not editable: a different
+# value is a different claim, so it is removed and added rather than rewritten.
+STAFF_EDITABLE_TOOL_FACET_FIELDS = frozenset({"evidence_url", "verified_at"})
+
 # Deliberately absent: `code` (the crawler matches plans on it, and it is half of
 # the tool/code uniqueness), `tool`, and the crawl bookkeeping - `verified_at`,
 # `last_changed_at`, `consecutive_absences`.

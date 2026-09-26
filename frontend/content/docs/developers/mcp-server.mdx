@@ -5,7 +5,7 @@ description: How our editors read and write the catalog from an AI client — th
 
 `/mcp` is a [Model Context Protocol](https://modelcontextprotocol.io) server that lets a
 staff user read and edit the catalog from an AI client: list listings, read one, edit it,
-edit its plans, publish a price, review a screenshot.
+edit its plans and facets, publish a price, review a screenshot.
 
 **It is staff-only.** This page is here because the design decisions are worth reading if
 you are building something similar — a write API whose caller is a language model has
@@ -19,6 +19,8 @@ catalog_list_plans        catalog_create_plan      catalog_update_plan
 catalog_set_plan_limit    catalog_set_plan_price
 catalog_add_screenshot    catalog_list_screenshots catalog_review_screenshot
 catalog_set_tool_logo     catalog_set_vendor_logo
+catalog_list_facets       catalog_add_tool_facet   catalog_update_tool_facet
+catalog_remove_tool_facet
 ```
 
 ## One tool per table
