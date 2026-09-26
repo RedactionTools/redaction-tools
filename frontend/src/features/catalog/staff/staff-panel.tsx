@@ -75,6 +75,7 @@ export function StaffPanel({ slug }: { slug: string }) {
           <Editable
             key={row.field}
             label={row.label.toLowerCase()}
+            placement="inside"
             editor={(done) => <ToolFieldEditor slug={slug} onDone={done} {...row} />}
           >
             <div className="grid gap-1 sm:grid-cols-[10rem_1fr]">

@@ -3,14 +3,30 @@
 import { type ReactNode, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 import { useIsStaff } from './use-is-staff'
 
+const PLACEMENT = {
+  // In the page's right margin where there is one (the container is max-w-5xl,
+  // so from xl up), on the block's first line otherwise.
+  gutter: 'top-0 right-0 xl:-right-10',
+  // Inside the block's top-right corner, for a block with a neighbour to its
+  // right - a grid column - where the margin belongs to someone else.
+  inside: 'top-0 right-0',
+  // Over the corner of something small, like the logo.
+  corner: '-top-2 -right-2',
+} as const
+
 /**
- * One block of the tool page, with an edit button for staff.
+ * One block of the tool page, with an edit icon for staff.
  *
- * Everyone else gets `children` exactly as they were - no wrapper element, so
- * the public page's markup does not change shape for a feature it cannot use.
+ * Everyone else gets `children` exactly as they were - no wrapper element. For
+ * staff the icon is positioned over the block rather than laid out after it,
+ * so the page they edit has the layout readers see. The exception is an
+ * `empty` block, which has nothing to sit on: there the icon takes a line of
+ * its own, named, because an icon over nothing says nothing.
+ *
  * Each block edits on its own, so a save is one field's worth of change and
  * one entry in the revision trail.
  */
@@ -18,10 +34,14 @@ export function Editable({
   label,
   editor,
   children,
+  placement = 'gutter',
+  empty = false,
 }: {
   label: string
   editor: (done: () => void) => ReactNode
   children?: ReactNode
+  placement?: keyof typeof PLACEMENT
+  empty?: boolean
 }) {
   const isStaff = useIsStaff()
   const [editing, setEditing] = useState(false)
@@ -36,19 +56,29 @@ export function Editable({
     )
   }
 
+  const button = (
+    <Button
+      variant="ghost"
+      size="sm"
+      className={cn(
+        'text-muted-foreground hover:text-foreground h-7 gap-1.5 px-1.5',
+        !empty && ['bg-background/80 absolute z-10 w-7 px-0', PLACEMENT[placement]],
+      )}
+      aria-label={`Edit ${label}`}
+      title={`Edit ${label}`}
+      onClick={() => setEditing(true)}
+    >
+      <PencilIcon />
+      {empty ? <span className="text-xs">Add {label}</span> : null}
+    </Button>
+  )
+
+  if (empty) return button
+
   return (
-    <div className="group relative">
+    <div className="relative">
       {children}
-      <Button
-        variant="ghost"
-        size="sm"
-        className="text-muted-foreground hover:text-foreground mt-1 size-7 px-0"
-        aria-label={`Edit ${label}`}
-        title={`Edit ${label}`}
-        onClick={() => setEditing(true)}
-      >
-        <PencilIcon />
-      </Button>
+      {button}
     </div>
   )
 }

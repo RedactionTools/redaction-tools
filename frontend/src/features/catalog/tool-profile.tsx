@@ -67,7 +67,6 @@ export function ToolProfile({ slug }: { slug: string }) {
 
   return (
     <article className="space-y-10">
-      <StaffPanel slug={tool.slug} />
       <ToolHeader tool={tool} />
       <KeyFacts tool={tool} />
       <Capabilities tool={tool} />
@@ -76,6 +75,7 @@ export function ToolProfile({ slug }: { slug: string }) {
           thing rather than describing it. */}
       <Editable
         label="screenshots"
+        empty={tool.screenshots.length === 0}
         editor={(done) => <ScreenshotManager slug={tool.slug} onDone={done} />}
       >
         <ToolScreenshots name={tool.name} screenshots={tool.screenshots} />
@@ -88,6 +88,10 @@ export function ToolProfile({ slug }: { slug: string }) {
           correct it will read to the end, and a buyer should not meet a vendor
           call to action before the assessment. */}
       <ClaimListing tool={tool} />
+      {/* After everything a reader sees: staff edit the page itself through
+          the icons on each block, and this holds only what the page never
+          shows. */}
+      <StaffPanel slug={tool.slug} />
     </article>
   )
 }
@@ -96,7 +100,11 @@ function ToolHeader({ tool }: { tool: ToolDetailOut }) {
   return (
     <header className="space-y-4">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-        <Editable label="logo" editor={(done) => <LogoEditor slug={tool.slug} onDone={done} />}>
+        <Editable
+          label="logo"
+          placement="corner"
+          editor={(done) => <LogoEditor slug={tool.slug} onDone={done} />}
+        >
           <ToolLogo name={tool.name} logoUrl={tool.logo_url} size="lg" />
         </Editable>
         <div>
@@ -207,6 +215,7 @@ function Capabilities({ tool }: { tool: ToolDetailOut }) {
   return (
     <Editable
       label="capabilities"
+      empty={capabilities.length === 0}
       editor={(done) => <FacetEditor slug={tool.slug} dimensions={['capability']} onDone={done} />}
     >
       {capabilities.length ? (
@@ -226,6 +235,14 @@ function Capabilities({ tool }: { tool: ToolDetailOut }) {
 }
 
 function PlanTable({ tool }: { tool: ToolDetailOut }) {
+  return (
+    <Editable label="plans" editor={(done) => <PlansEditor slug={tool.slug} onDone={done} />}>
+      <PlanSection tool={tool} />
+    </Editable>
+  )
+}
+
+function PlanSection({ tool }: { tool: ToolDetailOut }) {
   return (
     <section className="space-y-3">
       <h2 className="text-xl font-semibold">Plans and pricing</h2>
@@ -276,7 +293,6 @@ function PlanTable({ tool }: { tool: ToolDetailOut }) {
       </div>
 
       <ProvenanceLegend tool={tool} />
-      <Editable label="plans" editor={(done) => <PlansEditor slug={tool.slug} onDone={done} />} />
     </section>
   )
 }
@@ -335,6 +351,8 @@ function Editorial({ tool }: { tool: ToolDetailOut }) {
         <div className="grid gap-6 sm:grid-cols-2">
           <Editable
             label="strengths"
+            placement="inside"
+            empty={tool.pros.length === 0}
             editor={(done) => (
               <ToolFieldEditor
                 slug={tool.slug}
@@ -349,6 +367,8 @@ function Editorial({ tool }: { tool: ToolDetailOut }) {
           </Editable>
           <Editable
             label="limitations"
+            placement="inside"
+            empty={tool.cons.length === 0}
             editor={(done) => (
               <ToolFieldEditor
                 slug={tool.slug}
@@ -368,6 +388,7 @@ function Editorial({ tool }: { tool: ToolDetailOut }) {
           editorial rather than quietly becoming syndicated marketing. */}
       <Editable
         label="vendor copy"
+        empty={!tool.vendor_copy_md}
         editor={(done) => (
           <ToolFieldEditor
             slug={tool.slug}
@@ -399,7 +420,11 @@ function Editorial({ tool }: { tool: ToolDetailOut }) {
  */
 function Faq({ tool }: { tool: ToolDetailOut }) {
   return (
-    <Editable label="questions" editor={(done) => <FaqEditor slug={tool.slug} onDone={done} />}>
+    <Editable
+      label="questions"
+      empty={tool.faq.length === 0}
+      editor={(done) => <FaqEditor slug={tool.slug} onDone={done} />}
+    >
       {tool.faq.length ? (
         <section className="space-y-4">
           <h2 className="text-xl font-semibold">Common questions</h2>
