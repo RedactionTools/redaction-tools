@@ -23,6 +23,7 @@ import { PriceProvenanceBadge } from './price-provenance-badge'
 import { Editable } from './staff/editable'
 import { FaqEditor } from './staff/faq-editor'
 import { FacetEditor } from './staff/facet-editor'
+import { LogoEditor, ScreenshotManager } from './staff/media-editors'
 import { PlansEditor } from './staff/plans-editor'
 import { StaffPanel } from './staff/staff-panel'
 import { ToolFieldEditor } from './staff/tool-field-editor'
@@ -73,7 +74,12 @@ export function ToolProfile({ slug }: { slug: string }) {
       {/* Before the plan table: a buyer works out what the tool is before what
           it costs, and this is the only part of the page that shows them the
           thing rather than describing it. */}
-      <ToolScreenshots name={tool.name} screenshots={tool.screenshots} />
+      <Editable
+        label="screenshots"
+        editor={(done) => <ScreenshotManager slug={tool.slug} onDone={done} />}
+      >
+        <ToolScreenshots name={tool.name} screenshots={tool.screenshots} />
+      </Editable>
       <PlanTable tool={tool} />
       <DocumentCostCalculator tool={tool} />
       <Editorial tool={tool} />
@@ -90,7 +96,9 @@ function ToolHeader({ tool }: { tool: ToolDetailOut }) {
   return (
     <header className="space-y-4">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-        <ToolLogo name={tool.name} logoUrl={tool.logo_url} size="lg" />
+        <Editable label="logo" editor={(done) => <LogoEditor slug={tool.slug} onDone={done} />}>
+          <ToolLogo name={tool.name} logoUrl={tool.logo_url} size="lg" />
+        </Editable>
         <div>
           <p className="text-muted-foreground text-sm">{tool.vendor.name}</p>
           <Editable

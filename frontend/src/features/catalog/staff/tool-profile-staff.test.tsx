@@ -69,6 +69,7 @@ function stubFetch(status: number, body: unknown) {
     })
   const spy = vi.spyOn(globalThis, 'fetch').mockImplementation(async (url, init) => {
     if (!init?.method || init.method === 'GET') {
+      if (String(url).includes('/screenshots')) return json(SCREENSHOTS)
       if (String(url).includes('/staff/tools/')) return json(makeStaffTool())
       if (String(url).includes('/catalog/tools/')) return json(TOOL)
       return json([])
@@ -83,6 +84,23 @@ function stubFetch(status: number, body: unknown) {
     },
   }
 }
+
+const PENDING_SHOT = {
+  id: 9,
+  tool: 'adobe-acrobat',
+  alt_text: 'The redaction panel',
+  caption: '',
+  status: 'pending',
+  source: 'vendor',
+  source_url: '',
+  width: 1600,
+  height: 900,
+  rendition_widths: [640],
+  url: '/media/shot.webp',
+  captured_at: null,
+  review_note: '',
+}
+let SCREENSHOTS: unknown[] = []
 
 const UPDATED = { slug: TOOL.slug, changed: ['tagline'], listable: true, listability_reasons: [] }
 const ME = { id: 'u1', email: 'ed@example.com', name: 'Ed', is_staff: true }
@@ -101,6 +119,7 @@ function render({ staff, record = makeStaffTool() }: { staff: boolean; record?: 
 describe('ToolProfile for staff', () => {
   beforeEach(() => {
     session.current = null
+    SCREENSHOTS = []
   })
 
   afterEach(() => {
@@ -334,5 +353,40 @@ describe('ToolProfile for staff', () => {
     expect(JSON.parse(String(add?.body))).toMatchObject({ dimension: 'capability', value: 'batch' })
     expect(remove?.method).toBe('DELETE')
     expect(String(removeUrl)).toContain('/tools/adobe-acrobat/facets/capability/ocr')
+  })
+
+  it('uploads a new logo as a file', async () => {
+    const fetchSpy = stubFetch(200, { ...UPDATED, changed: ['logo_url'], logo_url: '/media/l.png' })
+    const user = userEvent.setup()
+    render({ staff: true })
+
+    await user.click(screen.getByRole('button', { name: 'Edit logo' }))
+    await user.upload(
+      screen.getByLabelText('Logo file'),
+      new File(['x'], 'logo.png', { type: 'image/png' }),
+    )
+    await user.click(screen.getByRole('button', { name: 'Upload logo' }))
+
+    await waitFor(() => expect(fetchSpy.mock.calls).not.toHaveLength(0))
+    const [url, init] = fetchSpy.mock.calls[0]
+    expect(String(url)).toContain('/tools/adobe-acrobat/logo')
+    expect((init?.body as FormData).get('image')).toBeInstanceOf(File)
+  })
+
+  // What a vendor sends in is invisible on the public page until someone
+  // publishes it, so the page is where staff should find it waiting.
+  it('lists a pending screenshot and publishes it', async () => {
+    SCREENSHOTS = [PENDING_SHOT]
+    const fetchSpy = stubFetch(200, { ...PENDING_SHOT, status: 'published' })
+    const user = userEvent.setup()
+    render({ staff: true })
+
+    await user.click(screen.getByRole('button', { name: 'Edit screenshots' }))
+    await user.click(await screen.findByRole('button', { name: 'Publish The redaction panel' }))
+
+    await waitFor(() => expect(fetchSpy.mock.calls).not.toHaveLength(0))
+    const [url, init] = fetchSpy.mock.calls[0]
+    expect(String(url)).toContain('/staff/screenshots/9/review')
+    expect(JSON.parse(String(init?.body))).toEqual({ status: 'published', note: '' })
   })
 })
