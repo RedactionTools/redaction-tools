@@ -24,6 +24,22 @@ describe('ToolProfile', () => {
   // The page is a comparison, and the reader who has decided needs the way out
   // to the tool itself. Nofollow: it is a reference, not an endorsement we pass
   // ranking through - and the same link every listing carries, ours included.
+  // Our own measurement of the tool, beside the vendor's claims: an internal
+  // link, so followed, one per suite the tool has published results in.
+  it("links to the tool's benchmark report in each suite it has results in", () => {
+    render(makeToolDetail({ benchmarks: [{ suite: 'pdf', name: 'PDF redaction' }] }))
+
+    const link = screen.getByRole('link', { name: /pdf redaction benchmark/i })
+    expect(link).toHaveAttribute('href', '/benchmarks/pdf/tools/adobe-acrobat')
+    expect(link).not.toHaveAttribute('rel')
+  })
+
+  it('offers no benchmark link before the tool has results', () => {
+    render()
+
+    expect(screen.queryByRole('link', { name: /benchmark/i })).not.toBeInTheDocument()
+  })
+
   it('links to the tool itself from the top of the page, nofollow', () => {
     render()
 

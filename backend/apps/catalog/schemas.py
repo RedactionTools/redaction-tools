@@ -145,6 +145,13 @@ class FaqItemOut(Schema):
     answer: str
 
 
+class ToolBenchmarkOut(Schema):
+    """A suite the tool has published results in: enough to link its report."""
+
+    suite: str
+    name: str
+
+
 class ToolDetailOut(ToolListItemOut):
     website_url: str
     pricing_url: str
@@ -157,6 +164,7 @@ class ToolDetailOut(ToolListItemOut):
     facets: list[ToolFacetOut]
     screenshots: list[ToolScreenshotOut]
     plans: list[PlanOut]
+    benchmarks: list[ToolBenchmarkOut]
     updated_at: datetime
 
 

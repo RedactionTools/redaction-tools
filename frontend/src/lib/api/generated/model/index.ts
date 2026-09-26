@@ -100,6 +100,7 @@ export * from './submitterOutRole';
 export * from './suiteOut';
 export * from './suiteOutScope';
 export * from './suiteSummaryOut';
+export * from './toolBenchmarkOut';
 export * from './toolClaimIn';
 export * from './toolClaimOut';
 export * from './toolClaimVerifyIn';

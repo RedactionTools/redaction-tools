@@ -1,5 +1,7 @@
 'use client'
 
+import Link from 'next/link'
+
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardTitle } from '@/components/ui/card'
@@ -128,7 +130,7 @@ function ToolHeader({ tool }: { tool: ToolDetailOut }) {
             </h1>
           </Editable>
         </div>
-        <VisitWebsite tool={tool} />
+        <HeaderLinks tool={tool} />
       </div>
       <Editable
         label="tagline"
@@ -160,27 +162,40 @@ function ToolHeader({ tool }: { tool: ToolDetailOut }) {
 }
 
 /**
- * The way out to the tool itself, for the reader who has decided.
+ * Where a reader goes next: our own measurement of the tool, then the tool.
  *
- * `nofollow`: the catalog is a reference, not a vote, and every listing gets
- * the same link on the same terms - ours included. A new tab, because the
- * comparison is what they will come back to.
+ * The benchmark links are internal and followed, one per suite the tool has
+ * approved results in. The website link is `nofollow`: the catalog is a
+ * reference, not a vote, and every listing gets the same link on the same
+ * terms - ours included. It opens a new tab, because the comparison is what
+ * they will come back to.
  */
-function VisitWebsite({ tool }: { tool: ToolDetailOut }) {
-  if (!tool.website_url) return null
+function HeaderLinks({ tool }: { tool: ToolDetailOut }) {
+  if (!tool.website_url && tool.benchmarks.length === 0) return null
 
   return (
-    <Button asChild variant="outline" className="shrink-0 self-start sm:ml-auto sm:self-center">
-      <a
-        href={tool.website_url}
-        target="_blank"
-        rel="nofollow noopener noreferrer"
-        onClick={() => analytics.capture('tool_website_visited', { tool_slug: tool.slug })}
-      >
-        Visit {tool.name}
-        <span aria-hidden="true">↗</span>
-      </a>
-    </Button>
+    <div className="flex shrink-0 flex-wrap gap-2 sm:ml-auto">
+      {tool.benchmarks.map((benchmark) => (
+        <Button key={benchmark.suite} asChild variant="ghost">
+          <Link href={`/benchmarks/${benchmark.suite}/tools/${tool.slug}`}>
+            {benchmark.name} benchmark
+          </Link>
+        </Button>
+      ))}
+      {tool.website_url ? (
+        <Button asChild variant="outline">
+          <a
+            href={tool.website_url}
+            target="_blank"
+            rel="nofollow noopener noreferrer"
+            onClick={() => analytics.capture('tool_website_visited', { tool_slug: tool.slug })}
+          >
+            Visit {tool.name}
+            <span aria-hidden="true">↗</span>
+          </a>
+        </Button>
+      ) : null}
+    </div>
   )
 }
 

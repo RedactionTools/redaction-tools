@@ -3369,6 +3369,25 @@
         "title": "PriceOut",
         "type": "object"
       },
+      "ToolBenchmarkOut": {
+        "description": "A suite the tool has published results in: enough to link its report.",
+        "properties": {
+          "suite": {
+            "title": "Suite",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "suite",
+          "name"
+        ],
+        "title": "ToolBenchmarkOut",
+        "type": "object"
+      },
       "ToolDetailOut": {
         "properties": {
           "slug": {
@@ -3470,6 +3489,13 @@
             "title": "Plans",
             "type": "array"
           },
+          "benchmarks": {
+            "items": {
+              "$ref": "#/components/schemas/ToolBenchmarkOut"
+            },
+            "title": "Benchmarks",
+            "type": "array"
+          },
           "updated_at": {
             "format": "date-time",
             "title": "Updated At",
@@ -3497,6 +3523,7 @@
           "facets",
           "screenshots",
           "plans",
+          "benchmarks",
           "updated_at"
         ],
         "title": "ToolDetailOut",

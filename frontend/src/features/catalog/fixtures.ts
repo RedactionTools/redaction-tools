@@ -166,6 +166,7 @@ export function makeToolDetail(overrides: Partial<ToolDetailOut> = {}): ToolDeta
     // Empty by default: most tests are about prices and editorial, and a
     // gallery every one of them had to account for would be noise.
     screenshots: [],
+    benchmarks: [],
     updated_at: '2026-09-17T00:00:00Z',
     plans: [
       {
