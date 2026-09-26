@@ -3,9 +3,13 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { getGetMeQueryKey } from '@/lib/api/generated/auth/auth'
-import { getGetToolQueryKey, getListMyListingsQueryKey } from '@/lib/api/generated/catalog/catalog'
+import {
+  getGetToolQueryKey,
+  getListFacetsQueryKey,
+  getListMyListingsQueryKey,
+} from '@/lib/api/generated/catalog/catalog'
 import { getStaffGetToolQueryKey } from '@/lib/api/generated/catalog-staff/catalog-staff'
-import type { StaffToolOut } from '@/lib/api/generated/model'
+import type { FacetDimensionOut, StaffToolOut } from '@/lib/api/generated/model'
 import { makeTestQueryClient, renderWithProviders } from '@/test/render'
 
 import { makeStaffTool, makeToolDetail } from '../fixtures'
@@ -23,13 +27,61 @@ vi.mock('next-auth/react', () => ({
 
 const TOOL = makeToolDetail()
 
+const FACETS: FacetDimensionOut[] = [
+  {
+    code: 'media',
+    label: 'Media',
+    values: [{ code: 'pdf', slug: 'pdf', label: 'PDF', has_landing_page: false, tool_count: 7 }],
+  },
+  {
+    code: 'capability',
+    label: 'Capability',
+    values: [
+      { code: 'ocr', slug: 'ocr', label: 'OCR', has_landing_page: false, tool_count: 4 },
+      {
+        code: 'batch',
+        slug: 'batch',
+        label: 'Batch processing',
+        has_landing_page: false,
+        tool_count: 5,
+      },
+      {
+        code: 'true-removal',
+        slug: 'true-removal',
+        label: 'True content removal',
+        has_landing_page: false,
+        tool_count: 5,
+      },
+    ],
+  },
+]
+
+/**
+ * The write answers with `body`; the re-reads every save triggers answer with
+ * the page as it was, so the refetch does not blank the profile mid-test.
+ * Only writes are recorded in `writes`.
+ */
 function stubFetch(status: number, body: unknown) {
-  return vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-    new Response(JSON.stringify(body), {
-      status,
+  const json = (payload: unknown, code = 200) =>
+    new Response(JSON.stringify(payload), {
+      status: code,
       headers: { 'Content-Type': 'application/json' },
-    }),
-  )
+    })
+  const spy = vi.spyOn(globalThis, 'fetch').mockImplementation(async (url, init) => {
+    if (!init?.method || init.method === 'GET') {
+      if (String(url).includes('/staff/tools/')) return json(makeStaffTool())
+      if (String(url).includes('/catalog/tools/')) return json(TOOL)
+      return json([])
+    }
+    return json(body, status)
+  })
+  return {
+    get mock() {
+      return {
+        calls: spy.mock.calls.filter(([, init]) => init?.method && init.method !== 'GET'),
+      }
+    },
+  }
 }
 
 const UPDATED = { slug: TOOL.slug, changed: ['tagline'], listable: true, listability_reasons: [] }
@@ -41,6 +93,7 @@ function render({ staff, record = makeStaffTool() }: { staff: boolean; record?: 
   queryClient.setQueryData(getGetToolQueryKey(TOOL.slug), TOOL)
   queryClient.setQueryData(getGetMeQueryKey(), { ...ME, is_staff: staff })
   queryClient.setQueryData(getListMyListingsQueryKey(), [])
+  queryClient.setQueryData(getListFacetsQueryKey(), FACETS)
   queryClient.setQueryData(getStaffGetToolQueryKey(TOOL.slug), record)
   return renderWithProviders(<ToolProfile slug={TOOL.slug} />, { queryClient })
 }
@@ -79,7 +132,7 @@ describe('ToolProfile for staff', () => {
     await user.type(input, 'Redact with care')
     await user.click(screen.getByRole('button', { name: 'Save' }))
 
-    await waitFor(() => expect(fetchSpy).toHaveBeenCalled())
+    await waitFor(() => expect(fetchSpy.mock.calls).not.toHaveLength(0))
     const [url, init] = fetchSpy.mock.calls[0]
     expect(String(url)).toContain('/api/v1/catalog/staff/tools/adobe-acrobat')
     expect(init?.method).toBe('PATCH')
@@ -98,7 +151,7 @@ describe('ToolProfile for staff', () => {
     await user.type(input, '{enter}Fast batch mode')
     await user.click(screen.getByRole('button', { name: 'Save' }))
 
-    await waitFor(() => expect(fetchSpy).toHaveBeenCalled())
+    await waitFor(() => expect(fetchSpy.mock.calls).not.toHaveLength(0))
     expect(JSON.parse(String(fetchSpy.mock.calls[0][1]?.body))).toEqual({
       changes: { pros: ['Removes underlying content and metadata properly', 'Fast batch mode'] },
     })
@@ -131,7 +184,7 @@ describe('ToolProfile for staff', () => {
     await user.type(screen.getByLabelText('Answer 1'), 'No, but there is a trial.')
     await user.click(screen.getByRole('button', { name: 'Save' }))
 
-    await waitFor(() => expect(fetchSpy).toHaveBeenCalled())
+    await waitFor(() => expect(fetchSpy.mock.calls).not.toHaveLength(0))
     expect(JSON.parse(String(fetchSpy.mock.calls[0][1]?.body))).toEqual({
       changes: { faq: [{ question: 'Is it free?', answer: 'No, but there is a trial.' }] },
     })
@@ -183,7 +236,7 @@ describe('ToolProfile for staff', () => {
       await user.type(name, 'Acrobat Pro DC')
       await user.click(screen.getByRole('button', { name: 'Save' }))
 
-      await waitFor(() => expect(fetchSpy).toHaveBeenCalled())
+      await waitFor(() => expect(fetchSpy.mock.calls).not.toHaveLength(0))
       const [url, init] = fetchSpy.mock.calls[0]
       expect(String(url)).toContain('/api/v1/catalog/staff/tools/adobe-acrobat/plans/pro')
       expect(JSON.parse(String(init?.body))).toEqual({ changes: { name: 'Acrobat Pro DC' } })
@@ -202,7 +255,7 @@ describe('ToolProfile for staff', () => {
       await user.type(amount, '24.99')
       await user.click(screen.getByRole('button', { name: 'Publish price' }))
 
-      await waitFor(() => expect(fetchSpy).toHaveBeenCalled())
+      await waitFor(() => expect(fetchSpy.mock.calls).not.toHaveLength(0))
       const [url, init] = fetchSpy.mock.calls[0]
       expect(String(url)).toContain('/plans/pro/prices')
       expect(JSON.parse(String(init?.body))).toMatchObject({
@@ -230,7 +283,7 @@ describe('ToolProfile for staff', () => {
       await user.type(screen.getByLabelText('Value'), '500')
       await user.click(screen.getByRole('button', { name: 'Save' }))
 
-      await waitFor(() => expect(fetchSpy).toHaveBeenCalled())
+      await waitFor(() => expect(fetchSpy.mock.calls).not.toHaveLength(0))
       const [url, init] = fetchSpy.mock.calls[0]
       expect(String(url)).toContain('/plans/pro/limits/pages_per_month')
       expect(init?.method).toBe('PUT')
@@ -253,12 +306,33 @@ describe('ToolProfile for staff', () => {
       await user.type(screen.getByLabelText('New plan name'), 'Team')
       await user.click(screen.getByRole('button', { name: 'Create plan' }))
 
-      await waitFor(() => expect(fetchSpy).toHaveBeenCalled())
+      await waitFor(() => expect(fetchSpy.mock.calls).not.toHaveLength(0))
       expect(JSON.parse(String(fetchSpy.mock.calls[0][1]?.body))).toEqual({
         code: 'team',
         name: 'Team',
         changes: {},
       })
     })
+  })
+
+  // Adds go first: removing the last value of a required dimension is refused,
+  // so swapping one for another has to pass through holding both.
+  it('saves a changed capability as an add, then a removal', async () => {
+    const fetchSpy = stubFetch(200, {})
+    const user = userEvent.setup()
+    render({ staff: true })
+
+    await user.click(screen.getByRole('button', { name: 'Edit capabilities' }))
+    await user.click(screen.getByRole('checkbox', { name: 'Batch processing' }))
+    await user.click(screen.getByRole('checkbox', { name: 'OCR' }))
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+
+    await waitFor(() => expect(fetchSpy.mock.calls).toHaveLength(2))
+    const [[addUrl, add], [removeUrl, remove]] = fetchSpy.mock.calls
+    expect(add?.method).toBe('POST')
+    expect(String(addUrl)).toContain('/tools/adobe-acrobat/facets')
+    expect(JSON.parse(String(add?.body))).toMatchObject({ dimension: 'capability', value: 'batch' })
+    expect(remove?.method).toBe('DELETE')
+    expect(String(removeUrl)).toContain('/tools/adobe-acrobat/facets/capability/ocr')
   })
 })

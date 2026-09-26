@@ -22,6 +22,7 @@ import { DocumentCostCalculator } from './document-cost-calculator'
 import { PriceProvenanceBadge } from './price-provenance-badge'
 import { Editable } from './staff/editable'
 import { FaqEditor } from './staff/faq-editor'
+import { FacetEditor } from './staff/facet-editor'
 import { PlansEditor } from './staff/plans-editor'
 import { StaffPanel } from './staff/staff-panel'
 import { ToolFieldEditor } from './staff/tool-field-editor'
@@ -161,6 +162,14 @@ function KeyFacts({ tool }: { tool: ToolDetailOut }) {
   ]
 
   return (
+    <Editable label="facets" editor={(done) => <FacetEditor slug={tool.slug} onDone={done} />}>
+      <KeyFactsCard facts={facts} />
+    </Editable>
+  )
+}
+
+function KeyFactsCard({ facts }: { facts: [string, string][] }) {
+  return (
     <Card>
       <CardTitle>Key facts</CardTitle>
       <dl className="mt-4 grid gap-x-8 gap-y-2 sm:grid-cols-2" data-testid="key-facts">
@@ -186,19 +195,25 @@ function KeyFacts({ tool }: { tool: ToolDetailOut }) {
  */
 function Capabilities({ tool }: { tool: ToolDetailOut }) {
   const capabilities = tool.facets.filter((facet) => facet.dimension === 'capability')
-  if (capabilities.length === 0) return null
 
   return (
-    <section className="space-y-3">
-      <h2 className="text-xl font-semibold">What it does</h2>
-      <ul className="flex flex-wrap gap-2" data-testid="capabilities">
-        {capabilities.map((facet) => (
-          <li key={facet.slug}>
-            <Badge tone="neutral">{facet.label}</Badge>
-          </li>
-        ))}
-      </ul>
-    </section>
+    <Editable
+      label="capabilities"
+      editor={(done) => <FacetEditor slug={tool.slug} dimensions={['capability']} onDone={done} />}
+    >
+      {capabilities.length ? (
+        <section className="space-y-3">
+          <h2 className="text-xl font-semibold">What it does</h2>
+          <ul className="flex flex-wrap gap-2" data-testid="capabilities">
+            {capabilities.map((facet) => (
+              <li key={facet.slug}>
+                <Badge tone="neutral">{facet.label}</Badge>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+    </Editable>
   )
 }
 
