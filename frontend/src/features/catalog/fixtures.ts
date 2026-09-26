@@ -3,6 +3,7 @@ import type {
   MyListingOut,
   PlanOut,
   PriceOut,
+  StaffToolOut,
   ToolDetailOut,
   ToolListItemOut,
   ToolPageOut,
@@ -165,6 +166,7 @@ export function makeToolDetail(overrides: Partial<ToolDetailOut> = {}): ToolDeta
     // Empty by default: most tests are about prices and editorial, and a
     // gallery every one of them had to account for would be noise.
     screenshots: [],
+    benchmarks: [],
     updated_at: '2026-09-17T00:00:00Z',
     plans: [
       {
@@ -203,6 +205,73 @@ export function makeToolDetail(overrides: Partial<ToolDetailOut> = {}): ToolDeta
         limits: [],
       },
     ],
+    ...overrides,
+  }
+}
+
+/** The staff record: the editable fields, plus what the public page never shows. */
+export function makeStaffTool(overrides: Partial<StaffToolOut> = {}): StaffToolOut {
+  const tool = makeToolDetail()
+  return {
+    slug: tool.slug,
+    name: tool.name,
+    vendor: tool.vendor.name,
+    status: 'published',
+    website_url: tool.website_url,
+    pricing_url: tool.pricing_url,
+    docs_url: tool.docs_url,
+    logo_url: tool.logo_url,
+    is_first_party: tool.is_first_party,
+    tagline: tool.tagline,
+    summary: tool.summary,
+    description_md: tool.description_md,
+    vendor_copy_md: tool.vendor_copy_md,
+    pros: tool.pros,
+    cons: tool.cons,
+    faq: tool.faq,
+    editor_verdict: '',
+    editor_notes: '',
+    sort_order: 0,
+    last_verified_at: '2026-09-15T00:00:00Z',
+    prices_changed_at: null,
+    facets: [
+      { dimension: 'media', value: 'pdf', slug: 'pdf', evidence_url: '', verified_at: null },
+      { dimension: 'capability', value: 'ocr', slug: 'ocr', evidence_url: '', verified_at: null },
+      {
+        dimension: 'capability',
+        value: 'true-removal',
+        slug: 'true-removal',
+        evidence_url: '',
+        verified_at: null,
+      },
+    ],
+    plans: tool.plans.map((plan) => ({
+      code: plan.code,
+      name: plan.name,
+      tier_order: plan.tier_order,
+      is_public: true,
+      is_free_tier: plan.is_free_tier,
+      is_trial: plan.is_trial,
+      trial_days: plan.trial_days,
+      is_enterprise_quote: plan.is_enterprise_quote,
+      min_seats: plan.min_seats,
+      highlights: plan.highlights,
+      source_url: plan.source_url,
+      prices: plan.prices.map((price) => ({
+        amount: price.amount,
+        currency: price.currency,
+        unit: price.unit,
+        billing_period: price.billing_period,
+        is_overage: price.is_overage,
+        source: price.source,
+        source_note: price.source_note,
+      })),
+      limits: [],
+    })),
+    open_revisions: 0,
+    open_price_proposals: 0,
+    listable: true,
+    listability_reasons: [],
     ...overrides,
   }
 }

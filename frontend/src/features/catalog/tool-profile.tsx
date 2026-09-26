@@ -1,6 +1,9 @@
 'use client'
 
+import Link from 'next/link'
+
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Card, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -12,6 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { analytics } from '@/lib/analytics'
 import { useGetTool } from '@/lib/api/generated/catalog/catalog'
 import type { PlanOut, ToolDetailOut } from '@/lib/api/generated/model'
 import { basePrice, overagePrice } from '@/lib/catalog/document-cost'
@@ -20,6 +24,14 @@ import { formatAmount, formatUnit, priceSentence } from '@/lib/catalog/format'
 import { ClaimListing } from './claim-listing'
 import { DocumentCostCalculator } from './document-cost-calculator'
 import { PriceProvenanceBadge } from './price-provenance-badge'
+import { Editable } from './staff/editable'
+import { FaqEditor } from './staff/faq-editor'
+import { FacetEditor } from './staff/facet-editor'
+import { LogoEditor, ScreenshotManager } from './staff/media-editors'
+import { PlansEditor } from './staff/plans-editor'
+import { StaffPanel } from './staff/staff-panel'
+import { ToolFieldEditor } from './staff/tool-field-editor'
+import { useIsStaff } from './staff/use-is-staff'
 import { ToolLogo } from './tool-logo'
 import { ToolScreenshots } from './tool-screenshots'
 
@@ -65,7 +77,13 @@ export function ToolProfile({ slug }: { slug: string }) {
       {/* Before the plan table: a buyer works out what the tool is before what
           it costs, and this is the only part of the page that shows them the
           thing rather than describing it. */}
-      <ToolScreenshots name={tool.name} screenshots={tool.screenshots} />
+      <Editable
+        label="screenshots"
+        empty={tool.screenshots.length === 0}
+        editor={(done) => <ScreenshotManager slug={tool.slug} onDone={done} />}
+      >
+        <ToolScreenshots name={tool.name} screenshots={tool.screenshots} />
+      </Editable>
       <PlanTable tool={tool} />
       <DocumentCostCalculator tool={tool} />
       <Editorial tool={tool} />
@@ -74,6 +92,10 @@ export function ToolProfile({ slug }: { slug: string }) {
           correct it will read to the end, and a buyer should not meet a vendor
           call to action before the assessment. */}
       <ClaimListing tool={tool} />
+      {/* After everything a reader sees: staff edit the page itself through
+          the icons on each block, and this holds only what the page never
+          shows. */}
+      <StaffPanel slug={tool.slug} />
     </article>
   )
 }
@@ -82,15 +104,48 @@ function ToolHeader({ tool }: { tool: ToolDetailOut }) {
   return (
     <header className="space-y-4">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-        <ToolLogo name={tool.name} logoUrl={tool.logo_url} size="lg" />
+        <Editable
+          label="logo"
+          placement="corner"
+          editor={(done) => <LogoEditor slug={tool.slug} onDone={done} />}
+        >
+          <ToolLogo name={tool.name} logoUrl={tool.logo_url} size="lg" />
+        </Editable>
         <div>
           <p className="text-muted-foreground text-sm">{tool.vendor.name}</p>
-          <h1 className="text-2xl font-semibold tracking-tight text-balance sm:text-3xl">
-            {tool.name}: pricing, features and limits
-          </h1>
+          <Editable
+            label="name"
+            editor={(done) => (
+              <ToolFieldEditor
+                slug={tool.slug}
+                kind="text"
+                field="name"
+                label="Name"
+                onDone={done}
+              />
+            )}
+          >
+            <h1 className="text-2xl font-semibold tracking-tight text-balance sm:text-3xl">
+              {tool.name}: pricing, features and limits
+            </h1>
+          </Editable>
         </div>
+        <HeaderLinks tool={tool} />
       </div>
-      <p className="text-lg text-pretty">{tool.tagline}</p>
+      <Editable
+        label="tagline"
+        editor={(done) => (
+          <ToolFieldEditor
+            slug={tool.slug}
+            kind="text"
+            field="tagline"
+            label="Tagline"
+            onDone={done}
+          />
+        )}
+      >
+        <p className="text-lg text-pretty">{tool.tagline}</p>
+      </Editable>
 
       {/* The GEO payload: the same facts the table holds, stated as a sentence,
           because models quote sentences rather than cells. */}
@@ -103,6 +158,44 @@ function ToolHeader({ tool }: { tool: ToolDetailOut }) {
         </p>
       ) : null}
     </header>
+  )
+}
+
+/**
+ * Where a reader goes next: our own measurement of the tool, then the tool.
+ *
+ * The benchmark links are internal and followed, one per suite the tool has
+ * approved results in. The website link is `nofollow`: the catalog is a
+ * reference, not a vote, and every listing gets the same link on the same
+ * terms - ours included. It opens a new tab, because the comparison is what
+ * they will come back to.
+ */
+function HeaderLinks({ tool }: { tool: ToolDetailOut }) {
+  if (!tool.website_url && tool.benchmarks.length === 0) return null
+
+  return (
+    <div className="flex shrink-0 flex-wrap gap-2 sm:ml-auto">
+      {tool.benchmarks.map((benchmark) => (
+        <Button key={benchmark.suite} asChild variant="ghost">
+          <Link href={`/benchmarks/${benchmark.suite}/tools/${tool.slug}`}>
+            {benchmark.name} benchmark
+          </Link>
+        </Button>
+      ))}
+      {tool.website_url ? (
+        <Button asChild variant="outline">
+          <a
+            href={tool.website_url}
+            target="_blank"
+            rel="nofollow noopener noreferrer"
+            onClick={() => analytics.capture('tool_website_visited', { tool_slug: tool.slug })}
+          >
+            Visit {tool.name}
+            <span aria-hidden="true">↗</span>
+          </a>
+        </Button>
+      ) : null}
+    </div>
   )
 }
 
@@ -127,6 +220,14 @@ function KeyFacts({ tool }: { tool: ToolDetailOut }) {
     ],
   ]
 
+  return (
+    <Editable label="facets" editor={(done) => <FacetEditor slug={tool.slug} onDone={done} />}>
+      <KeyFactsCard facts={facts} />
+    </Editable>
+  )
+}
+
+function KeyFactsCard({ facts }: { facts: [string, string][] }) {
   return (
     <Card>
       <CardTitle>Key facts</CardTitle>
@@ -153,23 +254,38 @@ function KeyFacts({ tool }: { tool: ToolDetailOut }) {
  */
 function Capabilities({ tool }: { tool: ToolDetailOut }) {
   const capabilities = tool.facets.filter((facet) => facet.dimension === 'capability')
-  if (capabilities.length === 0) return null
 
   return (
-    <section className="space-y-3">
-      <h2 className="text-xl font-semibold">What it does</h2>
-      <ul className="flex flex-wrap gap-2" data-testid="capabilities">
-        {capabilities.map((facet) => (
-          <li key={facet.slug}>
-            <Badge tone="neutral">{facet.label}</Badge>
-          </li>
-        ))}
-      </ul>
-    </section>
+    <Editable
+      label="capabilities"
+      empty={capabilities.length === 0}
+      editor={(done) => <FacetEditor slug={tool.slug} dimensions={['capability']} onDone={done} />}
+    >
+      {capabilities.length ? (
+        <section className="space-y-3">
+          <h2 className="text-xl font-semibold">What it does</h2>
+          <ul className="flex flex-wrap gap-2" data-testid="capabilities">
+            {capabilities.map((facet) => (
+              <li key={facet.slug}>
+                <Badge tone="neutral">{facet.label}</Badge>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+    </Editable>
   )
 }
 
 function PlanTable({ tool }: { tool: ToolDetailOut }) {
+  return (
+    <Editable label="plans" editor={(done) => <PlansEditor slug={tool.slug} onDone={done} />}>
+      <PlanSection tool={tool} />
+    </Editable>
+  )
+}
+
+function PlanSection({ tool }: { tool: ToolDetailOut }) {
   return (
     <section className="space-y-3">
       <h2 className="text-xl font-semibold">Plans and pricing</h2>
@@ -245,32 +361,94 @@ function ProvenanceLegend({ tool }: { tool: ToolDetailOut }) {
 }
 
 function Editorial({ tool }: { tool: ToolDetailOut }) {
+  // Staff see the empty blocks too: an edit button is the only way to fill one.
+  const isStaff = useIsStaff()
+
   return (
     <section className="space-y-6">
       <div className="space-y-3">
         <h2 className="text-xl font-semibold">Our assessment</h2>
-        {tool.description_md.split('\n\n').map((paragraph, index) => (
-          <p key={index} className="text-pretty">
-            {paragraph}
-          </p>
-        ))}
+        <Editable
+          label="assessment"
+          editor={(done) => (
+            <ToolFieldEditor
+              slug={tool.slug}
+              kind="multiline"
+              field="description_md"
+              label="Assessment (paragraphs separated by a blank line)"
+              onDone={done}
+            />
+          )}
+        >
+          <div className="space-y-3">
+            {tool.description_md.split('\n\n').map((paragraph, index) => (
+              <p key={index} className="text-pretty">
+                {paragraph}
+              </p>
+            ))}
+          </div>
+        </Editable>
       </div>
 
-      {tool.pros.length || tool.cons.length ? (
+      {tool.pros.length || tool.cons.length || isStaff ? (
         <div className="grid gap-6 sm:grid-cols-2">
-          <PointList title="Strengths" points={tool.pros} tone="ok" />
-          <PointList title="Limitations" points={tool.cons} tone="warn" />
+          <Editable
+            label="strengths"
+            placement="inside"
+            empty={tool.pros.length === 0}
+            editor={(done) => (
+              <ToolFieldEditor
+                slug={tool.slug}
+                kind="lines"
+                field="pros"
+                label="Strengths, one per line"
+                onDone={done}
+              />
+            )}
+          >
+            <PointList title="Strengths" points={tool.pros} tone="ok" />
+          </Editable>
+          <Editable
+            label="limitations"
+            placement="inside"
+            empty={tool.cons.length === 0}
+            editor={(done) => (
+              <ToolFieldEditor
+                slug={tool.slug}
+                kind="lines"
+                field="cons"
+                label="Limitations, one per line"
+                onDone={done}
+              />
+            )}
+          >
+            <PointList title="Limitations" points={tool.cons} tone="warn" />
+          </Editable>
         </div>
       ) : null}
 
       {/* Vendor copy is fenced and labelled, so the page's primary content stays
           editorial rather than quietly becoming syndicated marketing. */}
-      {tool.vendor_copy_md ? (
-        <Card data-testid="vendor-copy">
-          <CardTitle>From the vendor</CardTitle>
-          <p className="text-muted-foreground mt-2 text-sm">{tool.vendor_copy_md}</p>
-        </Card>
-      ) : null}
+      <Editable
+        label="vendor copy"
+        empty={!tool.vendor_copy_md}
+        editor={(done) => (
+          <ToolFieldEditor
+            slug={tool.slug}
+            kind="multiline"
+            field="vendor_copy_md"
+            label="From the vendor"
+            onDone={done}
+          />
+        )}
+      >
+        {tool.vendor_copy_md ? (
+          <Card data-testid="vendor-copy">
+            <CardTitle>From the vendor</CardTitle>
+            <p className="text-muted-foreground mt-2 text-sm">{tool.vendor_copy_md}</p>
+          </Card>
+        ) : null}
+      </Editable>
     </section>
   )
 }
@@ -284,20 +462,26 @@ function Editorial({ tool }: { tool: ToolDetailOut }) {
  * something to answer, which is also the gate on the FAQPage markup.
  */
 function Faq({ tool }: { tool: ToolDetailOut }) {
-  if (tool.faq.length === 0) return null
-
   return (
-    <section className="space-y-4">
-      <h2 className="text-xl font-semibold">Common questions</h2>
-      <dl className="space-y-4">
-        {tool.faq.map((entry) => (
-          <div key={entry.question} className="space-y-1">
-            <dt className="font-medium">{entry.question}</dt>
-            <dd className="text-muted-foreground text-pretty">{entry.answer}</dd>
-          </div>
-        ))}
-      </dl>
-    </section>
+    <Editable
+      label="questions"
+      empty={tool.faq.length === 0}
+      editor={(done) => <FaqEditor slug={tool.slug} onDone={done} />}
+    >
+      {tool.faq.length ? (
+        <section className="space-y-4">
+          <h2 className="text-xl font-semibold">Common questions</h2>
+          <dl className="space-y-4">
+            {tool.faq.map((entry) => (
+              <div key={entry.question} className="space-y-1">
+                <dt className="font-medium">{entry.question}</dt>
+                <dd className="text-muted-foreground text-pretty">{entry.answer}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      ) : null}
+    </Editable>
   )
 }
 
