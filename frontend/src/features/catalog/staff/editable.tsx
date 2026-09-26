@@ -2,30 +2,31 @@
 
 import { type ReactNode, useState } from 'react'
 
-import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
 import { useIsStaff } from './use-is-staff'
 
+/** Where the chip sits on the block's hover outline. */
 const PLACEMENT = {
-  // In the page's right margin where there is one (the container is max-w-5xl,
-  // so from xl up), on the block's first line otherwise.
-  gutter: 'top-0 right-0 xl:-right-10',
-  // Inside the block's top-right corner, for a block with a neighbour to its
-  // right - a grid column - where the margin belongs to someone else.
-  inside: 'top-0 right-0',
+  // The outline's top-right corner - attached to the block it edits.
+  edge: '-top-5 -right-5',
+  // Tucked inside, for a grid column whose right edge borders its neighbour.
+  inside: '-top-5 right-0',
   // Over the corner of something small, like the logo.
-  corner: '-top-2 -right-2',
+  corner: '-top-3 -right-3',
 } as const
 
 /**
- * One block of the tool page, with an edit icon for staff.
+ * One block of the tool page, editable in place by staff.
  *
  * Everyone else gets `children` exactly as they were - no wrapper element. For
- * staff the icon is positioned over the block rather than laid out after it,
- * so the page they edit has the layout readers see. The exception is an
- * `empty` block, which has nothing to sit on: there the icon takes a line of
- * its own, named, because an icon over nothing says nothing.
+ * staff nothing is laid out either: hovering a block (or tabbing into it)
+ * draws an outline around it and reveals a pencil on the outline's corner, both
+ * positioned rather than placed, so the page staff edit has the layout readers
+ * see. Touch screens cannot hover, so there the pencil always shows.
+ *
+ * An `empty` block has nothing to outline, so it becomes a dashed placeholder
+ * naming what it would hold.
  *
  * Each block edits on its own, so a save is one field's worth of change and
  * one entry in the revision trail.
@@ -34,7 +35,7 @@ export function Editable({
   label,
   editor,
   children,
-  placement = 'gutter',
+  placement = 'edge',
   empty = false,
 }: {
   label: string
@@ -50,45 +51,72 @@ export function Editable({
 
   if (editing) {
     return (
-      <div className="border-border rounded-md border border-dashed p-4">
+      <section
+        aria-label={`Editing ${label}`}
+        className="border-border bg-surface ring-ring/20 space-y-4 rounded-xl border p-5 shadow-sm ring-4"
+      >
+        <p className="text-muted-foreground flex items-center gap-2 text-xs font-medium tracking-wide uppercase">
+          <PencilIcon size={12} />
+          Editing {label}
+        </p>
         {editor(() => setEditing(false))}
-      </div>
+      </section>
     )
   }
 
-  const button = (
-    <Button
-      variant="ghost"
-      size="sm"
-      className={cn(
-        'text-muted-foreground hover:text-foreground h-7 gap-1.5 px-1.5',
-        !empty && ['bg-background/80 absolute z-10 w-7 px-0', PLACEMENT[placement]],
-      )}
-      aria-label={`Edit ${label}`}
-      title={`Edit ${label}`}
-      onClick={() => setEditing(true)}
-    >
-      <PencilIcon />
-      {empty ? <span className="text-xs">Add {label}</span> : null}
-    </Button>
-  )
-
-  if (empty) return button
+  if (empty) {
+    return (
+      <button
+        type="button"
+        aria-label={`Edit ${label}`}
+        onClick={() => setEditing(true)}
+        className={cn(
+          'border-border text-muted-foreground flex w-full items-center justify-center gap-2 rounded-xl border border-dashed px-4 py-4 text-sm transition-colors',
+          'hover:border-foreground/30 hover:bg-muted/40 hover:text-foreground',
+          'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none',
+        )}
+      >
+        <PlusIcon />
+        Add {label}
+      </button>
+    )
+  }
 
   return (
-    <div className="relative">
+    <div className="group/editable relative">
       {children}
-      {button}
+      <div
+        aria-hidden="true"
+        className={cn(
+          'pointer-events-none absolute -inset-2 rounded-xl border border-dashed border-transparent transition-colors',
+          'group-focus-within/editable:border-foreground/25 group-hover/editable:border-foreground/25',
+        )}
+      />
+      <button
+        type="button"
+        aria-label={`Edit ${label}`}
+        title={`Edit ${label}`}
+        onClick={() => setEditing(true)}
+        className={cn(
+          'border-border bg-background text-muted-foreground absolute z-10 grid size-7 place-items-center rounded-full border shadow-sm transition',
+          'hover:text-foreground hover:scale-110',
+          'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none',
+          'opacity-0 group-focus-within/editable:opacity-100 group-hover/editable:opacity-100 pointer-coarse:opacity-100',
+          PLACEMENT[placement],
+        )}
+      >
+        <PencilIcon size={14} />
+      </button>
     </div>
   )
 }
 
-function PencilIcon() {
+function PencilIcon({ size }: { size: number }) {
   return (
     <svg
       viewBox="0 0 24 24"
-      width={16}
-      height={16}
+      width={size}
+      height={size}
       fill="none"
       stroke="currentColor"
       strokeWidth={2}
@@ -98,6 +126,23 @@ function PencilIcon() {
     >
       <path d="M12 20h9" />
       <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+    </svg>
+  )
+}
+
+function PlusIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width={16}
+      height={16}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      aria-hidden="true"
+    >
+      <path d="M12 5v14M5 12h14" />
     </svg>
   )
 }
