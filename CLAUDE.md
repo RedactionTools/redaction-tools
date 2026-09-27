@@ -72,6 +72,10 @@ The parts that bite if you miss them:
   SHA-256 of its source - which is what lets `/media/` be served `immutable`, and why files are
   deleted only when the last row sharing that digest goes. A vendor upload lands `pending`; only an
   editor publishes it. Adding a width is `manage.py rerender_screenshots`, not a re-collection.
+- **Cost tables convert currencies at the ECB's daily reference rates** (`exchange_rates.py`,
+  refreshed daily by a qcluster schedule, served at `/catalog/exchange-rates`). Only the
+  Total and Per page cells are converted, marked `≈`; the published price stays the vendor's.
+  With no rates yet, tables fall back to ranking only plans that share a currency.
 - **Seed migrations are idempotent** and guarded by an existence check. They put 7 tools in every
   test database, so a test asserting "the catalog is empty" will not hold.
 - Catalog routes and `sitemap.ts` are `force-dynamic`: `next build` runs with no backend (CI

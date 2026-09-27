@@ -4,6 +4,7 @@ import type { Metadata } from 'next'
 import { PriceCalculator } from '@/features/catalog/price-calculator'
 import {
   getGetToolQueryOptions,
+  getListExchangeRatesQueryOptions,
   getListToolsQueryOptions,
 } from '@/lib/api/generated/catalog/catalog'
 import { canonicalMetadata } from '@/lib/seo/canonical'
@@ -42,6 +43,7 @@ export default async function PriceCalculatorPage({
 
   await Promise.all([
     queryClient.prefetchQuery(getListToolsQueryOptions({ page_size: 100 })),
+    queryClient.prefetchQuery(getListExchangeRatesQueryOptions()),
     ...slugs.map((slug) => queryClient.prefetchQuery(getGetToolQueryOptions(slug))),
   ])
 

@@ -623,6 +623,24 @@ class PlanLimit(TimeStampedModel):
         return f"{self.value} {self.unit}".strip()
 
 
+class ExchangeRate(TimeStampedModel):
+    """One currency's ECB reference rate per euro, as of the feed's date.
+
+    Only the latest day is kept: the rates convert a figure for a reader, they are
+    not a price history. `exchange_rates.refresh_exchange_rates` rewrites the table.
+    """
+
+    currency = models.CharField(max_length=3, unique=True)
+    per_eur = models.DecimalField(max_digits=16, decimal_places=6)
+    as_of = models.DateField()
+
+    class Meta:
+        ordering = ["currency"]
+
+    def __str__(self):
+        return f"{self.currency} {self.per_eur}/EUR on {self.as_of}"
+
+
 # --- Crawl -----------------------------------------------------------------
 # Schema only in phase 1. The fetcher, extractors, normalizer and guards arrive
 # in phase 2 against tables that already fit them.

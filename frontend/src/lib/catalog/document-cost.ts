@@ -37,6 +37,31 @@ function fromTenThousandths(value: number): string {
   return `${Math.floor(value / SCALE)}.${String(value % SCALE).padStart(4, '0')}`
 }
 
+/** ECB reference rates, each currency per one euro, as `list_exchange_rates` serves them. */
+export type Rates = Record<string, string>
+
+/** The currency a reader asked to see, and the rates that get a figure there. */
+export type Conversion = { currency: string; rates: Rates }
+
+/**
+ * `amount` in `to`, through the euro, or null when a rate is missing.
+ *
+ * Null rather than a guess: a converted figure reads exactly like a real one,
+ * so one the rates cannot back has to be absent instead.
+ */
+export function convertAmount(
+  amount: string,
+  from: string,
+  to: string,
+  rates: Rates,
+): string | null {
+  if (from === to) return amount
+  const fromRate = Number(rates[from])
+  const toRate = Number(rates[to])
+  if (!fromRate || !toRate) return null
+  return fromTenThousandths(Math.round((toTenThousandths(amount) * toRate) / fromRate))
+}
+
 /**
  * What the plan itself costs.
  *
@@ -208,7 +233,7 @@ export type KeyedPlan = { key: string; plan: PlanOut }
  * divisor no vendor published - the same division `apps/catalog/pricing.py`
  * refuses. A plan that cannot take the volume has no price at all.
  */
-function candidates(rows: KeyedPlan[], input: DocumentInput) {
+function candidates(rows: KeyedPlan[], input: DocumentInput, conversion?: Conversion) {
   const priced: { key: string; total: number; currency: string }[] = []
 
   for (const row of rows) {
@@ -226,7 +251,22 @@ function candidates(rows: KeyedPlan[], input: DocumentInput) {
     }
   }
 
-  return priced
+  if (!conversion) return priced
+
+  // Converted when rates are given, so the ranking below compares like with
+  // like. A row with no rate keeps its own currency, which leaves the set mixed
+  // and the ranking silent - the same answer as having no rates at all.
+  return priced.map((candidate) => {
+    const converted = convertAmount(
+      fromTenThousandths(candidate.total),
+      candidate.currency,
+      conversion.currency,
+      conversion.rates,
+    )
+    return converted === null
+      ? candidate
+      : { ...candidate, total: toTenThousandths(converted), currency: conversion.currency }
+  })
 }
 
 /**
@@ -234,16 +274,20 @@ function candidates(rows: KeyedPlan[], input: DocumentInput) {
  * made explicit so the table can point at an answer instead of leaving the
  * reader to scan a column.
  *
- * Mixed currencies return nothing: ranking them needs an exchange rate the
- * catalog does not publish, and picking one anyway would be a number we made
- * up. Across tools that is no longer a hypothetical, which is why
- * `comparableCurrencies` exists to let a caller say so.
+ * Mixed currencies are ranked only through `conversion`, the ECB rates into
+ * the reader's chosen currency. Without it, or with a currency the rates do not
+ * cover, they return nothing: picking a winner anyway would be a number we made
+ * up, which is why `comparableCurrencies` exists to let a caller say so.
  *
  * Returns every row tied at the lowest. A joint-cheapest pair is the true
  * answer, and breaking the tie on row order would invent a winner.
  */
-export function cheapestRows(rows: KeyedPlan[], input: DocumentInput): string[] {
-  const priced = candidates(rows, input)
+export function cheapestRows(
+  rows: KeyedPlan[],
+  input: DocumentInput,
+  conversion?: Conversion,
+): string[] {
+  const priced = candidates(rows, input, conversion)
 
   if (!priced.length) return []
   if (new Set(priced.map((candidate) => candidate.currency)).size > 1) return []
@@ -256,10 +300,15 @@ export function cheapestRows(rows: KeyedPlan[], input: DocumentInput): string[] 
  * The distinct currencies the priced rows are published in.
  *
  * More than one and there is no ranking to be had, so a table can say that
- * rather than leave an unbadged column reading like a tie.
+ * rather than leave an unbadged column reading like a tie. With `conversion`,
+ * only a currency the rates could not convert is left standing apart.
  */
-export function comparableCurrencies(rows: KeyedPlan[], input: DocumentInput): string[] {
-  return [...new Set(candidates(rows, input).map((candidate) => candidate.currency))]
+export function comparableCurrencies(
+  rows: KeyedPlan[],
+  input: DocumentInput,
+  conversion?: Conversion,
+): string[] {
+  return [...new Set(candidates(rows, input, conversion).map((candidate) => candidate.currency))]
 }
 
 /** The same, for one tool's plans, where the plan code is the row's name. */

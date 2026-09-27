@@ -26,6 +26,8 @@ export * from './cliLoginTokenOut';
 export * from './cliLoginUserOut';
 export * from './countsOut';
 export * from './errorSchema';
+export * from './exchangeRatesOut';
+export * from './exchangeRatesOutRates';
 export * from './facetDimensionOut';
 export * from './facetValueOut';
 export * from './faqItemOut';

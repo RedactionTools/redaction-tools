@@ -7,6 +7,7 @@ import {
   cheapestPlan,
   cheapestRows,
   comparableCurrencies,
+  convertAmount,
   documentCost,
   overagePrice,
 } from './document-cost'
@@ -479,6 +480,51 @@ describe('cheapestRows', () => {
     ]
 
     expect(cheapestRows(rows, { documents: 10, pagesPerDocument: 10 })).toEqual(['acrobat-payg'])
+  })
+})
+
+// ECB reference rates are quoted per euro.
+const RATES = { EUR: '1.0000', USD: '1.0850' }
+
+describe('convertAmount', () => {
+  it('converts through the euro, keeping four decimals', () => {
+    expect(convertAmount('10.0000', 'EUR', 'USD', RATES)).toBe('10.8500')
+    expect(convertAmount('10.8500', 'USD', 'EUR', RATES)).toBe('10.0000')
+  })
+
+  it('leaves an amount already in the currency untouched', () => {
+    expect(convertAmount('0.0500', 'USD', 'USD', {})).toBe('0.0500')
+  })
+
+  // No rate is no figure: a guess would read exactly like a real conversion.
+  it('has no answer for a currency the rates do not cover', () => {
+    expect(convertAmount('10.0000', 'JPY', 'USD', RATES)).toBeNull()
+  })
+})
+
+describe('cheapestRows across currencies', () => {
+  const dollars = plan({ code: 'usd', prices: [price({ amount: '0.0500' })] })
+  const euros = plan({ code: 'eur', prices: [price({ amount: '0.0100', currency: 'EUR' })] })
+  const rows = [
+    { key: 'a-usd', plan: dollars },
+    { key: 'b-eur', plan: euros },
+  ]
+
+  it("ranks on totals converted into the reader's currency", () => {
+    // $0.50 against €0.10, which is $0.1085.
+    expect(
+      cheapestRows(rows, { documents: 1, pagesPerDocument: 10 }, { currency: 'USD', rates: RATES }),
+    ).toEqual(['b-eur'])
+  })
+
+  it('still names no winner when a currency has no rate', () => {
+    expect(
+      cheapestRows(
+        rows,
+        { documents: 1, pagesPerDocument: 10 },
+        { currency: 'USD', rates: { USD: '1.0850' } },
+      ),
+    ).toEqual([])
   })
 })
 
