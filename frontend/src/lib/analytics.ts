@@ -19,8 +19,7 @@ export const posthogConfig = !isDevelopment && key && host ? { key, host } : nul
 export const analyticsEnabled = posthogConfig !== null
 
 /** Google Analytics sits behind the same development gate, independently of PostHog. */
-export const gaMeasurementId =
-  (!isDevelopment && process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID) || null
+export const gaMeasurementId = (!isDevelopment && process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID) || null
 
 type Properties = Record<string, unknown>
 
