@@ -28,6 +28,7 @@ from apps.catalog.constants import OWNER_EDITABLE_FIELDS, URL_FIELDS
 from apps.catalog.filters import ToolFilters, apply_filters
 from apps.catalog.images import ImageRejected
 from apps.catalog.models import (
+    ExchangeRate,
     FacetDimension,
     FacetValue,
     PriceProposal,
@@ -45,6 +46,7 @@ from apps.catalog.models import (
 from apps.catalog.pricing import price_summary, sort_key
 from apps.catalog.schemas import (
     CatalogStatsOut,
+    ExchangeRatesOut,
     FacetDimensionOut,
     MyListingOut,
     MyScreenshotOut,
@@ -317,6 +319,16 @@ def get_catalog_stats(request: HttpRequest):
         "dearest_amount": max(amounts) if amounts else None,
         "currency": "USD",
         "generated_at": timezone.now(),
+    }
+
+
+@router.get("/exchange-rates", response=ExchangeRatesOut, summary="ECB reference rates per euro")
+def list_exchange_rates(request: HttpRequest):
+    rates = list(ExchangeRate.objects.all())
+    return {
+        "base": "EUR",
+        "as_of": max((rate.as_of for rate in rates), default=None),
+        "rates": {rate.currency: rate.per_eur for rate in rates},
     }
 
 

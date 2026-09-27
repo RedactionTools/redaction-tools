@@ -4,7 +4,10 @@ import { notFound } from 'next/navigation'
 
 import { ToolProfile } from '@/features/catalog/tool-profile'
 import { canonicalMetadata } from '@/lib/seo/canonical'
-import { getGetToolQueryKey } from '@/lib/api/generated/catalog/catalog'
+import {
+  getGetToolQueryKey,
+  getListExchangeRatesQueryOptions,
+} from '@/lib/api/generated/catalog/catalog'
 import { fetchTool } from '@/lib/catalog/server'
 import { clientEnv } from '@/lib/env'
 import { toolMetaDescription } from '@/lib/seo/description'
@@ -43,6 +46,9 @@ export default async function ToolPage({ params }: PageProps<'/tool/[slug]'>) {
 
   const queryClient = getQueryClient()
   queryClient.setQueryData(getGetToolQueryKey(slug), tool)
+  // For the cost table's currency picker. `prefetchQuery` swallows a failure,
+  // and the table then prices each plan in its own currency, as it did before.
+  await queryClient.prefetchQuery(getListExchangeRatesQueryOptions())
 
   const site = clientEnv.NEXT_PUBLIC_SITE_URL
   // The FAQ node is spread rather than listed: it is undefined when the

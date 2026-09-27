@@ -3,7 +3,8 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 
 import type { ToolDetailOut } from '@/lib/api/generated/model'
-import { renderWithProviders } from '@/test/render'
+import { getListExchangeRatesQueryKey } from '@/lib/api/generated/catalog/catalog'
+import { makeTestQueryClient, renderWithProviders } from '@/test/render'
 
 import { DocumentCostCalculator } from './document-cost-calculator'
 import { makePlan, makePrice, makeToolDetail } from './fixtures'
@@ -293,5 +294,51 @@ describe('DocumentCostCalculator, the volume it is pricing', () => {
     await setField(/pages per document/i, '1')
 
     expect(screen.getByTestId('volume-total')).toHaveTextContent('1 page a month')
+  })
+})
+
+describe('DocumentCostCalculator in another currency', () => {
+  // 100 pages at €0.05 is €5.00, which is $5.43 at 1.085.
+  const euroTool = makeToolDetail({
+    slug: 'docugard',
+    plans: [
+      makePlan({
+        code: 'payg',
+        prices: [makePrice({ amount: '0.0500', currency: 'EUR', unit: 'page' })],
+      }),
+    ],
+  })
+
+  function withRates() {
+    const queryClient = makeTestQueryClient()
+    queryClient.setQueryData(getListExchangeRatesQueryKey(), {
+      base: 'EUR',
+      as_of: '2026-09-25',
+      rates: { EUR: '1.0000', USD: '1.0850' },
+    })
+    return { queryClient }
+  }
+
+  it('stays in the currency the tool publishes in until asked', () => {
+    renderWithProviders(<DocumentCostCalculator tool={euroTool} />, withRates())
+
+    expect(screen.getByLabelText(/show prices in/i)).toHaveValue('EUR')
+    expect(screen.queryByText(/≈/)).not.toBeInTheDocument()
+    expect(screen.queryByTestId('conversion-note')).not.toBeInTheDocument()
+  })
+
+  it('converts when the reader picks their own', async () => {
+    renderWithProviders(<DocumentCostCalculator tool={euroTool} />, withRates())
+
+    await userEvent.selectOptions(screen.getByLabelText(/show prices in/i), 'USD')
+
+    expect(screen.getByText('≈ $5.43')).toBeInTheDocument()
+    expect(screen.getByTestId('conversion-note')).toBeInTheDocument()
+  })
+
+  it('offers no choice before there are rates', () => {
+    renderWithProviders(<DocumentCostCalculator tool={euroTool} />)
+
+    expect(screen.queryByLabelText(/show prices in/i)).not.toBeInTheDocument()
   })
 })

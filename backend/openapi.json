@@ -658,6 +658,28 @@
         ]
       }
     },
+    "/api/v1/catalog/exchange-rates": {
+      "get": {
+        "operationId": "list_exchange_rates",
+        "summary": "ECB reference rates per euro",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExchangeRatesOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
     "/api/v1/catalog/submissions": {
       "post": {
         "operationId": "submit_tool",
@@ -3818,6 +3840,42 @@
           "generated_at"
         ],
         "title": "CatalogStatsOut",
+        "type": "object"
+      },
+      "ExchangeRatesOut": {
+        "description": "The ECB reference rates per euro, for converting a figure a reader sees.\n\n`as_of` is null and `rates` empty until the first scheduled refresh, and a\nclient then compares only what shares a currency.",
+        "properties": {
+          "base": {
+            "title": "Base",
+            "type": "string"
+          },
+          "as_of": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "As Of"
+          },
+          "rates": {
+            "additionalProperties": {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            "title": "Rates",
+            "type": "object"
+          }
+        },
+        "required": [
+          "base",
+          "as_of",
+          "rates"
+        ],
+        "title": "ExchangeRatesOut",
         "type": "object"
       },
       "ToolSubmissionOut": {

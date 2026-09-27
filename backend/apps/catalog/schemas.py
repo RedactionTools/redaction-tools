@@ -194,6 +194,18 @@ class CatalogStatsOut(Schema):
     generated_at: datetime
 
 
+class ExchangeRatesOut(Schema):
+    """The ECB reference rates per euro, for converting a figure a reader sees.
+
+    `as_of` is null and `rates` empty until the first scheduled refresh, and a
+    client then compares only what shares a currency.
+    """
+
+    base: str
+    as_of: date | None
+    rates: dict[str, Decimal]
+
+
 class ToolSubmissionIn(Schema):
     """What a submitter may state. None of it is published verbatim."""
 
