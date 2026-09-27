@@ -40,9 +40,9 @@ pdfredeval publish benchmarks/v0.1.1/runs/my-tool-web/
 ```
 
 `publish` groups your scored runs by tool and revision and opens one submission for each
-group. For each run it sends `manifest.json`, `score/report.json`, the overlay and the
-redacted PDF. It never sends the ground truth, `probes.csv`, screenshots or
-`entities.json`. It prints the link to your submission.
+group. For each run it sends `manifest.json`, `score/report.json`, the overlay, the
+redacted PDF and the images in the run's `screenshots/` folder. It never sends the ground
+truth, `probes.csv` or `entities.json`. It prints the link to your submission.
 
 A run is refused when its manifest:
 
@@ -50,6 +50,28 @@ A run is refused when its manifest:
 - carries anything that looks like a credential,
 - names a different tool or dataset revision from the submission, or
 - does not match the case or the PDF it claims to describe.
+
+## Screenshots
+
+Screenshots show how the tool was driven: its settings, any warning it raised, and its
+result screen. They appear on the run's page, next to the score. Each run can have up to
+10 PNG, JPEG or WebP images. The run page shows them in filename order, which for most
+capture tools is the order they were taken. We re-encode every image, which strips the
+metadata your capture tool embedded. Check what is visible before you publish, though:
+a screenshot shows whatever was on your screen. To keep them on your machine, pass
+`--no-screenshots`.
+
+To add screenshots to a run you already published, put them in its `screenshots/`
+folder and run:
+
+```bash
+pdfredeval publish-screenshots benchmarks/v0.1.1/runs/my-tool-web/
+```
+
+This does not resubmit the run or change its score. The site skips any image it already
+has, so running the command twice is safe. Before the run is approved, new screenshots
+are reviewed with the run. After approval, an editor checks each new screenshot before it
+appears on the run page.
 
 ## We check your numbers
 

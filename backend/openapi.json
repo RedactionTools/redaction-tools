@@ -2303,7 +2303,7 @@
             }
           }
         },
-        "description": "`manifest.json`, `score/report.json`, the delivered PDF and (optionally) the\noverlay PNG - exactly the files `pdfredeval publish` sends. Never the ground truth.",
+        "description": "`manifest.json`, `score/report.json`, the delivered PDF and (optionally) the\noverlay PNG and the run's `screenshots/` - exactly the files `pdfredeval publish`\nsends. Never the ground truth.",
         "tags": [
           "benchmarks"
         ],
@@ -2331,12 +2331,85 @@
                     "format": "binary",
                     "title": "Overlay",
                     "type": "string"
+                  },
+                  "screenshots": {
+                    "items": {
+                      "format": "binary",
+                      "type": "string"
+                    },
+                    "title": "Screenshots",
+                    "type": "array"
                   }
                 },
                 "required": [
                   "manifest",
                   "report",
                   "pdf"
+                ],
+                "title": "FileParams",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "APIKeyAuth": []
+          },
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/benchmarks/runs/{run_id}/screenshots": {
+      "post": {
+        "operationId": "add_benchmark_run_screenshots",
+        "summary": "Add screenshots to one of your runs, published or not",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyRunOut"
+                }
+              }
+            }
+          }
+        },
+        "description": "What `pdfredeval publish-screenshots` sends. Staff may add to any run; anyone else\nto their own, and once the run is published theirs wait for an editor.",
+        "tags": [
+          "benchmarks"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "properties": {
+                  "screenshots": {
+                    "items": {
+                      "format": "binary",
+                      "type": "string"
+                    },
+                    "title": "Screenshots",
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "screenshots"
                 ],
                 "title": "FileParams",
                 "type": "object"
@@ -5839,6 +5912,13 @@
               }
             ]
           },
+          "screenshots": {
+            "items": {
+              "$ref": "#/components/schemas/RunScreenshotOut"
+            },
+            "title": "Screenshots",
+            "type": "array"
+          },
           "output_pdf_url": {
             "anyOf": [
               {
@@ -5897,6 +5977,7 @@
           "text_retention",
           "gates_passed",
           "overlay",
+          "screenshots",
           "output_pdf_url",
           "submitter",
           "provenance",
@@ -5904,6 +5985,35 @@
           "reviewed_at"
         ],
         "title": "RunOut",
+        "type": "object"
+      },
+      "RunScreenshotOut": {
+        "description": "A screenshot taken while a run was made: the full-size source plus WebP widths.",
+        "properties": {
+          "url": {
+            "title": "Url",
+            "type": "string"
+          },
+          "srcset": {
+            "title": "Srcset",
+            "type": "string"
+          },
+          "width": {
+            "title": "Width",
+            "type": "integer"
+          },
+          "height": {
+            "title": "Height",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "url",
+          "srcset",
+          "width",
+          "height"
+        ],
+        "title": "RunScreenshotOut",
         "type": "object"
       },
       "PooledOut": {
@@ -6113,6 +6223,13 @@
               }
             ]
           },
+          "screenshots": {
+            "items": {
+              "$ref": "#/components/schemas/RunScreenshotOut"
+            },
+            "title": "Screenshots",
+            "type": "array"
+          },
           "output_pdf_url": {
             "anyOf": [
               {
@@ -6210,6 +6327,7 @@
           "text_retention",
           "gates_passed",
           "overlay",
+          "screenshots",
           "output_pdf_url",
           "submitter",
           "provenance",
@@ -6270,6 +6388,13 @@
                 "type": "null"
               }
             ]
+          },
+          "screenshots": {
+            "items": {
+              "$ref": "#/components/schemas/MyRunScreenshotOut"
+            },
+            "title": "Screenshots",
+            "type": "array"
           }
         },
         "required": [
@@ -6280,9 +6405,47 @@
           "verification",
           "counts",
           "leak_rate",
-          "overlay"
+          "overlay",
+          "screenshots"
         ],
         "title": "MyRunOut",
+        "type": "object"
+      },
+      "MyRunScreenshotOut": {
+        "properties": {
+          "url": {
+            "title": "Url",
+            "type": "string"
+          },
+          "srcset": {
+            "title": "Srcset",
+            "type": "string"
+          },
+          "width": {
+            "title": "Width",
+            "type": "integer"
+          },
+          "height": {
+            "title": "Height",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "published",
+              "pending"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url",
+          "srcset",
+          "width",
+          "height",
+          "status"
+        ],
+        "title": "MyRunScreenshotOut",
         "type": "object"
       },
       "MySubmissionOut": {

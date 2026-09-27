@@ -1,4 +1,5 @@
-"""Store the files a benchmark publishes: case PDFs, redacted outputs, overlays.
+"""Store the files a benchmark publishes: case PDFs, redacted outputs, overlays and the
+screenshots a run was made with.
 
 Every file sits under `benchmarks/<sha256>/`, named after the digest of its bytes -
 the same layout `catalog/screenshots.py` uses, and for the same reason: `/media` is
@@ -100,6 +101,12 @@ def store_overlay(data: bytes) -> StoredImage:
     rendition at full resolution, and the one a reader zooms into to see a leaked value.
     """
     return _store_image(data, "overlay")
+
+
+def store_screenshot(data: bytes) -> StoredImage:
+    """Keep a screenshot taken during a run, re-encoded (capture tools write the user and
+    machine name into PNG text chunks) and rendered at the widths the site serves."""
+    return _store_image(data, "screenshot")
 
 
 # 150 dpi puts an A4 page at 1240px: every planted value is legible when enlarged, and

@@ -5,11 +5,12 @@
  * Redaction tools compared by price, media and method, with the source and date recorded for every figure.
  * OpenAPI spec version: 1.0.0
  */
+import type { MyRunScreenshotOutStatus } from './myRunScreenshotOutStatus';
 
-export type PublishBenchmarkRunBody = {
-  manifest: Blob | File;
-  report: Blob | File;
-  pdf: Blob | File;
-  overlay?: Blob | File;
-  screenshots?: (Blob | File)[];
-};
+export interface MyRunScreenshotOut {
+  url: string;
+  srcset: string;
+  width: number;
+  height: number;
+  status: MyRunScreenshotOutStatus;
+}

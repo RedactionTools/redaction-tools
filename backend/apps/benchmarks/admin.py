@@ -17,6 +17,8 @@ from apps.benchmarks.models import (
     Case,
     DatasetRevision,
     Run,
+    RunScreenshot,
+    ScreenshotStatus,
     Submission,
     SubmissionStatus,
     Suite,
@@ -74,7 +76,15 @@ class RunInline(TabularInline):
     model = Run
     extra = 0
     can_delete = False
-    fields = ("overlay_preview", "case", "status", "headline", "verification_display", "error")
+    fields = (
+        "overlay_preview",
+        "case",
+        "status",
+        "headline",
+        "verification_display",
+        "screenshots_preview",
+        "error",
+    )
     readonly_fields = fields
 
     def has_add_permission(self, request, obj=None):
@@ -87,6 +97,17 @@ class RunInline(TabularInline):
         return format_html(
             '<a href="{0}" target="_blank"><img src="{0}" width="160" alt="" /></a>',
             media_url(obj.overlay.name),
+        )
+
+    @admin.display(description="Screenshots")
+    def screenshots_preview(self, obj):
+        shots = list(obj.screenshots.all())
+        if not shots:
+            return "-"
+        return format_html_join(
+            " ",
+            '<a href="{0}" target="_blank"><img src="{0}" width="96" alt="" title="{1}" /></a>',
+            ((media_url(shot.image.name), shot.get_status_display()) for shot in shots),
         )
 
     @admin.display(description="TP / FN / FP / TN")
@@ -186,3 +207,39 @@ class SubmissionAdmin(ModelAdmin):
                 done += 1
         if done:
             self.message_user(request, f"{done} submission(s) {status}.")
+
+
+@admin.register(RunScreenshot)
+class RunScreenshotAdmin(ModelAdmin):
+    """Where screenshots added after their run was published wait for an editor. Those
+    sent with a submission are reviewed on the submission's page, with the run."""
+
+    list_display = ("thumbnail", "run", "position", "status", "created_at")
+    list_filter = ("status",)
+    search_fields = ("run__run_id",)
+    list_select_related = ("run",)
+    fields = ("thumbnail", "run", "position", "status", "width", "height", "source_sha256")
+    readonly_fields = ("thumbnail", "run", "position", "width", "height", "source_sha256")
+    actions = ("publish_screenshots",)
+
+    def has_add_permission(self, request):
+        return False
+
+    @admin.display(description="Screenshot")
+    def thumbnail(self, obj):
+        return format_html(
+            '<a href="{0}" target="_blank"><img src="{0}" width="160" alt="" /></a>',
+            media_url(obj.image.name),
+        )
+
+    @admin.action(description="Publish - show on the run's page")
+    def publish_screenshots(self, request, queryset):
+        try:
+            done = services.publish_screenshots(
+                user=request.user,
+                screenshots=list(queryset.filter(status=ScreenshotStatus.PENDING)),
+            )
+        except BenchmarkError as exc:
+            self.message_user(request, str(exc), level=messages.ERROR)
+        else:
+            self.message_user(request, f"{done} screenshot(s) published.")

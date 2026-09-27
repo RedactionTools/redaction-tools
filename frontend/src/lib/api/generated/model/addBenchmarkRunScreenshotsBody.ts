@@ -6,10 +6,6 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type PublishBenchmarkRunBody = {
-  manifest: Blob | File;
-  report: Blob | File;
-  pdf: Blob | File;
-  overlay?: Blob | File;
-  screenshots?: (Blob | File)[];
+export type AddBenchmarkRunScreenshotsBody = {
+  screenshots: (Blob | File)[];
 };

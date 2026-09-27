@@ -6,10 +6,10 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type PublishBenchmarkRunBody = {
-  manifest: Blob | File;
-  report: Blob | File;
-  pdf: Blob | File;
-  overlay?: Blob | File;
-  screenshots?: (Blob | File)[];
-};
+export type MyRunScreenshotOutStatus = typeof MyRunScreenshotOutStatus[keyof typeof MyRunScreenshotOutStatus];
+
+
+export const MyRunScreenshotOutStatus = {
+  published: 'published',
+  pending: 'pending',
+} as const;
