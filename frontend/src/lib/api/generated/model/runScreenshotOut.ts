@@ -6,10 +6,12 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type PublishBenchmarkRunBody = {
-  manifest: Blob | File;
-  report: Blob | File;
-  pdf: Blob | File;
-  overlay?: Blob | File;
-  screenshots?: (Blob | File)[];
-};
+/**
+ * A screenshot taken while a run was made: the full-size source plus WebP widths.
+ */
+export interface RunScreenshotOut {
+  url: string;
+  srcset: string;
+  width: number;
+  height: number;
+}

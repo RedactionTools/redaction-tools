@@ -10,6 +10,7 @@ import { roleLabel, surfaceLabel } from '@/lib/benchmarks/format'
 
 import { OverlayFigure } from './overlay-figure'
 import { type Breakdowns, ReportBreakdowns, ReportHero } from './report-sections'
+import { RunScreenshots } from './run-screenshots'
 
 type Report = Breakdowns & {
   summary?: { over_redaction_rate?: RateOut }
@@ -130,6 +131,8 @@ export function RunReportView({ suite, runId }: { suite: string; runId: string }
           </div>
         </aside>
       </div>
+
+      <RunScreenshots screenshots={run.screenshots} label={run.tool.name} />
 
       <section className="space-y-2" data-testid="run-provenance">
         <h2 className="text-xl font-semibold">Provenance</h2>

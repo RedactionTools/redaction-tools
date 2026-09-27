@@ -77,3 +77,56 @@ def test_rejecting_with_a_note_records_it(admin_client, pending):
     pending.refresh_from_db()
     assert pending.status == SubmissionStatus.REJECTED
     assert pending.review_note == "Counts do not reproduce."
+
+
+# --- screenshots ---------------------------------------------------------------------
+
+SCREENSHOTS = "/admin/benchmarks/runscreenshot/"
+
+
+def _png():
+    import io
+
+    from PIL import Image
+
+    buffer = io.BytesIO()
+    Image.new("RGB", (640, 400), (20, 120, 200)).save(buffer, format="PNG")
+    return buffer.getvalue()
+
+
+@pytest.fixture
+def pending_screenshot(user, staff_user, pending):
+    from apps.benchmarks.models import RunStatus
+
+    run = pending.runs.get()
+    run.status = RunStatus.SCORED
+    run.save(update_fields=["status"])
+    services.review(user=staff_user, submission=pending, status=SubmissionStatus.APPROVED)
+    (shot,) = services.add_screenshots(user=user, run=run, images=[_png()])
+    return shot
+
+
+def test_a_submissions_page_shows_each_runs_screenshots(admin_client, pending):
+    services.add_screenshots(user=pending.submitted_by, run=pending.runs.get(), images=[_png()])
+
+    body = admin_client.get(f"{CHANGELIST}{pending.pk}/change/").content.decode()
+
+    assert "screenshot.png" in body
+
+
+def test_screenshots_awaiting_an_editor_are_listed(admin_client, pending_screenshot):
+    response = admin_client.get(f"{SCREENSHOTS}?status__exact=pending")
+
+    assert response.status_code == 200
+    assert pending_screenshot.run.run_id in response.content.decode()
+
+
+def test_an_editor_publishes_a_screenshot_from_the_list(admin_client, pending_screenshot):
+    admin_client.post(
+        SCREENSHOTS,
+        {"action": "publish_screenshots", "_selected_action": [str(pending_screenshot.pk)]},
+        follow=True,
+    )
+
+    pending_screenshot.refresh_from_db()
+    assert pending_screenshot.status == "published"

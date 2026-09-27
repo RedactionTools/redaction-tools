@@ -25,6 +25,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AddBenchmarkRunScreenshotsBody,
   CaseDetailOut,
   CaseOut,
   GetBenchmarkCaseParams,
@@ -1075,7 +1076,8 @@ export const useUploadBenchmarkOutput = <TError = unknown,
 
 /**
  * `manifest.json`, `score/report.json`, the delivered PDF and (optionally) the
- * overlay PNG - exactly the files `pdfredeval publish` sends. Never the ground truth.
+ * overlay PNG and the run's `screenshots/` - exactly the files `pdfredeval publish`
+ * sends. Never the ground truth.
  * @summary Publish one run scored with pdfredeval
  */
 export const publishBenchmarkRun = async (submissionId: string,
@@ -1086,6 +1088,9 @@ formData.append(`report`, publishBenchmarkRunBody.report);
 formData.append(`pdf`, publishBenchmarkRunBody.pdf);
 if(publishBenchmarkRunBody.overlay !== undefined) {
  formData.append(`overlay`, publishBenchmarkRunBody.overlay);
+ }
+if(publishBenchmarkRunBody.screenshots !== undefined) {
+ publishBenchmarkRunBody.screenshots.forEach(value => formData.append(`screenshots`, value));
  }
 
   return customFetch<MyRunOut>(getPublishBenchmarkRunUrl(submissionId),
@@ -1147,6 +1152,84 @@ export const usePublishBenchmarkRun = <TError = unknown,
         TContext
       > => {
       return useMutation(getPublishBenchmarkRunMutationOptions(options), queryClient);
+    }
+    export const getAddBenchmarkRunScreenshotsUrl = (runId: string,) => {
+
+
+
+
+  return `/api/v1/benchmarks/runs/${runId}/screenshots`
+}
+
+/**
+ * What `pdfredeval publish-screenshots` sends. Staff may add to any run; anyone else
+ * to their own, and once the run is published theirs wait for an editor.
+ * @summary Add screenshots to one of your runs, published or not
+ */
+export const addBenchmarkRunScreenshots = async (runId: string,
+    addBenchmarkRunScreenshotsBody: AddBenchmarkRunScreenshotsBody, options?: Parameters<typeof customFetch>[1]): Promise<MyRunOut> => {
+    const formData = new FormData();
+addBenchmarkRunScreenshotsBody.screenshots.forEach(value => formData.append(`screenshots`, value));
+
+  return customFetch<MyRunOut>(getAddBenchmarkRunScreenshotsUrl(runId),
+  {
+    ...options,
+    method: 'POST'
+    ,
+    body: formData
+  }
+);}
+
+
+
+
+
+export const getAddBenchmarkRunScreenshotsMutationKey = () => ['addBenchmarkRunScreenshots'] as const;
+
+export const getAddBenchmarkRunScreenshotsMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addBenchmarkRunScreenshots>>, TError,AddBenchmarkRunScreenshotsMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof addBenchmarkRunScreenshots>>, TError,AddBenchmarkRunScreenshotsMutationVariables, TContext> => {
+
+const mutationKey = getAddBenchmarkRunScreenshotsMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof addBenchmarkRunScreenshots>>, AddBenchmarkRunScreenshotsMutationVariables> = (props) => {
+          const {runId,data} = props ?? {};
+
+          return  addBenchmarkRunScreenshots(runId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AddBenchmarkRunScreenshotsMutationResult = NonNullable<Awaited<ReturnType<typeof addBenchmarkRunScreenshots>>>
+    export type AddBenchmarkRunScreenshotsMutationBody = AddBenchmarkRunScreenshotsBody
+    export type AddBenchmarkRunScreenshotsMutationError = unknown
+    export type AddBenchmarkRunScreenshotsMutationVariables = {runId: string;data: AddBenchmarkRunScreenshotsBody}
+
+    /**
+ * @summary Add screenshots to one of your runs, published or not
+ */
+export const useAddBenchmarkRunScreenshots = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addBenchmarkRunScreenshots>>, TError,AddBenchmarkRunScreenshotsMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof addBenchmarkRunScreenshots>>,
+        TError,
+        AddBenchmarkRunScreenshotsMutationVariables,
+        TContext
+      > => {
+      return useMutation(getAddBenchmarkRunScreenshotsMutationOptions(options), queryClient);
     }
     export const getFinalizeBenchmarkSubmissionUrl = (submissionId: string,) => {
 

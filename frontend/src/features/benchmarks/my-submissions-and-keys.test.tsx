@@ -63,6 +63,7 @@ describe('MySubmissions', () => {
             counts: { TP: 0, FN: 0, FP: 0, TN: 0, unsupported: 0, undecided: 0 },
             leak_rate: makeRate(0, 0),
             overlay: null,
+            screenshots: [],
           },
         ],
       }),

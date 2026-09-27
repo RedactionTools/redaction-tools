@@ -298,6 +298,8 @@ BENCHMARK_MAX_PDF_BYTES = env.int("BENCHMARK_MAX_PDF_BYTES", default=20 * 1024 *
 # Per account, counting every write to a submission: opening one, each file sent
 # to it, finalizing it. A full case set is a few dozen writes.
 BENCHMARK_SUBMIT_RATE = env("BENCHMARK_SUBMIT_RATE", default="200/day")
+# Screenshots one run may carry: its settings, a warning or two, the result screen.
+BENCHMARK_MAX_SCREENSHOTS_PER_RUN = env.int("BENCHMARK_MAX_SCREENSHOTS_PER_RUN", default=10)
 # How long one run may take to score in the worker. OCR at 300 dpi is most of it.
 BENCHMARK_SCORE_TIMEOUT = env.int("BENCHMARK_SCORE_TIMEOUT", default=300)
 # Off only where tesseract is absent and the suite has to run anyway; a score

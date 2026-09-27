@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 
+export * from './addBenchmarkRunScreenshotsBody';
 export * from './apiKeyCreatedOut';
 export * from './apiKeyIn';
 export * from './apiKeyOut';
@@ -40,6 +41,8 @@ export * from './listToolsParams';
 export * from './myListingOut';
 export * from './myRunOut';
 export * from './myRunOutStatus';
+export * from './myRunScreenshotOut';
+export * from './myRunScreenshotOutStatus';
 export * from './myScreenshotOut';
 export * from './mySubmissionOut';
 export * from './mySubmissionOutOrigin';
@@ -67,6 +70,7 @@ export * from './runDetailOutVerificationDiff';
 export * from './runOut';
 export * from './runOutProvenance';
 export * from './runOutScoredBy';
+export * from './runScreenshotOut';
 export * from './screenshotUploadIn';
 export * from './staffChangesIn';
 export * from './staffChangesInChanges';
