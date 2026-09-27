@@ -62,6 +62,20 @@ class PreviewOut(Schema):
     height: int
 
 
+class RunScreenshotOut(Schema):
+    """A screenshot taken while a run was made: the full-size source plus WebP widths."""
+
+    url: str
+    srcset: str
+    width: int
+    height: int
+
+
+class MyRunScreenshotOut(RunScreenshotOut):
+    #: `pending` until an editor publishes one added after its run was approved.
+    status: Literal["published", "pending"]
+
+
 class RevisionOut(Schema):
     revision: str
     generator_version: str
@@ -135,6 +149,8 @@ class RunOut(Schema):
     text_retention: float | None
     gates_passed: bool | None
     overlay: OverlayOut | None
+    #: Published screenshots only, in the order they were taken; none for a holdout case.
+    screenshots: list[RunScreenshotOut]
     output_pdf_url: str | None
     submitter: SubmitterOut
     provenance: Provenance
@@ -202,6 +218,7 @@ class MyRunOut(Schema):
     counts: CountsOut
     leak_rate: RateOut
     overlay: OverlayOut | None
+    screenshots: list[MyRunScreenshotOut]
 
 
 class MySubmissionOut(Schema):

@@ -9,7 +9,7 @@ import {
 import { makeTestQueryClient, renderWithProviders } from '@/test/render'
 
 import { CaseView } from './case-view'
-import { makeCaseDetail, makeRun, makeRunDetail } from './fixtures'
+import { makeCaseDetail, makeRun, makeRunDetail, makeRunScreenshot } from './fixtures'
 import { RunReportView } from './run-report-view'
 
 const RUN_ID = makeRun().run_id
@@ -54,6 +54,30 @@ describe('RunReportView', () => {
     expect(within(diff).getByText('counts.FN')).toBeInTheDocument()
     expect(within(diff).getByText('0')).toBeInTheDocument()
     expect(within(diff).getByText('12')).toBeInTheDocument()
+  })
+
+  it('shows the screenshots the run was made with, and enlarges one', async () => {
+    renderRun(
+      makeRunDetail({
+        screenshots: [
+          makeRunScreenshot(),
+          makeRunScreenshot({ url: 'http://localhost:8007/media/benchmarks/ddd/screenshot.png' }),
+        ],
+      }),
+    )
+
+    const section = screen.getByTestId('run-screenshots')
+    expect(within(section).getByRole('heading', { name: 'Screenshots' })).toBeInTheDocument()
+    await userEvent.click(
+      within(section).getByRole('button', { name: /enlarge screenshot 2 of 2/i }),
+    )
+    expect(screen.getByRole('dialog')).toHaveTextContent(/screenshot 2 of 2/i)
+  })
+
+  it('has no screenshots section when the run has none', () => {
+    renderRun()
+
+    expect(screen.queryByTestId('run-screenshots')).not.toBeInTheDocument()
   })
 })
 

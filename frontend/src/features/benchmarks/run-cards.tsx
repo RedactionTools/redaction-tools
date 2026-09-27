@@ -9,7 +9,8 @@ import { OverlayFigure } from './overlay-figure'
 import { ProvenanceBadge } from './provenance-badge'
 
 /**
- * One card per run: the overlay, the numbers, who published it and where to dig in.
+ * One card per run: the overlay, the numbers, who published it and where to dig in -
+ * its report, its PDF and the screenshots it was made with.
  * `heading` picks what names a card - the case on a tool report, the tool on a case.
  */
 export function RunCards({
@@ -79,6 +80,16 @@ export function RunCards({
                     <a href={run.output_pdf_url} className="hover:underline">
                       Redacted PDF
                     </a>
+                  ) : null}
+                  {run.screenshots.length ? (
+                    <Link
+                      href={`/benchmarks/${suite}/runs/${run.run_id}#screenshots`}
+                      className="hover:underline"
+                    >
+                      {run.screenshots.length === 1
+                        ? '1 screenshot'
+                        : `${run.screenshots.length} screenshots`}
+                    </Link>
                   ) : null}
                 </div>
               )}

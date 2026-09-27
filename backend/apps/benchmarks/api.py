@@ -13,7 +13,7 @@ from typing import Literal
 from uuid import UUID
 
 from django.conf import settings
-from django.db.models import Count, Q
+from django.db.models import Count, Prefetch, Q, prefetch_related_objects
 from django.http import HttpRequest
 from ninja import File, Form, Router, Status
 from ninja.errors import HttpError
@@ -23,7 +23,15 @@ from ninja_apikey.security import APIKeyAuth
 from apps.accounts.api import JWTAuth
 from apps.benchmarks import leaderboard, services
 from apps.benchmarks.files import media_url
-from apps.benchmarks.models import CaseVisibility, Run, Submission, SubmissionStatus, Suite
+from apps.benchmarks.models import (
+    CaseVisibility,
+    Run,
+    RunScreenshot,
+    ScreenshotStatus,
+    Submission,
+    SubmissionStatus,
+    Suite,
+)
 from apps.benchmarks.schemas import (
     CaseDetailOut,
     CaseOut,
@@ -116,6 +124,28 @@ def overlay_out(run):
     }
 
 
+def screenshot_out(shot):
+    return {
+        "url": media_url(shot.image.name),
+        "srcset": _srcset(shot.image.name, shot.widths),
+        "width": shot.width,
+        "height": shot.height,
+    }
+
+
+def with_public_screenshots(runs):
+    """Fetch every run's published screenshots in one query, for `_run_out`."""
+    prefetch_related_objects(
+        runs,
+        Prefetch(
+            "screenshots",
+            queryset=RunScreenshot.objects.filter(status=ScreenshotStatus.PUBLISHED),
+            to_attr="public_screenshots",
+        ),
+    )
+    return runs
+
+
 def _counts(run):
     return {
         "TP": run.tp,
@@ -149,6 +179,7 @@ def _run_out(run):
         "text_retention": run.text_retention,
         "gates_passed": run.gates_passed,
         "overlay": None if holdout else overlay_out(run),
+        "screenshots": [] if holdout else [screenshot_out(s) for s in run.public_screenshots],
         "output_pdf_url": None if holdout else media_url(run.output_pdf.name),
         "submitter": {"name": submission.submitter_name, "role": submission.submitter_role},
         "provenance": leaderboard.provenance(run),
@@ -225,6 +256,7 @@ def get_benchmark_case(request: HttpRequest, suite: str, case_id: str, revision:
     if case is None:
         raise HttpError(404, f"Revision {target.revision} has no public case {case_id!r}.")
     runs = leaderboard.latest_per_tool_and_case(leaderboard.approved_runs(target), case_id=case.pk)
+    with_public_screenshots(runs)
     return {**_case_out(case), "revision": target.revision, "runs": [_run_out(r) for r in runs]}
 
 
@@ -252,6 +284,7 @@ def get_benchmark_tool_report(
     surfaces = []
     for surface, surface_runs in sorted(by_surface.items()):
         kept, excluded = leaderboard.select(surface_runs)
+        with_public_screenshots(kept)
         surfaces.append(
             {
                 "surface": surface,
@@ -285,6 +318,7 @@ def get_benchmark_run(request: HttpRequest, run_id: str):
     )
     if run is None:
         raise HttpError(404, f"No published run {run_id!r}.")
+    with_public_screenshots([run])
     submission = run.submission
     return {
         **_run_out(run),
@@ -333,6 +367,18 @@ def _check_pdf_size(upload):
         raise HttpError(422, f"That PDF is larger than the {cap // 1024 // 1024} MB limit.")
 
 
+def _check_screenshot_sizes(uploads):
+    """Before a byte is read, as for a PDF: images.py would refuse these anyway, but only
+    after pulling each one into memory."""
+    for index, upload in enumerate(uploads, start=1):
+        if upload.size > images.MAX_UPLOAD_BYTES:
+            raise HttpError(
+                422,
+                f"Screenshot {index} is larger than the "
+                f"{images.MAX_UPLOAD_BYTES // 1024 // 1024} MB limit.",
+            )
+
+
 def _read_json(upload, name):
     if upload.size > MAX_JSON_BYTES:
         raise HttpError(422, f"That {name} is too large to be one pdfredeval wrote.")
@@ -352,6 +398,9 @@ def my_run_out(run):
         "counts": _counts(run),
         "leak_rate": run_leak_rate(run),
         "overlay": overlay_out(run),
+        "screenshots": [
+            {**screenshot_out(shot), "status": shot.status} for shot in run.screenshots.all()
+        ],
     }
 
 
@@ -369,7 +418,10 @@ def my_submission_out(submission):
         "created_at": submission.created_at,
         "submitted_at": submission.submitted_at,
         "reviewed_at": submission.reviewed_at,
-        "runs": [my_run_out(run) for run in submission.runs.select_related("case")],
+        "runs": [
+            my_run_out(run)
+            for run in submission.runs.select_related("case").prefetch_related("screenshots")
+        ],
     }
 
 
@@ -449,13 +501,17 @@ def publish_benchmark_run(
     report: File[UploadedFile],
     pdf: File[UploadedFile],
     overlay: File[UploadedFile] = None,
+    screenshots: File[list[UploadedFile]] = None,
 ):
     """`manifest.json`, `score/report.json`, the delivered PDF and (optionally) the
-    overlay PNG - exactly the files `pdfredeval publish` sends. Never the ground truth."""
+    overlay PNG and the run's `screenshots/` - exactly the files `pdfredeval publish`
+    sends. Never the ground truth."""
     submission = _mine_or_404(request, submission_id)
     _check_pdf_size(pdf)
     if overlay is not None and overlay.size > images.MAX_UPLOAD_BYTES:
         raise HttpError(422, "That overlay is larger than an overlay PNG can be.")
+    screenshots = screenshots or []
+    _check_screenshot_sizes(screenshots)
     try:
         run = services.add_scored_run(
             user=request.auth,
@@ -464,6 +520,35 @@ def publish_benchmark_run(
             report=_read_json(report, "report.json"),
             overlay=overlay.read() if overlay is not None else None,
             pdf=pdf.read(),
+            screenshots=[shot.read() for shot in screenshots],
+        )
+    except BenchmarkError as exc:
+        raise _refused(exc) from exc
+    return Status(201, my_run_out(run))
+
+
+@router.post(
+    "/runs/{run_id}/screenshots",
+    response={201: MyRunOut},
+    auth=WRITE_AUTH,
+    throttle=[BenchmarkWriteThrottle()],
+    summary="Add screenshots to one of your runs, published or not",
+)
+def add_benchmark_run_screenshots(
+    request: HttpRequest, run_id: str, screenshots: File[list[UploadedFile]]
+):
+    """What `pdfredeval publish-screenshots` sends. Staff may add to any run; anyone else
+    to their own, and once the run is published theirs wait for an editor."""
+    runs = Run.objects.filter(run_id=run_id).select_related("submission", "case")
+    if not request.auth.is_staff:
+        runs = runs.filter(submission__submitted_by=request.auth)
+    run = runs.first()
+    if run is None:
+        raise HttpError(404, f"No run of yours with the id {run_id!r}.")
+    _check_screenshot_sizes(screenshots)
+    try:
+        services.add_screenshots(
+            user=request.auth, run=run, images=[shot.read() for shot in screenshots]
         )
     except BenchmarkError as exc:
         raise _refused(exc) from exc

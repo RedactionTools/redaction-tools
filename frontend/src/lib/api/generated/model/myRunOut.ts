@@ -7,6 +7,7 @@
  */
 import type { CountsOut } from './countsOut';
 import type { MyRunOutStatus } from './myRunOutStatus';
+import type { MyRunScreenshotOut } from './myRunScreenshotOut';
 import type { OverlayOut } from './overlayOut';
 import type { RateOut } from './rateOut';
 
@@ -19,4 +20,5 @@ export interface MyRunOut {
   counts: CountsOut;
   leak_rate: RateOut;
   overlay: OverlayOut | null;
+  screenshots: MyRunScreenshotOut[];
 }

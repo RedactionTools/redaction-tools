@@ -8,6 +8,7 @@ import type {
   RevisionOut,
   RunDetailOut,
   RunOut,
+  RunScreenshotOut,
   SuiteOut,
   ToolReportOut,
 } from '@/lib/api/generated/model'
@@ -108,6 +109,7 @@ export function makeRun(overrides: Partial<RunOut> = {}): RunOut {
       url: 'http://localhost:8007/media/benchmarks/aaa/overlay.png',
       srcset: 'http://localhost:8007/media/benchmarks/aaa/w480.webp 480w',
     },
+    screenshots: [],
     output_pdf_url: 'http://localhost:8007/media/benchmarks/bbb/redacted.pdf',
     submitter: { name: 'Tool Owner', role: 'owner' },
     provenance: 'verified',
@@ -228,6 +230,16 @@ export function makeApiKey(overrides: Partial<ApiKeyOut> = {}): ApiKeyOut {
     created_at: '2026-09-25T09:00:00Z',
     expires_at: null,
     revoked: false,
+    ...overrides,
+  }
+}
+
+export function makeRunScreenshot(overrides: Partial<RunScreenshotOut> = {}): RunScreenshotOut {
+  return {
+    url: 'http://localhost:8007/media/benchmarks/ccc/screenshot.png',
+    srcset: 'http://localhost:8007/media/benchmarks/ccc/w480.webp 480w',
+    width: 1280,
+    height: 800,
     ...overrides,
   }
 }

@@ -276,3 +276,43 @@ class Run(TimeStampedModel):
 
     def __str__(self):
         return self.run_id
+
+
+class ScreenshotStatus(models.TextChoices):
+    PUBLISHED = "published", "Published"
+    # Added by a non-staff account after its run was approved: the review that published
+    # the run never saw it, so an editor publishes it on its own.
+    PENDING = "pending", "Pending review"
+
+
+class RunScreenshot(TimeStampedModel):
+    """A screenshot taken while a run was made - the tool's settings, a warning it showed,
+    the result screen. Evidence for the score, never part of it.
+
+    pdfredeval keeps these in a run's `screenshots/`. They are re-encoded on the way in
+    (`files.store_screenshot`), which drops whatever metadata the capture tool wrote.
+    """
+
+    run = models.ForeignKey(Run, on_delete=models.CASCADE, related_name="screenshots")
+    position = models.PositiveSmallIntegerField(default=0)
+    status = models.CharField(
+        max_length=16, choices=ScreenshotStatus.choices, default=ScreenshotStatus.PUBLISHED
+    )
+    image = models.ImageField(upload_to="benchmarks", max_length=255)
+    widths = models.JSONField(default=list, blank=True)
+    width = models.PositiveIntegerField()
+    height = models.PositiveIntegerField()
+    #: Of the bytes as uploaded, so sending the same file again is recognised.
+    source_sha256 = models.CharField(max_length=64)
+
+    class Meta:
+        db_table = "benchmarks_run_screenshot"
+        ordering = ["run", "position", "pk"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["run", "source_sha256"], name="uniq_run_screenshot_source"
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.run.run_id} screenshot {self.position + 1}"

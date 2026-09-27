@@ -6,7 +6,7 @@ import { getGetBenchmarkToolReportQueryKey } from '@/lib/api/generated/benchmark
 import type { ToolReportOut } from '@/lib/api/generated/model'
 import { makeTestQueryClient, renderWithProviders } from '@/test/render'
 
-import { makeRun, makeToolReport } from './fixtures'
+import { makeRun, makeRunScreenshot, makeToolReport } from './fixtures'
 import { ToolReportView } from './tool-report-view'
 
 const params = { revision: 'v0.1.1', scope: 'all' as const }
@@ -75,6 +75,17 @@ describe('ToolReportView', () => {
     expect(screen.getByRole('link', { name: /redacted pdf/i })).toHaveAttribute(
       'href',
       run.output_pdf_url,
+    )
+  })
+
+  it('says how many screenshots back a run, on the way to its report', () => {
+    const report = makeToolReport()
+    report.surfaces[0].runs = [makeRun({ screenshots: [makeRunScreenshot(), makeRunScreenshot()] })]
+    render(report)
+
+    expect(screen.getByRole('link', { name: /2 screenshots/i })).toHaveAttribute(
+      'href',
+      `/benchmarks/pdf/runs/${makeRun().run_id}#screenshots`,
     )
   })
 

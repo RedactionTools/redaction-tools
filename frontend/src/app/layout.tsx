@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 
+import { GoogleAnalytics } from '@/components/analytics/google-analytics'
 import { Providers } from '@/components/providers/providers'
+import { gaMeasurementId } from '@/lib/analytics'
 import { clientEnv } from '@/lib/env'
 import { SITE_OPEN_GRAPH } from '@/lib/seo/canonical'
 import { SITE_DESCRIPTION, SITE_NAME } from '@/lib/seo/site'
@@ -37,6 +39,7 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
     <html lang="en" suppressHydrationWarning>
       <body className="bg-background text-foreground min-h-dvh antialiased">
         <Providers>{children}</Providers>
+        <GoogleAnalytics measurementId={gaMeasurementId} />
       </body>
     </html>
   )

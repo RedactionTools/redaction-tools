@@ -17,6 +17,7 @@ import uuid
 import zipfile
 from collections import Counter
 
+from django.conf import settings
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
@@ -27,8 +28,10 @@ from apps.benchmarks.models import (
     CaseVisibility,
     DatasetRevision,
     Run,
+    RunScreenshot,
     RunStatus,
     ScoredBy,
+    ScreenshotStatus,
     Submission,
     SubmissionOrigin,
     SubmissionStatus,
@@ -194,7 +197,7 @@ def add_output(*, user, submission, case_id, pdf):
         )
 
 
-def add_scored_run(*, user, submission, manifest, report, overlay, pdf):
+def add_scored_run(*, user, submission, manifest, report, overlay, pdf, screenshots=()):
     """Add one run the submitter scored with `pdfredeval score`.
 
     Their report is what we publish - it is theirs to stand behind, and it carries the
@@ -223,11 +226,12 @@ def add_scored_run(*, user, submission, manifest, report, overlay, pdf):
         drawn = files.store_overlay(overlay) if overlay else None
     except FileRejected as exc:
         raise BenchmarkError(f"Overlay: {exc}") from exc
+    shots = _store_screenshots(screenshots, existing=set(), held=0)
 
     try:
         with transaction.atomic():
             submission.runs.filter(case=case).delete()
-            return Run.objects.create(
+            run = Run.objects.create(
                 submission=submission,
                 case=case,
                 run_id=parsed.run_id,
@@ -242,10 +246,95 @@ def add_scored_run(*, user, submission, manifest, report, overlay, pdf):
                 verification=Verification.PENDING,
                 **headline(report),
             )
+            _save_screenshots(run, shots, ScreenshotStatus.PUBLISHED, start=0)
+            return run
     except IntegrityError as exc:
         raise BenchmarkError(
             f"Run {parsed.run_id} is already published. Score a new attempt to send it again."
         ) from exc
+
+
+def add_screenshots(*, user, run, images):
+    """Add screenshots to a run, sent with it or at any time after. Returns those added.
+
+    A screenshot is evidence rather than score, so adding one never reopens the
+    submission - which is what lets an already-published run get its screenshots from
+    `pdfredeval publish-screenshots`. What the review saw is what it published, though:
+    one a non-staff account adds after approval waits for an editor.
+
+    All or nothing, and an image the run already has is skipped rather than added
+    twice, so a CLI that retries a batch cannot leave it half-sent or duplicated.
+    """
+    submission = run.submission
+    if not user.is_staff and submission.submitted_by_id != user.pk:
+        raise BenchmarkError("That run is not yours.")
+    if submission.status in (SubmissionStatus.WITHDRAWN, SubmissionStatus.REJECTED):
+        raise BenchmarkError(f"That run's submission was {submission.status}.")
+
+    current = list(run.screenshots.values_list("source_sha256", "position"))
+    shots = _store_screenshots(
+        images, existing={digest for digest, _ in current}, held=len(current)
+    )
+    status = (
+        ScreenshotStatus.PENDING
+        if submission.status == SubmissionStatus.APPROVED and not user.is_staff
+        else ScreenshotStatus.PUBLISHED
+    )
+    start = max((position for _, position in current), default=-1) + 1
+    with transaction.atomic():
+        return _save_screenshots(run, shots, status, start=start)
+
+
+def publish_screenshots(*, user, screenshots):
+    """An editor's approval of screenshots added after their run was published."""
+    _require_staff(user, "publish screenshots")
+    ids = [shot.pk for shot in screenshots]
+    return RunScreenshot.objects.filter(pk__in=ids).update(
+        status=ScreenshotStatus.PUBLISHED, updated_at=timezone.now()
+    )
+
+
+def _store_screenshots(images, *, existing, held):
+    """Validate and store each new image, in order, before anything is written to the
+    database. Returns `(source digest, StoredImage)` for the ones not already held."""
+    new, seen = [], set(existing)
+    for data in images:
+        digest = files.sha256(data)
+        if digest not in seen:
+            seen.add(digest)
+            new.append((len(new), digest, data))
+
+    cap = settings.BENCHMARK_MAX_SCREENSHOTS_PER_RUN
+    if held + len(new) > cap:
+        raise BenchmarkError(
+            f"A run holds at most {cap} screenshots; this one has {held} and "
+            f"{len(new)} more were sent."
+        )
+
+    stored = []
+    for index, digest, data in new:
+        try:
+            stored.append((digest, files.store_screenshot(data)))
+        except FileRejected as exc:
+            # By position among those sent, which is what the caller can find again.
+            raise BenchmarkError(f"Screenshot {index + 1}: {exc}") from exc
+    return stored
+
+
+def _save_screenshots(run, shots, status, *, start):
+    return [
+        RunScreenshot.objects.create(
+            run=run,
+            position=start + offset,
+            status=status,
+            image=image.path,
+            widths=image.widths,
+            width=image.width,
+            height=image.height,
+            source_sha256=digest,
+        )
+        for offset, (digest, image) in enumerate(shots)
+    ]
 
 
 def finalize(*, user, submission):

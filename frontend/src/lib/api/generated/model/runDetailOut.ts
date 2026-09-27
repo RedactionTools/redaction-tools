@@ -13,6 +13,7 @@ import type { RunDetailOutProvenance } from './runDetailOutProvenance';
 import type { RunDetailOutReport } from './runDetailOutReport';
 import type { RunDetailOutScoredBy } from './runDetailOutScoredBy';
 import type { RunDetailOutVerificationDiff } from './runDetailOutVerificationDiff';
+import type { RunScreenshotOut } from './runScreenshotOut';
 import type { SubmitterOut } from './submitterOut';
 import type { ToolRefOut } from './toolRefOut';
 
@@ -29,6 +30,7 @@ export interface RunDetailOut {
   text_retention: number | null;
   gates_passed: boolean | null;
   overlay: OverlayOut | null;
+  screenshots: RunScreenshotOut[];
   output_pdf_url: string | null;
   submitter: SubmitterOut;
   provenance: RunDetailOutProvenance;

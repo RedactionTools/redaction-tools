@@ -31,3 +31,23 @@ def test_operation_ids_are_unique():
     ids = [op["operationId"] for path in schema["paths"].values() for op in path.values()]
 
     assert len(ids) == len(set(ids)), sorted(ids)
+
+
+def test_schema_names_are_unique_across_apps():
+    """ninja names a component after its class alone, so two apps' `ScreenshotOut`s become
+    one - the last registered silently replaces the other in the spec and in every
+    generated type that referenced it."""
+    from ninja import Schema
+
+    def subclasses(cls):
+        for sub in cls.__subclasses__():
+            yield sub
+            yield from subclasses(sub)
+
+    ours = [cls for cls in subclasses(Schema) if cls.__module__.startswith("apps.")]
+    names = [cls.__name__ for cls in ours]
+
+    duplicates = sorted(
+        {f"{c.__module__}.{c.__name__}" for c in ours if names.count(c.__name__) > 1}
+    )
+    assert not duplicates, duplicates
