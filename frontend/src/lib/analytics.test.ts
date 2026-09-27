@@ -59,6 +59,35 @@ describe('posthogConfig', () => {
   })
 })
 
+describe('gaMeasurementId', () => {
+  it('is null in development even when the id is set', async () => {
+    const { gaMeasurementId } = await loadAnalytics({
+      NODE_ENV: 'development',
+      NEXT_PUBLIC_GA_MEASUREMENT_ID: 'G-TEST',
+    })
+
+    expect(gaMeasurementId).toBeNull()
+  })
+
+  it('carries the id outside development', async () => {
+    const { gaMeasurementId } = await loadAnalytics({
+      NODE_ENV: 'production',
+      NEXT_PUBLIC_GA_MEASUREMENT_ID: 'G-TEST',
+    })
+
+    expect(gaMeasurementId).toBe('G-TEST')
+  })
+
+  it('is null outside development when the id is unset', async () => {
+    const { gaMeasurementId } = await loadAnalytics({
+      NODE_ENV: 'production',
+      NEXT_PUBLIC_GA_MEASUREMENT_ID: '',
+    })
+
+    expect(gaMeasurementId).toBeNull()
+  })
+})
+
 describe('analytics', () => {
   it('does not reach posthog in development', async () => {
     const { analytics, spies } = await loadAnalytics({ NODE_ENV: 'development', ...configured })
