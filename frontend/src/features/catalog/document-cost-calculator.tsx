@@ -18,11 +18,15 @@ import type { PlanOut, ToolDetailOut } from '@/lib/api/generated/model'
 import {
   basePrice,
   cheapestRows,
+  type Conversion,
+  convertAmount,
   documentCost,
   type DocumentInput,
   type KeyedPlan,
 } from '@/lib/catalog/document-cost'
-import { formatCost } from '@/lib/catalog/format'
+import { formatConverted, formatCost } from '@/lib/catalog/format'
+
+import { ConversionNote, CurrencySelect, useDisplayCurrency } from './display-currency'
 
 import { PriceProvenanceBadge } from './price-provenance-badge'
 import { planPrice } from './tool-profile'
@@ -153,14 +157,52 @@ function totalPages(volume: Volume): string {
   return `${pages.toLocaleString('en-US')} ${pages === 1 ? 'page' : 'pages'}`
 }
 
-function CostCells({ plan, input }: { plan: PlanOut; input: DocumentInput }) {
+/**
+ * A figure in the reader's currency, with the published one under it when the
+ * two differ. Falls back to the published figure alone when there is no rate.
+ */
+function Amount({
+  amount,
+  currency,
+  conversion,
+}: {
+  amount: string
+  currency: string
+  conversion?: Conversion | null
+}) {
+  const converted =
+    conversion && conversion.currency !== currency
+      ? convertAmount(amount, currency, conversion.currency, conversion.rates)
+      : null
+
+  if (converted === null || !conversion) return <>{formatCost(amount, currency)}</>
+
+  return (
+    <>
+      {formatConverted(converted, conversion.currency)}
+      <span className="text-muted-foreground block text-xs font-normal">
+        {formatCost(amount, currency)}
+      </span>
+    </>
+  )
+}
+
+function CostCells({
+  plan,
+  input,
+  conversion,
+}: {
+  plan: PlanOut
+  input: DocumentInput
+  conversion?: Conversion | null
+}) {
   const cost = documentCost(plan, input)
 
   if (cost.kind === 'amount') {
     return (
       <>
         <TableCell className="font-medium tabular-nums" label="Total">
-          {formatCost(cost.total, cost.currency)}
+          <Amount amount={cost.total} currency={cost.currency} conversion={conversion} />
           {cost.overage ? (
             // The sum is shown, not just its answer: a bill that jumped because
             // the allowance ran out should say so on the row that jumped.
@@ -172,7 +214,7 @@ function CostCells({ plan, input }: { plan: PlanOut; input: DocumentInput }) {
           ) : null}
         </TableCell>
         <TableCell className="tabular-nums" label="Per page">
-          {formatCost(cost.perPage, cost.currency)}
+          <Amount amount={cost.perPage} currency={cost.currency} conversion={conversion} />
         </TableCell>
       </>
     )
@@ -236,15 +278,18 @@ export function CostTable({
   input,
   caption,
   showTool,
+  conversion,
 }: {
   rows: CostRow[]
   input: DocumentInput
   caption: ReactNode
   showTool?: boolean
+  /** Totals in the reader's currency. Left off, each row stays in its own. */
+  conversion?: Conversion | null
 }) {
   // Recomputed per render rather than memoised: it is one pass over a handful
   // of plans, and the volume it depends on changes on every keystroke anyway.
-  const cheapest = cheapestRows(rows, input)
+  const cheapest = cheapestRows(rows, input, conversion ?? undefined)
 
   return (
     <Table>
@@ -299,7 +344,7 @@ export function CostTable({
                 ) : null}
               </span>
             </TableCell>
-            <CostCells plan={plan} input={input} />
+            <CostCells plan={plan} input={input} conversion={conversion} />
           </TableRow>
         ))}
       </TableBody>
@@ -338,6 +383,8 @@ export function DocumentCostCalculator({
 }) {
   const [volume, setVolume] = useState<Volume>(DEFAULT_VOLUME)
   const input = controlled ?? volumeInput(volume)
+  const rows = planRows(tool)
+  const display = useDisplayCurrency(rows)
 
   return (
     <section className="space-y-4" data-testid="document-cost-calculator">
@@ -346,7 +393,16 @@ export function DocumentCostCalculator({
           so the fields would be a second set of the same controls there. */}
       {controlled ? null : <VolumeFields volume={volume} onChange={setVolume} />}
 
-      <CostTable rows={planRows(tool)} input={input} caption={COST_CAPTION} />
+      <CurrencySelect
+        id={`cost-currency-${tool.slug}`}
+        value={display.currency}
+        options={display.options}
+        onChange={display.setCurrency}
+      />
+
+      <CostTable rows={rows} input={input} caption={COST_CAPTION} conversion={display.conversion} />
+
+      {display.converts && display.asOf ? <ConversionNote asOf={display.asOf} /> : null}
     </section>
   )
 }

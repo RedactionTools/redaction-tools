@@ -27,6 +27,7 @@ import type {
 import type {
   CatalogStatsOut,
   ErrorSchema,
+  ExchangeRatesOut,
   FacetDimensionOut,
   ListToolsParams,
   MyListingOut,
@@ -463,6 +464,106 @@ export function useGetCatalogStats<TData = Awaited<ReturnType<typeof getCatalogS
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetCatalogStatsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export const getListExchangeRatesUrl = () => {
+
+
+
+
+  return `/api/v1/catalog/exchange-rates`
+}
+
+/**
+ * @summary ECB reference rates per euro
+ */
+export const listExchangeRates = async ( options?: Parameters<typeof customFetch>[1]): Promise<ExchangeRatesOut> => {
+
+  return customFetch<ExchangeRatesOut>(getListExchangeRatesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListExchangeRatesQueryKey = () => {
+    return [
+    `/api/v1/catalog/exchange-rates`
+    ] as const;
+    }
+
+
+export const getListExchangeRatesQueryOptions = <TData = Awaited<ReturnType<typeof listExchangeRates>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listExchangeRates>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListExchangeRatesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listExchangeRates>>> = ({ signal }) => listExchangeRates({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listExchangeRates>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListExchangeRatesQueryResult = NonNullable<Awaited<ReturnType<typeof listExchangeRates>>>
+export type ListExchangeRatesQueryError = unknown
+
+
+export function useListExchangeRates<TData = Awaited<ReturnType<typeof listExchangeRates>>, TError = unknown>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listExchangeRates>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listExchangeRates>>,
+          TError,
+          Awaited<ReturnType<typeof listExchangeRates>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListExchangeRates<TData = Awaited<ReturnType<typeof listExchangeRates>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listExchangeRates>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listExchangeRates>>,
+          TError,
+          Awaited<ReturnType<typeof listExchangeRates>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListExchangeRates<TData = Awaited<ReturnType<typeof listExchangeRates>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listExchangeRates>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary ECB reference rates per euro
+ */
+
+export function useListExchangeRates<TData = Awaited<ReturnType<typeof listExchangeRates>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listExchangeRates>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListExchangeRatesQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

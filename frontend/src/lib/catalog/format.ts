@@ -54,6 +54,25 @@ export function formatCost(amount: string, currency: string): string {
   }).format(Number(amount))
 }
 
+/**
+ * A converted figure, marked as one.
+ *
+ * Rounded to cents from one unit up: the four decimals `formatCost` keeps are
+ * the vendor's own precision, and a conversion has none to keep. Below one it
+ * keeps them, because a per-page rate rounded to cents is often zero.
+ */
+export function formatConverted(amount: string, currency: string): string {
+  const value = Number(amount)
+  if (Math.abs(value) < 1) return `≈ ${formatCost(amount, currency)}`
+  const formatted = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value)
+  return `≈ ${formatted}`
+}
+
 export function formatUnit(unit: string): string {
   return UNIT_LABELS[unit] ?? `per ${unit.replace(/_/g, ' ')}`
 }
