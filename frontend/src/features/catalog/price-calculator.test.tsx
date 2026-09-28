@@ -55,13 +55,17 @@ function render(...slugs: string[]) {
 beforeEach(() => replace.mockClear())
 
 describe('PriceCalculator', () => {
-  it('lists every catalog tool to choose from', () => {
+  // The catalog has outgrown a dropdown: scrolling a long list for a name the
+  // reader already knows is slower than typing a few letters of it.
+  it('narrows the tools to the ones whose name matches what is typed', async () => {
+    const user = userEvent.setup()
     render()
 
-    const picker = screen.getByLabelText('Tools')
+    await user.type(screen.getByRole('combobox', { name: 'Tools' }), 'redac')
 
-    expect(within(picker).getByRole('option', { name: 'Adobe Acrobat' })).toBeInTheDocument()
-    expect(within(picker).getByRole('option', { name: 'Redactable' })).toBeInTheDocument()
+    const list = screen.getByRole('listbox', { name: 'Tools' })
+    expect(within(list).getByRole('option', { name: /^Redactable/ })).toBeInTheDocument()
+    expect(within(list).queryByRole('option', { name: /^Adobe Acrobat/ })).not.toBeInTheDocument()
   })
 
   /**
@@ -137,7 +141,8 @@ describe('PriceCalculator', () => {
     const user = userEvent.setup()
     render()
 
-    await user.selectOptions(screen.getByLabelText('Tools'), 'redactable')
+    await user.type(screen.getByRole('combobox', { name: 'Tools' }), 'redac')
+    await user.click(screen.getByRole('option', { name: /^Redactable/ }))
 
     expect(replace).toHaveBeenCalledWith('/price-calculator?tool=redactable', { scroll: false })
   })
@@ -170,7 +175,8 @@ describe('PriceCalculator', () => {
     const user = userEvent.setup()
     render('redactable')
 
-    await user.selectOptions(screen.getByLabelText('Tools'), 'adobe-acrobat')
+    await user.type(screen.getByRole('combobox', { name: 'Tools' }), 'acro')
+    await user.click(screen.getByRole('option', { name: /^Adobe Acrobat/ }))
 
     expect(replace).toHaveBeenCalledWith('/price-calculator?tool=redactable&tool=adobe-acrobat', {
       scroll: false,
@@ -186,13 +192,15 @@ describe('PriceCalculator', () => {
 
   // Offering a tool already in the table would either duplicate a block of rows
   // or do nothing, and neither tells the reader which it was.
-  it('stops offering a tool once it is in the table', () => {
+  it('stops offering a tool once it is in the table', async () => {
+    const user = userEvent.setup()
     render('redactable')
 
-    const picker = screen.getByLabelText('Tools')
+    await user.type(screen.getByRole('combobox', { name: 'Tools' }), 'a')
 
-    expect(within(picker).queryByRole('option', { name: 'Redactable' })).not.toBeInTheDocument()
-    expect(within(picker).getByRole('option', { name: 'Adobe Acrobat' })).toBeInTheDocument()
+    const list = screen.getByRole('listbox', { name: 'Tools' })
+    expect(within(list).queryByRole('option', { name: /^Redactable/ })).not.toBeInTheDocument()
+    expect(within(list).getByRole('option', { name: /^Adobe Acrobat/ })).toBeInTheDocument()
   })
 
   it('drops a tool from the URL when its chip is removed', async () => {

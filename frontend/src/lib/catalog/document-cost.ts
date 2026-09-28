@@ -318,3 +318,32 @@ export function cheapestPlan(plans: PlanOut[], input: DocumentInput): string[] {
     input,
   )
 }
+
+/** The one figure a tool's cheapest plan charges for a volume, and which plan charges it. */
+export type CheapestCost = { plan: string; total: string; perPage: string; currency: string }
+
+/**
+ * What `input` costs on the tool's cheapest plan, or null when the catalog has
+ * no figure it will state - no plan takes the volume, every fee is annual or
+ * per seat, or the plans are published in currencies that do not compare.
+ *
+ * The same candidates `cheapestPlan` ranks, so a hub row and the calculator
+ * can never name a different plan for the same month of work.
+ */
+export function cheapestCost(plans: PlanOut[], input: DocumentInput): CheapestCost | null {
+  const [code] = cheapestPlan(plans, input)
+  const plan = plans.find((candidate) => candidate.code === code)
+  if (!plan) return null
+
+  const cost = documentCost(plan, input)
+  // `cheapestPlan` only ranks an "included" plan when it is a flat monthly fee.
+  const total = cost.kind === 'amount' ? cost.total : (basePrice(plan) as PriceOut).amount
+  const pages = input.documents * input.pagesPerDocument
+
+  return {
+    plan: plan.name,
+    total,
+    perPage: fromTenThousandths(Math.round(toTenThousandths(total) / pages)),
+    currency: cost.kind === 'amount' ? cost.currency : (basePrice(plan) as PriceOut).currency,
+  }
+}

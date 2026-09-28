@@ -38,6 +38,7 @@ export function makeTool(overrides: Partial<ToolListItemOut> = {}): ToolListItem
       last_changed_at: null,
       is_stale: false,
     },
+    plans: [],
     ...overrides,
   }
 }

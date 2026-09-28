@@ -5,6 +5,7 @@
  * Redaction tools compared by price, media and method, with the source and date recorded for every figure.
  * OpenAPI spec version: 1.0.0
  */
+import type { PlanOut } from './planOut';
 import type { PriceSummaryOut } from './priceSummaryOut';
 import type { VendorOut } from './vendorOut';
 
@@ -18,4 +19,5 @@ export interface ToolListItemOut {
   vendor: VendorOut;
   facet_slugs: string[];
   price_summary: PriceSummaryOut;
+  plans: PlanOut[];
 }
