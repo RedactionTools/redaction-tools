@@ -16,6 +16,15 @@ if (!Element.prototype.hasPointerCapture) {
 if (!Element.prototype.scrollIntoView) {
   Element.prototype.scrollIntoView = () => {}
 }
+// Nor ResizeObserver, which a tooltip measures its trigger with; a missing one
+// throws while the tooltip opens, outside any test, as an unhandled error.
+if (!globalThis.ResizeObserver) {
+  globalThis.ResizeObserver = class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+}
 
 // NEXT_PUBLIC_* is inlined at build time, so tests have to stub it explicitly.
 vi.stubEnv('NEXT_PUBLIC_API_URL', 'http://localhost:8007')

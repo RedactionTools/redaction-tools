@@ -74,6 +74,19 @@ def test_a_row_carries_what_the_hub_table_renders(client):
 
 
 @pytest.mark.django_db
+def test_a_row_carries_its_plans_so_the_hub_can_cost_a_volume(client):
+    """The "from" figure cannot answer "what do 1,000 pages cost?" - a per-page rate
+    and a capped subscription need their plans, prices and limits to be costed."""
+    payload = client.get(f"{LIST_URL}?q=caseguard").json()
+
+    row = next(item for item in payload["items"] if item["slug"] == "caseguard")
+    plan = row["plans"][0]
+    assert plan["code"] == "studio"
+    assert plan["prices"][0]["amount"] == "279.0000"
+    assert "limits" in plan
+
+
+@pytest.mark.django_db
 def test_a_trial_is_reported_as_a_trial_and_not_as_a_free_tier(client):
     payload = client.get(f"{LIST_URL}?q=acrobat").json()
 
