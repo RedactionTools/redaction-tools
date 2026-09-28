@@ -4,6 +4,7 @@ import type { PlanLimitOut, PlanOut, PriceOut } from '@/lib/api/generated/model'
 
 import {
   basePrice,
+  cheapestCost,
   cheapestPlan,
   cheapestRows,
   comparableCurrencies,
@@ -544,5 +545,36 @@ describe('comparableCurrencies', () => {
       'USD',
       'EUR',
     ])
+  })
+})
+
+describe('cheapestCost', () => {
+  const metered = plan({
+    code: 'payg',
+    name: 'Pay as you go',
+    prices: [price({ amount: '0.0500' })],
+  })
+  const flat = plan({
+    code: 'pro',
+    name: 'Pro',
+    prices: [price({ amount: '15.0000', unit: 'month', billing_period: 'monthly' })],
+  })
+
+  it('states what the cheapest plan charges for the volume, and which plan that is', () => {
+    // 1,000 pages: $50 metered against a $15 flat fee that covers them.
+    expect(cheapestCost([metered, flat], { documents: 100, pagesPerDocument: 10 })).toEqual({
+      plan: 'Pro',
+      total: '15.0000',
+      perPage: '0.0150',
+      currency: 'USD',
+    })
+  })
+  it('has no figure when no plan will state one', () => {
+    const yearly = plan({
+      prices: [price({ amount: '100.0000', unit: 'year', billing_period: 'annual' })],
+    })
+
+    expect(cheapestCost([yearly], { documents: 100, pagesPerDocument: 10 })).toBeNull()
+    expect(cheapestCost([], { documents: 100, pagesPerDocument: 10 })).toBeNull()
   })
 })

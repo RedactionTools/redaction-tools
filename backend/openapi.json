@@ -2996,267 +2996,6 @@
         "title": "ToolFilters",
         "type": "object"
       },
-      "PriceSummaryOut": {
-        "description": "The one price a comparison row can honestly show, plus its provenance.",
-        "properties": {
-          "has_free_tier": {
-            "title": "Has Free Tier",
-            "type": "boolean"
-          },
-          "is_trial": {
-            "title": "Is Trial",
-            "type": "boolean"
-          },
-          "trial_days": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Trial Days"
-          },
-          "is_quote_only": {
-            "title": "Is Quote Only",
-            "type": "boolean"
-          },
-          "from_amount": {
-            "anyOf": [
-              {
-                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "From Amount"
-          },
-          "currency": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Currency"
-          },
-          "unit": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Unit"
-          },
-          "billing_period": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Billing Period"
-          },
-          "source": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Source"
-          },
-          "is_pinned": {
-            "title": "Is Pinned",
-            "type": "boolean"
-          },
-          "source_note": {
-            "title": "Source Note",
-            "type": "string"
-          },
-          "source_url": {
-            "title": "Source Url",
-            "type": "string"
-          },
-          "last_verified_at": {
-            "anyOf": [
-              {
-                "format": "date-time",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Last Verified At"
-          },
-          "last_changed_at": {
-            "anyOf": [
-              {
-                "format": "date-time",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Last Changed At"
-          },
-          "is_stale": {
-            "title": "Is Stale",
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "has_free_tier",
-          "is_trial",
-          "trial_days",
-          "is_quote_only",
-          "from_amount",
-          "currency",
-          "unit",
-          "billing_period",
-          "source",
-          "is_pinned",
-          "source_note",
-          "source_url",
-          "last_verified_at",
-          "last_changed_at",
-          "is_stale"
-        ],
-        "title": "PriceSummaryOut",
-        "type": "object"
-      },
-      "ToolListItemOut": {
-        "properties": {
-          "slug": {
-            "title": "Slug",
-            "type": "string"
-          },
-          "name": {
-            "title": "Name",
-            "type": "string"
-          },
-          "tagline": {
-            "title": "Tagline",
-            "type": "string"
-          },
-          "summary": {
-            "title": "Summary",
-            "type": "string"
-          },
-          "logo_url": {
-            "title": "Logo Url",
-            "type": "string"
-          },
-          "is_first_party": {
-            "title": "Is First Party",
-            "type": "boolean"
-          },
-          "vendor": {
-            "$ref": "#/components/schemas/VendorOut"
-          },
-          "facet_slugs": {
-            "items": {
-              "type": "string"
-            },
-            "title": "Facet Slugs",
-            "type": "array"
-          },
-          "price_summary": {
-            "$ref": "#/components/schemas/PriceSummaryOut"
-          }
-        },
-        "required": [
-          "slug",
-          "name",
-          "tagline",
-          "summary",
-          "logo_url",
-          "is_first_party",
-          "vendor",
-          "facet_slugs",
-          "price_summary"
-        ],
-        "title": "ToolListItemOut",
-        "type": "object"
-      },
-      "ToolPageOut": {
-        "description": "One page of hub rows. `count` is the size of the whole filtered set.",
-        "properties": {
-          "count": {
-            "title": "Count",
-            "type": "integer"
-          },
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/ToolListItemOut"
-            },
-            "title": "Items",
-            "type": "array"
-          }
-        },
-        "required": [
-          "count",
-          "items"
-        ],
-        "title": "ToolPageOut",
-        "type": "object"
-      },
-      "VendorOut": {
-        "properties": {
-          "slug": {
-            "title": "Slug",
-            "type": "string"
-          },
-          "name": {
-            "title": "Name",
-            "type": "string"
-          },
-          "hq_country": {
-            "title": "Hq Country",
-            "type": "string"
-          }
-        },
-        "required": [
-          "slug",
-          "name",
-          "hq_country"
-        ],
-        "title": "VendorOut",
-        "type": "object"
-      },
-      "FaqItemOut": {
-        "description": "One question a listing answers.\n\nTyped rather than left as a bare dict so the generated client gets a real\nshape instead of `{[key: string]: unknown}` - which is what kept the field\nunrendered. The source is a JSONField typed by hand in the admin, so the\nview normalises before serialising: with this schema in place a mistyped\nkey would be a 500 on a public page rather than a missing answer.",
-        "properties": {
-          "question": {
-            "title": "Question",
-            "type": "string"
-          },
-          "answer": {
-            "title": "Answer",
-            "type": "string"
-          }
-        },
-        "required": [
-          "question",
-          "answer"
-        ],
-        "title": "FaqItemOut",
-        "type": "object"
-      },
       "PlanLimitOut": {
         "properties": {
           "kind": {
@@ -3464,6 +3203,275 @@
         "title": "PriceOut",
         "type": "object"
       },
+      "PriceSummaryOut": {
+        "description": "The one price a comparison row can honestly show, plus its provenance.",
+        "properties": {
+          "has_free_tier": {
+            "title": "Has Free Tier",
+            "type": "boolean"
+          },
+          "is_trial": {
+            "title": "Is Trial",
+            "type": "boolean"
+          },
+          "trial_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trial Days"
+          },
+          "is_quote_only": {
+            "title": "Is Quote Only",
+            "type": "boolean"
+          },
+          "from_amount": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "From Amount"
+          },
+          "currency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Currency"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit"
+          },
+          "billing_period": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Billing Period"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "is_pinned": {
+            "title": "Is Pinned",
+            "type": "boolean"
+          },
+          "source_note": {
+            "title": "Source Note",
+            "type": "string"
+          },
+          "source_url": {
+            "title": "Source Url",
+            "type": "string"
+          },
+          "last_verified_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Verified At"
+          },
+          "last_changed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Changed At"
+          },
+          "is_stale": {
+            "title": "Is Stale",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "has_free_tier",
+          "is_trial",
+          "trial_days",
+          "is_quote_only",
+          "from_amount",
+          "currency",
+          "unit",
+          "billing_period",
+          "source",
+          "is_pinned",
+          "source_note",
+          "source_url",
+          "last_verified_at",
+          "last_changed_at",
+          "is_stale"
+        ],
+        "title": "PriceSummaryOut",
+        "type": "object"
+      },
+      "ToolListItemOut": {
+        "properties": {
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "tagline": {
+            "title": "Tagline",
+            "type": "string"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          },
+          "logo_url": {
+            "title": "Logo Url",
+            "type": "string"
+          },
+          "is_first_party": {
+            "title": "Is First Party",
+            "type": "boolean"
+          },
+          "vendor": {
+            "$ref": "#/components/schemas/VendorOut"
+          },
+          "facet_slugs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Facet Slugs",
+            "type": "array"
+          },
+          "price_summary": {
+            "$ref": "#/components/schemas/PriceSummaryOut"
+          },
+          "plans": {
+            "items": {
+              "$ref": "#/components/schemas/PlanOut"
+            },
+            "title": "Plans",
+            "type": "array"
+          }
+        },
+        "required": [
+          "slug",
+          "name",
+          "tagline",
+          "summary",
+          "logo_url",
+          "is_first_party",
+          "vendor",
+          "facet_slugs",
+          "price_summary",
+          "plans"
+        ],
+        "title": "ToolListItemOut",
+        "type": "object"
+      },
+      "ToolPageOut": {
+        "description": "One page of hub rows. `count` is the size of the whole filtered set.",
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ToolListItemOut"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "count",
+          "items"
+        ],
+        "title": "ToolPageOut",
+        "type": "object"
+      },
+      "VendorOut": {
+        "properties": {
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "hq_country": {
+            "title": "Hq Country",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slug",
+          "name",
+          "hq_country"
+        ],
+        "title": "VendorOut",
+        "type": "object"
+      },
+      "FaqItemOut": {
+        "description": "One question a listing answers.\n\nTyped rather than left as a bare dict so the generated client gets a real\nshape instead of `{[key: string]: unknown}` - which is what kept the field\nunrendered. The source is a JSONField typed by hand in the admin, so the\nview normalises before serialising: with this schema in place a mistyped\nkey would be a 500 on a public page rather than a missing answer.",
+        "properties": {
+          "question": {
+            "title": "Question",
+            "type": "string"
+          },
+          "answer": {
+            "title": "Answer",
+            "type": "string"
+          }
+        },
+        "required": [
+          "question",
+          "answer"
+        ],
+        "title": "FaqItemOut",
+        "type": "object"
+      },
       "ToolBenchmarkOut": {
         "description": "A suite the tool has published results in: enough to link its report.",
         "properties": {
@@ -3522,6 +3530,13 @@
           "price_summary": {
             "$ref": "#/components/schemas/PriceSummaryOut"
           },
+          "plans": {
+            "items": {
+              "$ref": "#/components/schemas/PlanOut"
+            },
+            "title": "Plans",
+            "type": "array"
+          },
           "website_url": {
             "title": "Website Url",
             "type": "string"
@@ -3577,13 +3592,6 @@
             "title": "Screenshots",
             "type": "array"
           },
-          "plans": {
-            "items": {
-              "$ref": "#/components/schemas/PlanOut"
-            },
-            "title": "Plans",
-            "type": "array"
-          },
           "benchmarks": {
             "items": {
               "$ref": "#/components/schemas/ToolBenchmarkOut"
@@ -3607,6 +3615,7 @@
           "vendor",
           "facet_slugs",
           "price_summary",
+          "plans",
           "website_url",
           "pricing_url",
           "docs_url",
@@ -3617,7 +3626,6 @@
           "faq",
           "facets",
           "screenshots",
-          "plans",
           "benchmarks",
           "updated_at"
         ],

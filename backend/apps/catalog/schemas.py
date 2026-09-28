@@ -88,6 +88,7 @@ class ToolListItemOut(Schema):
     vendor: VendorOut
     facet_slugs: list[str]
     price_summary: PriceSummaryOut
+    plans: list[PlanOut]
 
 
 class ToolPageOut(Schema):
@@ -163,7 +164,6 @@ class ToolDetailOut(ToolListItemOut):
     faq: list[FaqItemOut]
     facets: list[ToolFacetOut]
     screenshots: list[ToolScreenshotOut]
-    plans: list[PlanOut]
     benchmarks: list[ToolBenchmarkOut]
     updated_at: datetime
 

@@ -5,7 +5,6 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useState } from 'react'
 
-import { Select } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { analytics } from '@/lib/analytics'
 import { getGetToolQueryOptions, useListTools } from '@/lib/api/generated/catalog/catalog'
@@ -14,6 +13,7 @@ import { MAX_TOOLS, toolsHref } from '@/lib/catalog/calculator-tools'
 import { DEFAULT_VOLUME, VolumeFields, type Volume, volumeInput } from './document-cost-calculator'
 import { ExampleCostPreview } from './example-cost-preview'
 import { ToolCostComparison } from './tool-cost-comparison'
+import { ToolPicker } from './tool-picker'
 
 /**
  * The catalog-wide cost calculator.
@@ -72,28 +72,16 @@ export function PriceCalculator({ slugs }: { slugs: string[] }) {
         <label className="text-muted-foreground block text-sm" htmlFor="calculator-tool">
           Tools
         </label>
-        {/* An adder rather than a picker: it never holds a value, because the
-            selection lives in the chips below it and in the URL. */}
-        <Select
+        <ToolPicker
           id="calculator-tool"
-          className="max-w-sm"
-          value=""
+          tools={page.items.filter((item) => !slugs.includes(item.slug))}
           disabled={full}
-          onChange={(event) => {
-            const toolSlug = event.target.value
+          placeholder={full ? `Up to ${MAX_TOOLS} tools at a time` : 'Search tools to add…'}
+          onPick={(toolSlug) => {
             analytics.capture('price_comparison_tool_added', { tool_slug: toolSlug })
             show([...slugs, toolSlug])
           }}
-        >
-          <option value="">{full ? `Up to ${MAX_TOOLS} tools at a time` : 'Add a tool…'}</option>
-          {page.items
-            .filter((item) => !slugs.includes(item.slug))
-            .map((item) => (
-              <option key={item.slug} value={item.slug}>
-                {item.name}
-              </option>
-            ))}
-        </Select>
+        />
 
         {chosen.length ? (
           <ul className="flex flex-wrap items-center gap-2">

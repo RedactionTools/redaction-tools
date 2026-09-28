@@ -83,6 +83,41 @@ def _base_queryset():
     )
 
 
+def _plans(tool):
+    """Public plans with their current prices and limits - everything the
+    frontend's cost arithmetic needs, on a hub row as much as on a profile."""
+    return [
+        {
+            "code": plan.code,
+            "name": plan.name,
+            "tier_order": plan.tier_order,
+            "is_free_tier": plan.is_free_tier,
+            "is_trial": plan.is_trial,
+            "trial_days": plan.trial_days,
+            "is_enterprise_quote": plan.is_enterprise_quote,
+            "min_seats": plan.min_seats,
+            "highlights": plan.highlights,
+            "source_url": plan.source_url,
+            "verified_at": plan.verified_at,
+            "prices": [price for price in plan.prices.all() if price.is_current],
+            "limits": [
+                {
+                    "kind": limit.kind,
+                    "label": limit.label,
+                    "value": limit.value,
+                    "unit": limit.unit,
+                    "is_unlimited": limit.is_unlimited,
+                    "note": limit.note,
+                    "display": limit.display_value,
+                }
+                for limit in plan.limits.all()
+            ],
+        }
+        for plan in tool.plans.all()
+        if plan.is_public
+    ]
+
+
 def _row(tool):
     return {
         "slug": tool.slug,
@@ -94,6 +129,7 @@ def _row(tool):
         "vendor": tool.vendor,
         "facet_slugs": tool.facet_slugs,
         "price_summary": price_summary(tool),
+        "plans": _plans(tool),
     }
 
 
@@ -218,37 +254,6 @@ def get_tool(request: HttpRequest, slug: str):
     if tool is None or not tool.is_listable():
         return Status(404, {"detail": "No tool with that slug."})
 
-    plans = [
-        {
-            "code": plan.code,
-            "name": plan.name,
-            "tier_order": plan.tier_order,
-            "is_free_tier": plan.is_free_tier,
-            "is_trial": plan.is_trial,
-            "trial_days": plan.trial_days,
-            "is_enterprise_quote": plan.is_enterprise_quote,
-            "min_seats": plan.min_seats,
-            "highlights": plan.highlights,
-            "source_url": plan.source_url,
-            "verified_at": plan.verified_at,
-            "prices": [price for price in plan.prices.all() if price.is_current],
-            "limits": [
-                {
-                    "kind": limit.kind,
-                    "label": limit.label,
-                    "value": limit.value,
-                    "unit": limit.unit,
-                    "is_unlimited": limit.is_unlimited,
-                    "note": limit.note,
-                    "display": limit.display_value,
-                }
-                for limit in plan.limits.all()
-            ],
-        }
-        for plan in tool.plans.all()
-        if plan.is_public
-    ]
-
     return Status(
         200,
         {
@@ -263,7 +268,6 @@ def get_tool(request: HttpRequest, slug: str):
             "faq": _faq(tool),
             "facets": _facets(tool),
             "screenshots": _screenshots(tool),
-            "plans": plans,
             "benchmarks": [
                 {"suite": suite.slug, "name": suite.name}
                 for suite in leaderboard.suites_for_tool(tool)

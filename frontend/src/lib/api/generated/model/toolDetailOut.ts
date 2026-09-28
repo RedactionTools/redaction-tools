@@ -23,6 +23,7 @@ export interface ToolDetailOut {
   vendor: VendorOut;
   facet_slugs: string[];
   price_summary: PriceSummaryOut;
+  plans: PlanOut[];
   website_url: string;
   pricing_url: string;
   docs_url: string;
@@ -33,7 +34,6 @@ export interface ToolDetailOut {
   faq: FaqItemOut[];
   facets: ToolFacetOut[];
   screenshots: ToolScreenshotOut[];
-  plans: PlanOut[];
   benchmarks: ToolBenchmarkOut[];
   updated_at: string;
 }
