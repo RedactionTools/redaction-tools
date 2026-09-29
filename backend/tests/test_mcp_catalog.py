@@ -37,6 +37,7 @@ TOOLS = {
     "catalog_add_tool_facet",
     "catalog_update_tool_facet",
     "catalog_remove_tool_facet",
+    "catalog_create_claim_invite",
 }
 
 

@@ -7,9 +7,10 @@ from urllib.parse import urlparse
 
 from django.conf import settings
 from django.core.mail import send_mail
+from django.db import transaction
 from django.utils import timezone
 
-from apps.catalog.models import ToolClaimCode
+from apps.catalog.models import ToolClaim, ToolClaimCode, ToolClaimInvite, ToolClaimStatus
 
 logger = logging.getLogger(__name__)
 
@@ -111,3 +112,75 @@ def verify_claim_code(claim, raw: str) -> bool:
 
     ToolClaimCode.objects.filter(pk=code.pk).update(used_at=timezone.now())
     return True
+
+
+# --- Staff invites -----------------------------------------------------------
+
+
+class InviteUnavailable(Exception):
+    """The link is unknown, revoked, or already used by someone else."""
+
+
+def issue_claim_invite(*, tool, email, user):
+    """Mint a one-time claim link. Returns the row and the URL, which is never stored."""
+    raw = secrets.token_urlsafe(32)
+    invite = ToolClaimInvite.objects.create(
+        tool=tool, email=email, token_hash=hash_code(raw), created_by=user
+    )
+    return invite, f"{settings.FRONTEND_URL}/claim/{raw}"
+
+
+def find_claim_invite(raw):
+    """The live invite behind a link, or None. A revoked one is as good as unknown."""
+    return (
+        ToolClaimInvite.objects.select_related("tool")
+        .filter(token_hash=hash_code(raw or ""), revoked_at__isnull=True)
+        .first()
+    )
+
+
+@transaction.atomic
+def redeem_claim_invite(raw, user):
+    """Grant the invite's listing to `user`, once. Returns the approved claim.
+
+    The row is locked so two people opening the link at the same moment cannot
+    both win. Reopening your own redeemed link returns the same claim rather than
+    an error: owners click an email twice.
+    """
+    invite = (
+        ToolClaimInvite.objects.select_for_update(of=("self",))
+        .select_related("tool", "claim")
+        .filter(token_hash=hash_code(raw or ""), revoked_at__isnull=True)
+        .first()
+    )
+    if invite is None:
+        raise InviteUnavailable("This claim link is not valid.")
+    if invite.redeemed_at is not None:
+        if invite.redeemed_by_id == user.pk and invite.claim is not None:
+            return invite.claim
+        raise InviteUnavailable("This claim link has already been used.")
+
+    now = timezone.now()
+    # A person who already filed a claim the ordinary way has it approved, not
+    # duplicated: one claim per person per tool is a database constraint. Either
+    # way the claim records the address staff vouched for, not the one typed in.
+    claim, _ = ToolClaim.objects.update_or_create(
+        tool=invite.tool,
+        user=user,
+        defaults={
+            "work_email": invite.email,
+            "email_domain": invite.email.rsplit("@", 1)[-1].lower(),
+            "domain_matched": domain_matches(invite.email, invite.tool.website_url),
+            "status": ToolClaimStatus.APPROVED,
+            "email_verified_at": now,
+            "reviewed_by": invite.created_by,
+            "reviewed_at": now,
+            "admin_comment": f"Approved by staff claim link #{invite.pk}.",
+        },
+    )
+
+    invite.redeemed_at = now
+    invite.redeemed_by = user
+    invite.claim = claim
+    invite.save(update_fields=["redeemed_at", "redeemed_by", "claim", "updated_at"])
+    return claim

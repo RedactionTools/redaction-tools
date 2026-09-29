@@ -524,6 +524,19 @@ class RemoveToolFacetResult(Struct):
     listability_reasons: list[str]
 
 
+class CreateClaimInviteParams(Struct):
+    slug: SLUG
+    email: Annotated[str, Meta(description="The owner's address, where you will send the link.")]
+
+
+class ClaimInviteResult(Struct):
+    id: int
+    tool: str
+    email: str
+    url: Annotated[str, Meta(description="The only copy of the link: it is not stored.")]
+    created_at: str
+
+
 LOGO_IMAGE_URL = Annotated[
     str,
     Meta(
@@ -946,4 +959,25 @@ def register(server):
                     value=params.value,
                 ),
                 RemoveToolFacetResult,
+            )
+
+    @server.tool(
+        description=(
+            "Mint a one-time claim link for a listing's owner. Whoever opens it "
+            "while signed in becomes an approved maintainer with no further "
+            "review, so send it only to someone you have verified. It never "
+            "expires; this tool does not send mail - pass the url on yourself. "
+            "A link sent to the wrong person is revoked in the admin."
+        ),
+        read_only=False,
+        destructive=False,
+        idempotent=False,
+        open_world=False,
+        permission=is_staff,
+    )
+    def catalog_create_claim_invite(request, params: CreateClaimInviteParams) -> ClaimInviteResult:
+        with _as_tool_error():
+            return msgspec.convert(
+                staff.create_claim_invite(user=request.user, slug=params.slug, email=params.email),
+                ClaimInviteResult,
             )

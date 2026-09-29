@@ -123,6 +123,9 @@ The parts that bite if you miss them:
   frontend off to refresh a token that was never the problem.
 - The frontend check (`useIsStaff`) is only cosmetic. The page is public and cached, so the API
   is what actually refuses writes.
+- **A staff claim link grants a listing with no review** (`ToolClaimInvite`, `/claim/<token>`).
+  Only its hash is stored, it never expires and it redeems once. The off switch is the admin's
+  revoke action, not a TTL.
 
 ## Conventions
 

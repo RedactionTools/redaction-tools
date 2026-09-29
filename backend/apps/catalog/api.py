@@ -23,7 +23,14 @@ from apps.accounts.api import JWTAuth
 from apps.benchmarks import leaderboard
 from apps.catalog import images
 from apps.catalog import screenshots as screenshot_service
-from apps.catalog.claims import domain_matches, issue_claim_code, verify_claim_code
+from apps.catalog.claims import (
+    InviteUnavailable,
+    domain_matches,
+    find_claim_invite,
+    issue_claim_code,
+    redeem_claim_invite,
+    verify_claim_code,
+)
 from apps.catalog.constants import OWNER_EDITABLE_FIELDS, URL_FIELDS
 from apps.catalog.filters import ToolFilters, apply_filters
 from apps.catalog.images import ImageRejected
@@ -46,6 +53,7 @@ from apps.catalog.models import (
 from apps.catalog.pricing import price_summary, sort_key
 from apps.catalog.schemas import (
     CatalogStatsOut,
+    ClaimInviteOut,
     ExchangeRatesOut,
     FacetDimensionOut,
     MyListingOut,
@@ -65,7 +73,12 @@ from apps.catalog.schemas import (
     ToolSubmissionOut,
 )
 from apps.catalog.services import check_external_urls, client_ip, conflict, normalize_host
-from apps.catalog.throttles import ClaimThrottle, ScreenshotThrottle, SubmitThrottle
+from apps.catalog.throttles import (
+    CatalogReadThrottle,
+    ClaimThrottle,
+    ScreenshotThrottle,
+    SubmitThrottle,
+)
 from apps.core.schemas import ErrorSchema
 
 router = Router(tags=["catalog"])
@@ -465,6 +478,43 @@ def verify_tool_claim(request: HttpRequest, claim_id: int, payload: ToolClaimVer
         email_verified_at=timezone.now(), status=ToolClaimStatus.PENDING_REVIEW
     )
     claim.refresh_from_db()
+    return Status(200, _claim_out(claim))
+
+
+# A staff-issued link skips both the code and the review: staff chose whom to
+# send it to. Only the link's hash is stored, so the token in the path is the
+# whole credential - hence one use, and a revoked link reads as unknown.
+
+
+@router.get(
+    "/claim-invites/{token}",
+    response={200: ClaimInviteOut, 404: ErrorSchema},
+    throttle=[CatalogReadThrottle()],
+    summary="What a claim link is for, before signing in",
+)
+def get_claim_invite(request: HttpRequest, token: str):
+    invite = find_claim_invite(token)
+    if invite is None:
+        return Status(404, {"detail": "This claim link is not valid."})
+    return {
+        "tool": invite.tool.slug,
+        "tool_name": invite.tool.name,
+        "redeemed": invite.redeemed_at is not None,
+    }
+
+
+@router.post(
+    "/claim-invites/{token}/redeem",
+    response={200: ToolClaimOut, 404: ErrorSchema},
+    auth=JWTAuth(),
+    throttle=[ClaimThrottle()],
+    summary="Take over a listing with a staff-issued claim link",
+)
+def redeem_tool_claim_invite(request: HttpRequest, token: str):
+    try:
+        claim = redeem_claim_invite(token, request.auth)
+    except InviteUnavailable as exc:
+        return Status(404, {"detail": str(exc)})
     return Status(200, _claim_out(claim))
 
 
