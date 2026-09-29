@@ -132,6 +132,12 @@ describe('ToolProfile for staff', () => {
     expect(screen.getByRole('button', { name: 'Edit tagline' })).toBeInTheDocument()
   })
 
+  it('offers staff a claim link for the owner', () => {
+    render({ staff: true })
+
+    expect(screen.getByRole('button', { name: /create claim link/i })).toBeInTheDocument()
+  })
+
   it('offers a signed-in reader who is not staff nothing to edit', () => {
     render({ staff: false })
 

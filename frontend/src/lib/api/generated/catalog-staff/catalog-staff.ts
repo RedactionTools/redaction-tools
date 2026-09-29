@@ -26,6 +26,8 @@ import type {
 
 import type {
   StaffChangesIn,
+  StaffClaimInviteIn,
+  StaffClaimInviteOut,
   StaffPlanCreateIn,
   StaffPlanCreateOut,
   StaffPlanLimitIn,
@@ -1126,4 +1128,92 @@ export const useStaffUploadToolLogo = <TError = unknown,
         TContext
       > => {
       return useMutation(getStaffUploadToolLogoMutationOptions(options), queryClient);
+    }
+    export const getStaffCreateClaimInviteUrl = (slug: string,) => {
+
+
+
+
+  return `/api/v1/catalog/staff/tools/${slug}/claim-invites`
+}
+
+/**
+ * @summary Mint a one-time claim link to email to the listing's owner
+ */
+export const staffCreateClaimInvite = async (slug: string,
+    staffClaimInviteIn: StaffClaimInviteIn, options?: Parameters<typeof customFetch>[1]): Promise<StaffClaimInviteOut> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<StaffClaimInviteOut>(getStaffCreateClaimInviteUrl(slug),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(staffClaimInviteIn)
+  }
+);}
+
+
+
+
+
+export const getStaffCreateClaimInviteMutationKey = () => ['staffCreateClaimInvite'] as const;
+
+export const getStaffCreateClaimInviteMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof staffCreateClaimInvite>>, TError,StaffCreateClaimInviteMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof staffCreateClaimInvite>>, TError,StaffCreateClaimInviteMutationVariables, TContext> => {
+
+const mutationKey = getStaffCreateClaimInviteMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof staffCreateClaimInvite>>, StaffCreateClaimInviteMutationVariables> = (props) => {
+          const {slug,data} = props ?? {};
+
+          return  staffCreateClaimInvite(slug,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type StaffCreateClaimInviteMutationResult = NonNullable<Awaited<ReturnType<typeof staffCreateClaimInvite>>>
+    export type StaffCreateClaimInviteMutationBody = StaffClaimInviteIn
+    export type StaffCreateClaimInviteMutationError = unknown
+    export type StaffCreateClaimInviteMutationVariables = {slug: string;data: StaffClaimInviteIn}
+
+    /**
+ * @summary Mint a one-time claim link to email to the listing's owner
+ */
+export const useStaffCreateClaimInvite = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof staffCreateClaimInvite>>, TError,StaffCreateClaimInviteMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof staffCreateClaimInvite>>,
+        TError,
+        StaffCreateClaimInviteMutationVariables,
+        TContext
+      > => {
+      return useMutation(getStaffCreateClaimInviteMutationOptions(options), queryClient);
     }

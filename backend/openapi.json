@@ -860,6 +860,95 @@
         ]
       }
     },
+    "/api/v1/catalog/claim-invites/{token}": {
+      "get": {
+        "operationId": "get_claim_invite",
+        "summary": "What a claim link is for, before signing in",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClaimInviteOut"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
+    "/api/v1/catalog/claim-invites/{token}/redeem": {
+      "post": {
+        "operationId": "redeem_tool_claim_invite",
+        "summary": "Take over a listing with a staff-issued claim link",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ToolClaimOut"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "catalog"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
     "/api/v1/catalog/my-listings": {
       "get": {
         "operationId": "list_my_listings",
@@ -1805,6 +1894,53 @@
                 ],
                 "title": "FileParams",
                 "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "StaffJWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/catalog/staff/tools/{slug}/claim-invites": {
+      "post": {
+        "operationId": "staff_create_claim_invite",
+        "summary": "Mint a one-time claim link to email to the listing's owner",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffClaimInviteOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "catalog-staff"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StaffClaimInviteIn"
               }
             }
           },
@@ -4100,6 +4236,29 @@
         "title": "ToolClaimVerifyIn",
         "type": "object"
       },
+      "ClaimInviteOut": {
+        "properties": {
+          "tool": {
+            "title": "Tool",
+            "type": "string"
+          },
+          "tool_name": {
+            "title": "Tool Name",
+            "type": "string"
+          },
+          "redeemed": {
+            "title": "Redeemed",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "tool",
+          "tool_name",
+          "redeemed"
+        ],
+        "title": "ClaimInviteOut",
+        "type": "object"
+      },
       "MyListingOut": {
         "description": "An owner's own view of a listing.\n\nCarries every field in `OWNER_EDITABLE_FIELDS` because the owner's editor\nprefills from here rather than from the public profile, which 404s on a\nlisting that is not listable - the one its owner most needs to correct.",
         "properties": {
@@ -5356,6 +5515,54 @@
           "logo_url"
         ],
         "title": "StaffToolLogoOut",
+        "type": "object"
+      },
+      "StaffClaimInviteOut": {
+        "description": "Carries the only copy of the link: the server keeps its hash.",
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "tool": {
+            "title": "Tool",
+            "type": "string"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "tool",
+          "email",
+          "url",
+          "created_at"
+        ],
+        "title": "StaffClaimInviteOut",
+        "type": "object"
+      },
+      "StaffClaimInviteIn": {
+        "properties": {
+          "email": {
+            "title": "Email",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email"
+        ],
+        "title": "StaffClaimInviteIn",
         "type": "object"
       },
       "SuiteSummaryOut": {

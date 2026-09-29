@@ -31,6 +31,7 @@ from apps.catalog.models import (
     PriceSource,
     Tool,
     ToolClaim,
+    ToolClaimInvite,
     ToolClaimStatus,
     ToolFacet,
     ToolRevision,
@@ -633,6 +634,44 @@ class ToolClaimAdmin(ModelAdmin):
     def revoke_claims(self, request, queryset):
         count = self._decide(request, queryset, ToolClaimStatus.REVOKED)
         self.message_user(request, f"{count} claim(s) revoked.")
+
+
+@admin.register(ToolClaimInvite)
+class ToolClaimInviteAdmin(ModelAdmin):
+    """Staff-issued claim links: an audit trail and the off switch.
+
+    Minted on the tool page or over MCP, never here - the link is shown once, and
+    an admin add form has nowhere to show it. Nothing is editable, because the
+    only change that makes sense after sending one is taking it back.
+    """
+
+    list_display = ("tool", "email", "created_by", "created_at", "redeemed_by", "revoked_at")
+    list_filter = (("redeemed_at", admin.EmptyFieldListFilter), "revoked_at")
+    search_fields = ("tool__name", "email", "redeemed_by__email")
+    readonly_fields = (
+        "tool",
+        "email",
+        "created_by",
+        "created_at",
+        "redeemed_at",
+        "redeemed_by",
+        "claim",
+        "revoked_at",
+    )
+    fields = readonly_fields
+    actions = ("revoke_invites",)
+
+    def has_add_permission(self, request):
+        return False
+
+    @admin.action(description="Revoke - the link stops working")
+    def revoke_invites(self, request, queryset):
+        # A redeemed link has done its work; revoking the claim it made is the
+        # claim admin's job, not this one's.
+        count = queryset.filter(revoked_at__isnull=True, redeemed_at__isnull=True).update(
+            revoked_at=timezone.now()
+        )
+        self.message_user(request, f"{count} link(s) revoked.")
 
 
 @admin.register(ToolRevision)

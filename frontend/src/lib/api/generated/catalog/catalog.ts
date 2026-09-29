@@ -26,6 +26,7 @@ import type {
 
 import type {
   CatalogStatsOut,
+  ClaimInviteOut,
   ErrorSchema,
   ExchangeRatesOut,
   FacetDimensionOut,
@@ -936,6 +937,179 @@ export const useVerifyToolClaim = <TError = ErrorSchema,
         TContext
       > => {
       return useMutation(getVerifyToolClaimMutationOptions(options), queryClient);
+    }
+    export const getGetClaimInviteUrl = (token: string,) => {
+
+
+
+
+  return `/api/v1/catalog/claim-invites/${token}`
+}
+
+/**
+ * @summary What a claim link is for, before signing in
+ */
+export const getClaimInvite = async (token: string, options?: Parameters<typeof customFetch>[1]): Promise<ClaimInviteOut> => {
+
+  return customFetch<ClaimInviteOut>(getGetClaimInviteUrl(token),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetClaimInviteQueryKey = (token: string,) => {
+    return [
+    `/api/v1/catalog/claim-invites/${token}`
+    ] as const;
+    }
+
+
+export const getGetClaimInviteQueryOptions = <TData = Awaited<ReturnType<typeof getClaimInvite>>, TError = ErrorSchema>(token: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClaimInvite>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetClaimInviteQueryKey(token);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getClaimInvite>>> = ({ signal }) => getClaimInvite(token, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: token !== null && token !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getClaimInvite>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetClaimInviteQueryResult = NonNullable<Awaited<ReturnType<typeof getClaimInvite>>>
+export type GetClaimInviteQueryError = ErrorSchema
+
+
+export function useGetClaimInvite<TData = Awaited<ReturnType<typeof getClaimInvite>>, TError = ErrorSchema>(
+ token: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClaimInvite>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getClaimInvite>>,
+          TError,
+          Awaited<ReturnType<typeof getClaimInvite>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetClaimInvite<TData = Awaited<ReturnType<typeof getClaimInvite>>, TError = ErrorSchema>(
+ token: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClaimInvite>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getClaimInvite>>,
+          TError,
+          Awaited<ReturnType<typeof getClaimInvite>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetClaimInvite<TData = Awaited<ReturnType<typeof getClaimInvite>>, TError = ErrorSchema>(
+ token: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClaimInvite>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary What a claim link is for, before signing in
+ */
+
+export function useGetClaimInvite<TData = Awaited<ReturnType<typeof getClaimInvite>>, TError = ErrorSchema>(
+ token: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClaimInvite>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetClaimInviteQueryOptions(token,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export const getRedeemToolClaimInviteUrl = (token: string,) => {
+
+
+
+
+  return `/api/v1/catalog/claim-invites/${token}/redeem`
+}
+
+/**
+ * @summary Take over a listing with a staff-issued claim link
+ */
+export const redeemToolClaimInvite = async (token: string, options?: Parameters<typeof customFetch>[1]): Promise<ToolClaimOut> => {
+
+  return customFetch<ToolClaimOut>(getRedeemToolClaimInviteUrl(token),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getRedeemToolClaimInviteMutationKey = () => ['redeemToolClaimInvite'] as const;
+
+export const getRedeemToolClaimInviteMutationOptions = <TError = ErrorSchema,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof redeemToolClaimInvite>>, TError,RedeemToolClaimInviteMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof redeemToolClaimInvite>>, TError,RedeemToolClaimInviteMutationVariables, TContext> => {
+
+const mutationKey = getRedeemToolClaimInviteMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof redeemToolClaimInvite>>, RedeemToolClaimInviteMutationVariables> = (props) => {
+          const {token} = props ?? {};
+
+          return  redeemToolClaimInvite(token,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RedeemToolClaimInviteMutationResult = NonNullable<Awaited<ReturnType<typeof redeemToolClaimInvite>>>
+
+    export type RedeemToolClaimInviteMutationError = ErrorSchema
+    export type RedeemToolClaimInviteMutationVariables = {token: string}
+
+    /**
+ * @summary Take over a listing with a staff-issued claim link
+ */
+export const useRedeemToolClaimInvite = <TError = ErrorSchema,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof redeemToolClaimInvite>>, TError,RedeemToolClaimInviteMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof redeemToolClaimInvite>>,
+        TError,
+        RedeemToolClaimInviteMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRedeemToolClaimInviteMutationOptions(options), queryClient);
     }
     export const getListMyListingsUrl = () => {
 

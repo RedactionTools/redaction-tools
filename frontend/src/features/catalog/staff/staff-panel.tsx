@@ -5,6 +5,7 @@ import { Card, CardDescription, CardTitle } from '@/components/ui/card'
 import { useStaffGetTool } from '@/lib/api/generated/catalog-staff/catalog-staff'
 import type { StaffToolOut } from '@/lib/api/generated/model'
 
+import { ClaimInviteMinter } from './claim-invite-minter'
 import { Editable } from './editable'
 import { type FieldSpec, ToolFieldEditor } from './tool-field-editor'
 import { useIsStaff } from './use-is-staff'
@@ -85,6 +86,13 @@ export function StaffPanel({ slug }: { slug: string }) {
           </Editable>
         ))}
       </dl>
+
+      <div className="border-border space-y-2 border-t pt-4">
+        <CardDescription>
+          Invite the owner to maintain this listing with a one-time link you email to them.
+        </CardDescription>
+        <ClaimInviteMinter slug={slug} toolName={record.name} />
+      </div>
     </Card>
   )
 }

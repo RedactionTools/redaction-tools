@@ -220,6 +220,38 @@ Things to know:
 - Uploads are files (`upload_screenshot`, `upload_tool_logo`). The MCP's URL-fetching variants
   share the same code underneath.
 
+## Staff claim links
+
+Staff can hand a listing straight to its owner. **Create claim link** in the staff panel (or the
+`catalog_create_claim_invite` MCP tool) takes the owner's email and returns a URL of the form
+`<FRONTEND_URL>/claim/<token>`. Staff send it themselves: the server sends no mail. The owner signs
+in on that page and accepts, which gives them an **approved** `ToolClaim` on the spot. There is no
+code to enter and no review, because sending the link was the review.
+
+| Where | What |
+| --- | --- |
+| `apps/catalog/models.py` | `ToolClaimInvite`: tool, recipient, token hash, who redeemed it |
+| `apps/catalog/claims.py` | `issue_claim_invite`, `redeem_claim_invite` |
+| `apps/catalog/staff.py` | `create_claim_invite`, called by the staff route and the MCP tool |
+| `apps/catalog/api.py` | `GET /claim-invites/<token>` (preview), `POST .../redeem` (bearer) |
+| `frontend/src/app/(site)/claim/[token]/` | The owner's landing page |
+
+Things to know:
+
+- **Only the SHA-256 of the token is stored**, so the link appears once, in the staff panel. A lost
+  link cannot be recovered: mint a new one.
+- **It never expires and works once.** Redemption locks the row, so if two people accept at the
+  same moment only one gets the listing. If the owner who redeemed it opens it again, they land
+  on the success state. Anyone else gets a 404.
+- **Revoke from the admin** (Catalog → Tool claim invites). A revoked link reads as unknown.
+  Revoking a link that was already redeemed does nothing. To take the listing back, revoke the
+  claim it created.
+- The claim records the invite's email as `work_email` and the staff member who minted the link as
+  `reviewed_by`. If the owner already had a pending claim on the tool, it is approved instead of
+  duplicated.
+- Accepting takes a button press. Opening the link does not redeem it, because mail scanners
+  open links before people do. The page is `noindex` and sends no referrer.
+
 ## OpenAPI schema for the frontend
 
 `backend/openapi.json` is committed and is what Orval generates the TypeScript client into
