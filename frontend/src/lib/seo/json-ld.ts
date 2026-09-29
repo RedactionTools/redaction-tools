@@ -2,6 +2,8 @@ import type { ToolDetailOut } from '@/lib/api/generated/model'
 import type { Author } from '@/lib/blog/authors'
 import { BLOG_NAME, type BlogPostMeta } from '@/lib/blog/posts'
 
+import { markdownToPlainText } from './plain-text'
+
 /**
  * Structured data for the catalog.
  *
@@ -306,7 +308,7 @@ export function benchmarkDatasetJsonLd(
   return {
     '@type': 'Dataset',
     name: `${suite.name} benchmark`,
-    description: suite.description,
+    description: markdownToPlainText(suite.description),
     url: `${site}/benchmarks/${suite.slug}`,
     version: suite.revision,
     creator: { '@id': organizationId(site) },

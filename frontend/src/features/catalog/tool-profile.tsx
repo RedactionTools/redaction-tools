@@ -4,6 +4,7 @@ import Link from 'next/link'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Markdown } from '@/components/markdown'
 import { Card, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -375,18 +376,12 @@ function Editorial({ tool }: { tool: ToolDetailOut }) {
               slug={tool.slug}
               kind="multiline"
               field="description_md"
-              label="Assessment (paragraphs separated by a blank line)"
+              label="Assessment (Markdown)"
               onDone={done}
             />
           )}
         >
-          <div className="space-y-3">
-            {tool.description_md.split('\n\n').map((paragraph, index) => (
-              <p key={index} className="text-pretty">
-                {paragraph}
-              </p>
-            ))}
-          </div>
+          <Markdown>{tool.description_md}</Markdown>
         </Editable>
       </div>
 
@@ -445,7 +440,9 @@ function Editorial({ tool }: { tool: ToolDetailOut }) {
         {tool.vendor_copy_md ? (
           <Card data-testid="vendor-copy">
             <CardTitle>From the vendor</CardTitle>
-            <p className="text-muted-foreground mt-2 text-sm">{tool.vendor_copy_md}</p>
+            <Markdown className="text-muted-foreground mt-2 text-sm" linkRel="nofollow ugc">
+              {tool.vendor_copy_md}
+            </Markdown>
           </Card>
         ) : null}
       </Editable>

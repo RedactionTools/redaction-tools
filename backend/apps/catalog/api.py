@@ -228,8 +228,16 @@ def list_tools(
             if pair[1]["price_summary"]["has_free_tier"] == filters.has_free_tier
         ]
 
-    ordering = filters.ordering or "price"
-    if ordering in ("name", "-name"):
+    ordering = filters.ordering
+    if ordering is None:
+        # The hub sends no ordering: staff's `sort_order` leads, and price
+        # settles ties, so tools nobody has placed keep the order they had.
+        keyed = [
+            (tool.sort_order, sort_key(tool, row["price_summary"]), tool, row) for tool, row in rows
+        ]
+        keyed.sort(key=lambda item: item[:2])
+        rows = [(tool, row) for _, _, tool, row in keyed]
+    elif ordering in ("name", "-name"):
         rows.sort(key=lambda pair: pair[0].name.lower(), reverse=ordering.startswith("-"))
     elif ordering == "verified":
         rows.sort(

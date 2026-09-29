@@ -39,6 +39,12 @@ describe('BenchmarkSuiteView', () => {
     )
   })
 
+  it('renders the suite description as Markdown', () => {
+    render(makeSuite({ description_md: 'Seeded with **known** values.' }))
+
+    expect(screen.getByText('known').tagName).toBe('STRONG')
+  })
+
   it('says how many scored cases are held out, so coverage adds up', () => {
     render(makeSuite({ holdout_case_count: 3 }))
 

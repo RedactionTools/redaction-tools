@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 
+import { Markdown } from '@/components/markdown'
 import { Card, CardDescription, CardTitle } from '@/components/ui/card'
 import { listBenchmarkSuites } from '@/lib/api/generated/benchmarks/benchmarks'
 import type { SuiteSummaryOut } from '@/lib/api/generated/model'
@@ -51,7 +52,7 @@ export default async function BenchmarksPage() {
                   {suite.name}
                 </Link>
               </CardTitle>
-              <CardDescription>{suite.description_md}</CardDescription>
+              <Markdown className="text-muted-foreground text-sm">{suite.description_md}</Markdown>
               <p className="text-sm tabular-nums">
                 {suite.tool_count} {suite.tool_count === 1 ? 'tool' : 'tools'} · {suite.case_count}{' '}
                 {suite.case_count === 1 ? 'case' : 'cases'} · {suite.current_revision}

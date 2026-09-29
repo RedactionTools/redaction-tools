@@ -167,11 +167,16 @@ def test_ordering_by_price_puts_the_cheapest_first_and_the_unpriced_last(client)
 
 
 @pytest.mark.django_db
-def test_the_first_party_tool_is_not_sorted_first(client):
-    """We are in our own catalog; default order is price then name, never us."""
-    payload = client.get(LIST_URL).json()
+def test_default_order_follows_sort_order_then_price(client):
+    """Staff set the hub's order; a tie keeps the price order it had before."""
+    Tool.objects.update(sort_order=10)
+    Tool.objects.filter(slug="caseguard").update(sort_order=5)
 
-    assert _slugs(payload)[0] != "pdf-redaction"
+    default = _slugs(client.get(LIST_URL).json())
+    by_price = _slugs(client.get(f"{LIST_URL}?ordering=price").json())
+
+    assert default[0] == "caseguard"
+    assert default[1:] == [slug for slug in by_price if slug != "caseguard"]
 
 
 @pytest.mark.django_db
