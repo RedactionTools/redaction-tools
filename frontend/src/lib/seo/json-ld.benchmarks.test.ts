@@ -24,6 +24,20 @@ describe('benchmarkDatasetJsonLd', () => {
     ])
   })
 
+  // The suite description is Markdown, and a crawler quotes this field as text.
+  it('describes the dataset in plain text, not Markdown', () => {
+    const node = benchmarkDatasetJsonLd(site, {
+      slug: 'pdf',
+      name: 'PDF redaction',
+      description: 'Synthetic **one-page** PDFs.\n\n- Seeded by [us](https://example.com)',
+      revision: 'v0.1.1',
+      casePackUrl: null,
+      tools: [],
+    })
+
+    expect(node.description).toBe('Synthetic one-page PDFs. Seeded by us')
+  })
+
   it('points at the tools it measures and never redefines them', () => {
     const node = benchmarkDatasetJsonLd(site, {
       slug: 'pdf',

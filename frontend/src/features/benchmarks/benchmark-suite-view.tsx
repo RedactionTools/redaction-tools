@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 
+import { Markdown } from '@/components/markdown'
 import { Button } from '@/components/ui/button'
 import { Card, CardDescription, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -40,7 +41,7 @@ export function BenchmarkSuiteView({
           </Link>
         </p>
         <h1 className="text-3xl font-semibold">{data.name} benchmark</h1>
-        <p className="text-muted-foreground max-w-2xl">{data.description_md}</p>
+        <Markdown className="text-muted-foreground max-w-2xl">{data.description_md}</Markdown>
         <div className="flex flex-wrap items-center gap-3">
           <Button asChild>
             <Link href={`/benchmarks/${suite}/submit`}>Submit results</Link>

@@ -140,6 +140,25 @@ describe('ToolProfile', () => {
     )
   })
 
+  // The field is Markdown, and staff write it as such: shown raw, a list is a
+  // row of asterisks and a link is a bracketed URL.
+  it('renders the assessment as Markdown', () => {
+    render(
+      makeToolDetail({
+        description_md:
+          'Redacts **for real**.\n\n- Burns in\n- Strips metadata\n\n[Docs](https://example.com)',
+      }),
+    )
+
+    expect(screen.getByText('for real').tagName).toBe('STRONG')
+    expect(screen.getByText('Burns in').tagName).toBe('LI')
+    expect(screen.getByRole('link', { name: 'Docs' })).toHaveAttribute(
+      'href',
+      'https://example.com',
+    )
+    expect(screen.queryByText(/\*\*/)).not.toBeInTheDocument()
+  })
+
   it('fences vendor copy away from our own editorial', () => {
     render(makeToolDetail({ vendor_copy_md: 'Acrobat is the worlds best PDF tool.' }))
 
