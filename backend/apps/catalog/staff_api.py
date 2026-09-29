@@ -14,6 +14,8 @@ from apps.catalog import images, staff
 from apps.catalog.schemas import (
     ScreenshotUploadIn,
     StaffChangesIn,
+    StaffClaimInviteIn,
+    StaffClaimInviteOut,
     StaffPlanCreateIn,
     StaffPlanCreateOut,
     StaffPlanLimitIn,
@@ -172,3 +174,15 @@ def staff_review_screenshot(
 @router.post("/tools/{slug}/logo", response=StaffToolLogoOut, summary="Upload a listing's logo")
 def staff_upload_tool_logo(request: HttpRequest, slug: str, image: File[UploadedFile]):
     return staff.upload_tool_logo(user=request.auth, slug=slug, data=_read_upload(image))
+
+
+# --- Claim links -------------------------------------------------------------
+
+
+@router.post(
+    "/tools/{slug}/claim-invites",
+    response={201: StaffClaimInviteOut},
+    summary="Mint a one-time claim link to email to the listing's owner",
+)
+def staff_create_claim_invite(request: HttpRequest, slug: str, payload: StaffClaimInviteIn):
+    return Status(201, staff.create_claim_invite(user=request.auth, slug=slug, email=payload.email))

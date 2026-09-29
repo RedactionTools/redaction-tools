@@ -13,13 +13,14 @@ who did it.
 from decimal import Decimal, InvalidOperation
 
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.core.validators import validate_email
 from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.utils import timezone
 from django.utils.dateparse import parse_date
 from django.utils.text import slugify
 
-from apps.catalog import logos
+from apps.catalog import claims, logos
 from apps.catalog import screenshots as screenshot_service
 from apps.catalog.constants import (
     PLAN_URL_FIELDS,
@@ -874,4 +875,31 @@ def _screenshot(shot):
         "url": shot.display_url,
         "captured_at": shot.captured_at.isoformat() if shot.captured_at else None,
         "review_note": shot.review_note,
+    }
+
+
+# --- Claim links ---------------------------------------------------------------
+
+
+def create_claim_invite(*, user, slug, email):
+    """Mint a one-time link that grants this listing to whoever redeems it.
+
+    The URL is returned once and never stored, so the caller has to pass it on
+    now; a lost link is replaced by minting another and revoking the first in
+    the admin.
+    """
+    tool = _tool(slug)
+    email = (email or "").strip()
+    try:
+        validate_email(email)
+    except DjangoValidationError as exc:
+        raise StaffError(f"{email!r} is not a valid email address.") from exc
+
+    invite, url = claims.issue_claim_invite(tool=tool, email=email, user=user)
+    return {
+        "id": invite.pk,
+        "tool": tool.slug,
+        "email": invite.email,
+        "url": url,
+        "created_at": invite.created_at.isoformat(),
     }

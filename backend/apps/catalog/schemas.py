@@ -531,3 +531,23 @@ class StaffScreenshotReviewIn(Schema):
 
 class StaffToolLogoOut(StaffToolUpdateOut):
     logo_url: str
+
+
+class StaffClaimInviteIn(Schema):
+    email: str
+
+
+class StaffClaimInviteOut(Schema):
+    """Carries the only copy of the link: the server keeps its hash."""
+
+    id: int
+    tool: str
+    email: str
+    url: str
+    created_at: datetime
+
+
+class ClaimInviteOut(Schema):
+    tool: str
+    tool_name: str
+    redeemed: bool

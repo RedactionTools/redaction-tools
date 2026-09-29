@@ -986,6 +986,48 @@ class ToolClaimCode(TimeStampedModel):
         )
 
 
+class ToolClaimInvite(TimeStampedModel):
+    """A one-time link staff email to a tool's owner, which grants the listing.
+
+    It skips review because issuing it *was* the review: staff chose the
+    recipient. So the token is a credential, and only its hash is kept. It has no
+    expiry on purpose - an owner may sit on the email for weeks - so a link that
+    went to the wrong person is closed by revoking it, not by waiting.
+    """
+
+    tool = models.ForeignKey(Tool, on_delete=models.CASCADE, related_name="claim_invites")
+    email = models.EmailField(help_text="Who it was sent to; becomes the claim's work email.")
+    token_hash = models.CharField(
+        max_length=64, unique=True, help_text="sha256; the link itself is never kept."
+    )
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name="+"
+    )
+    redeemed_at = models.DateTimeField(null=True, blank=True)
+    redeemed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+    claim = models.OneToOneField(
+        ToolClaim,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="invite",
+    )
+    revoked_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "catalog_tool_claim_invite"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Invite to {self.tool.name} for {self.email}"
+
+
 # --- Owner proposals -------------------------------------------------------
 
 
