@@ -35,6 +35,19 @@ describe('ToolProfile', () => {
     expect(link).not.toHaveAttribute('rel')
   })
 
+  // Our measurement is the page's lead call to action, so it is the filled button
+  // and the way out to the vendor is the outlined one beside it.
+  it('shows the benchmark link as the primary button', () => {
+    render(makeToolDetail({ benchmarks: [{ suite: 'pdf', name: 'PDF redaction' }] }))
+
+    expect(screen.getByRole('link', { name: /pdf redaction benchmark/i })).toHaveClass(
+      'bg-foreground',
+    )
+    expect(screen.getByRole('link', { name: /visit adobe acrobat/i })).not.toHaveClass(
+      'bg-foreground',
+    )
+  })
+
   it('offers no benchmark link before the tool has results', () => {
     render()
 
