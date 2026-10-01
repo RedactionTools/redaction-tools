@@ -267,6 +267,12 @@ production. Tests always use the in-memory backend.
 | `submission_received` | a tool is submitted (`POST /catalog/submissions`) | `contact_email`, else the account |
 | `submission_staff_notice` | the same, with a link to the row in the admin | every active `is_staff` account |
 | `claim_code` | a vendor claims a listing | the claimant's work email |
+| `benchmark_sent` | a benchmark submission is sent (`finalize`) | the submitter |
+| `benchmark_scored` | scoring settles: waiting for review, or failed with each case's error | the submitter |
+| `benchmark_staff_notice` | the same, only when it is waiting for review; links to the admin via `BACKEND_URL` | every active `is_staff` account |
+| `benchmark_reviewed` | an editor approves (links to the tool's report) or rejects (passes on the note) | the submitter |
+
+A staff member's own benchmark submission approves itself on scoring and mails nobody.
 
 All but `claim_code` go through the django-q2 queue after the transaction commits, so a
 sign-in or a submission never waits on - or fails with - the mail provider, and a

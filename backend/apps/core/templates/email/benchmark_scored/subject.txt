@@ -1,0 +1,1 @@
+{% autoescape off %}{% if failed %}Scoring failed for your {{ tool_name }} submission{% else %}Your {{ tool_name }} results are scored and waiting for review{% endif %}{% endautoescape %}

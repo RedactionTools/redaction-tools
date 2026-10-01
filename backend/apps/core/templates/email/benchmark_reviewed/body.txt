@@ -1,0 +1,15 @@
+{% autoescape off %}{% if approved %}Your {{ tool_name }} submission to the {{ suite_name }} benchmark ({{ revision }}) is approved, and the results are live:
+
+{{ site_url }}/benchmarks/{{ suite_slug }}/tools/{{ tool_slug }}{% if review_note %}
+
+A note from the reviewer:
+{{ review_note }}{% endif %}{% else %}Your {{ tool_name }} submission to the {{ suite_name }} benchmark ({{ revision }}) was not approved. The reviewer wrote:
+
+{{ review_note }}
+
+Nothing from it was published. You are welcome to send a new submission that addresses this.{% endif %}
+
+-- 
+Redaction Tools
+{{ site_url }}
+{% endautoescape %}

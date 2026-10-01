@@ -1,0 +1,19 @@
+<mjml lang="en">
+  <mj-head>
+    <mj-title>{% if failed %}Scoring failed for your {{ tool_name }} submission{% else %}Your {{ tool_name }} results are scored{% endif %}</mj-title>
+    <mj-preview>{% if failed %}Some cases could not be scored.{% else %}A person reviews it next.{% endif %}</mj-preview>
+    <mj-include path="../_partials/head.mjml" />
+  </mj-head>
+  <mj-body background-color="#f4f4f5" width="624px">
+    <mj-include path="../_partials/header.mjml" />
+    <mj-section padding="0 32px" background-color="#f4f4f5">
+      <mj-column background-color="#ffffff" padding="32px 32px 16px">
+        <mj-text>{% if failed %}We could not score every case in your <strong>{{ tool_name }}</strong> submission to the {{ suite_name }} benchmark ({{ revision }}):{% else %}Your <strong>{{ tool_name }}</strong> submission to the {{ suite_name }} benchmark ({{ revision }}) is scored - {{ case_count }} case{{ case_count|pluralize }}.{% endif %}</mj-text>
+        <mj-text>{% if failed %}<ul style="margin:0;padding-left:20px;">{% for failure in failures %}<li style="margin-bottom:8px;"><strong>{{ failure.case }}</strong>: {{ failure.error }}</li>{% endfor %}</ul>{% endif %}</mj-text>
+        <mj-text>{% if failed %}A submission with a failed case cannot be published. Fix the output and send a new submission.{% else %}A person reviews it next. We will email you when it is approved and published.{% endif %}</mj-text>
+        <mj-button href="{{ site_url }}/benchmarks/submissions" background-color="#18181b" color="#ffffff" font-size="15px" border-radius="6px" align="left" padding="8px 0 16px">See the details</mj-button>
+      </mj-column>
+    </mj-section>
+    <mj-include path="../_partials/footer.mjml" />
+  </mj-body>
+</mjml>

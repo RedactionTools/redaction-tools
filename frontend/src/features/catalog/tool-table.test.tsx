@@ -134,6 +134,18 @@ describe('ToolTable', () => {
     )
   })
 
+  it('marks a tool its vendor maintains here', () => {
+    render([
+      makeTool({ slug: 'caseguard', name: 'CaseGuard', is_vendor_maintained: true }),
+      makeTool(),
+    ])
+
+    const maintained = screen.getByTestId('tool-row-caseguard')
+    expect(within(maintained).getByText('Vendor-maintained')).toBeInTheDocument()
+    const other = screen.getByTestId('tool-row-adobe-acrobat')
+    expect(within(other).queryByText('Vendor-maintained')).not.toBeInTheDocument()
+  })
+
   it('does not clutter the table with the first-party note', () => {
     // Disclosure lives on the profile and the methodology page; repeating it in
     // every row costs a column's worth of attention for no extra information.

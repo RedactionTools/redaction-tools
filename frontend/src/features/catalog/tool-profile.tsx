@@ -35,6 +35,7 @@ import { ToolFieldEditor } from './staff/tool-field-editor'
 import { useIsStaff } from './staff/use-is-staff'
 import { ToolLogo } from './tool-logo'
 import { ToolScreenshots } from './tool-screenshots'
+import { VendorMaintainedBadge } from './vendor-maintained-badge'
 
 const MEDIA = new Set(['pdf', 'image', 'video', 'audio', 'text'])
 const DEPLOYMENT = new Set(['online', 'desktop', 'self-hosted', 'api-tools', 'browser-extension'])
@@ -113,7 +114,10 @@ function ToolHeader({ tool }: { tool: ToolDetailOut }) {
           <ToolLogo name={tool.name} logoUrl={tool.logo_url} size="lg" />
         </Editable>
         <div>
-          <p className="text-muted-foreground text-sm">{tool.vendor.name}</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-muted-foreground text-sm">{tool.vendor.name}</p>
+            {tool.is_vendor_maintained ? <VendorMaintainedBadge vendor={tool.vendor.name} /> : null}
+          </div>
           <Editable
             label="name"
             editor={(done) => (
@@ -177,7 +181,7 @@ function HeaderLinks({ tool }: { tool: ToolDetailOut }) {
   return (
     <div className="flex shrink-0 flex-wrap gap-2 sm:ml-auto">
       {tool.benchmarks.map((benchmark) => (
-        <Button key={benchmark.suite} asChild variant="ghost">
+        <Button key={benchmark.suite} asChild>
           <Link href={`/benchmarks/${benchmark.suite}/tools/${tool.slug}`}>
             {benchmark.name} benchmark
           </Link>

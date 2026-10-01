@@ -1,0 +1,8 @@
+{
+  "tool_name": "PDF Redaction",
+  "tool_slug": "pdf-redaction",
+  "suite_name": "PDF redaction",
+  "suite_slug": "pdf",
+  "revision": "v0.1.1",
+  "case_count": 12
+}

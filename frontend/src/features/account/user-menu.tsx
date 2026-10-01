@@ -71,6 +71,9 @@ export function UserMenu() {
         <DropdownMenuItem asChild>
           <Link href="/account">Account</Link>
         </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/my-listings">My listings</Link>
+        </DropdownMenuItem>
         <DropdownMenuItem onSelect={handleSignOut}>Sign out</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

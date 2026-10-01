@@ -1,0 +1,24 @@
+<mjml lang="en">
+  <mj-head>
+    <mj-title>Benchmark submission to review: {{ tool_name }}</mj-title>
+    <mj-preview>{{ tool_name }} on {{ suite_name }} is scored and waiting for review.</mj-preview>
+    <mj-include path="../_partials/head.mjml" />
+  </mj-head>
+  <mj-body background-color="#f4f4f5" width="624px">
+    <mj-include path="../_partials/header.mjml" />
+    <mj-section padding="0 32px" background-color="#f4f4f5">
+      <mj-column background-color="#ffffff" padding="32px 32px 16px">
+        <mj-text>A benchmark submission is scored and waiting for review.</mj-text>
+        <mj-text>
+          <strong>Tool:</strong> {{ tool_name }}<br>
+          <strong>Benchmark:</strong> {{ suite_name }} ({{ revision }}), {{ case_count }} case{{ case_count|pluralize }}<br>
+          <strong>Submitted by:</strong> {{ submitter_name }} ({{ submitter_role }})<br>
+          <strong>Origin:</strong> {{ origin }}
+        </mj-text>
+        <mj-text>{% if notes %}<strong>Notes</strong><br>{{ notes|linebreaksbr }}{% endif %}</mj-text>
+        <mj-button href="{{ admin_url }}" background-color="#18181b" color="#ffffff" font-size="15px" border-radius="6px" align="left" padding="8px 0 16px">Review in the admin</mj-button>
+      </mj-column>
+    </mj-section>
+    <mj-include path="../_partials/footer.mjml" />
+  </mj-body>
+</mjml>
