@@ -86,7 +86,11 @@ export function ToolTable({ filters }: { filters: CatalogFilters }) {
             <TableRow key={tool.slug} data-testid={`tool-row-${tool.slug}`}>
               <TableCell>
                 <div className="flex items-center gap-3">
-                  <ToolLogo name={tool.name} logoUrl={tool.logo_url} />
+                  {/* The same page as the name, for the pointer only: a second
+                      link per row would make a keyboard tab through every tool twice. */}
+                  <Link href={`/tool/${tool.slug}`} tabIndex={-1} aria-hidden="true">
+                    <ToolLogo name={tool.name} logoUrl={tool.logo_url} />
+                  </Link>
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
                       <Link href={`/tool/${tool.slug}`} className="font-medium hover:underline">

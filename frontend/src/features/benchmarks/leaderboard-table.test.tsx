@@ -51,6 +51,25 @@ describe('LeaderboardTable', () => {
     expect(screen.getByText('Hidden Tool').closest('a')).toBeNull()
   })
 
+  it('links the logo wherever the name links, and nowhere for a tool with no page', () => {
+    render([
+      makeRow(),
+      makeRow({
+        tool: { slug: 'hidden-tool', name: 'Hidden Tool', logo_url: '', listable: false },
+      }),
+    ])
+
+    const logo = (slug: string) =>
+      screen
+        .getByTestId(`leaderboard-row-${slug}-web`)
+        .querySelector('img, [data-testid="tool-monogram"]')!
+    expect(logo('pdf-redaction').closest('a')).toHaveAttribute(
+      'href',
+      '/benchmarks/pdf/tools/pdf-redaction?revision=v0.1.1',
+    )
+    expect(logo('hidden-tool').closest('a')).toBeNull()
+  })
+
   it('says who published a result and how far it can be trusted', () => {
     render([
       makeRow({
