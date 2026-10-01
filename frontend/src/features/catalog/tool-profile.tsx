@@ -22,6 +22,7 @@ import type { PlanOut, ToolDetailOut } from '@/lib/api/generated/model'
 import { basePrice, overagePrice } from '@/lib/catalog/document-cost'
 import { formatAmount, formatUnit, priceSentence } from '@/lib/catalog/format'
 
+import { CommentSection } from '@/features/comments/comment-section'
 import { ClaimListing } from './claim-listing'
 import { DocumentCostCalculator } from './document-cost-calculator'
 import { PriceProvenanceBadge } from './price-provenance-badge'
@@ -94,6 +95,7 @@ export function ToolProfile({ slug }: { slug: string }) {
           correct it will read to the end, and a buyer should not meet a vendor
           call to action before the assessment. */}
       <ClaimListing tool={tool} />
+      <CommentSection targetType="tool" slug={tool.slug} />
       {/* After everything a reader sees: staff edit the page itself through
           the icons on each block, and this holds only what the page never
           shows. */}

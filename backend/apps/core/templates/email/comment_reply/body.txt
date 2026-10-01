@@ -1,0 +1,10 @@
+{% autoescape off %}{{ author_name }} replied to your comment on {{ page_title }}.
+
+You wrote:
+{{ parent_excerpt }}
+
+{{ author_name }} replied:
+{{ comment_excerpt }}
+
+Read the thread: {{ comment_url }}
+{% endautoescape %}

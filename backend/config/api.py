@@ -13,6 +13,8 @@ from apps.benchmarks.api import router as benchmarks_router
 from apps.catalog.api import router as catalog_router
 from apps.catalog.staff import StaffError
 from apps.catalog.staff_api import router as catalog_staff_router
+from apps.comments.api import router as comments_router
+from apps.comments.staff_api import router as comments_staff_router
 from apps.core.api import router as core_router
 
 
@@ -46,6 +48,8 @@ api.add_router("/auth/", accounts_router)
 api.add_router("/catalog/", catalog_router)
 api.add_router("/catalog/staff/", catalog_staff_router)
 api.add_router("/benchmarks/", benchmarks_router)
+api.add_router("/comments/staff/", comments_staff_router)
+api.add_router("/comments/", comments_router)
 
 
 @api.exception_handler(StaffError)
