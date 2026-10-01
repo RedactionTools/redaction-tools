@@ -1,0 +1,28 @@
+<mjml lang="en">
+  <mj-head>
+    <mj-title>New tool submission: {{ name }}</mj-title>
+    <mj-preview>{{ name }} is waiting for review.</mj-preview>
+    <mj-include path="../_partials/head.mjml" />
+  </mj-head>
+  <mj-body background-color="#f4f4f5" width="624px">
+    <mj-include path="../_partials/header.mjml" />
+    <mj-section padding="0 32px" background-color="#f4f4f5">
+      <mj-column background-color="#ffffff" padding="32px 32px 16px">
+        <mj-text>A tool was submitted and is waiting for review.</mj-text>
+        <mj-text>
+          <strong>Tool:</strong> {{ name }}<br>{% if vendor_name %}
+          <strong>Vendor:</strong> {{ vendor_name }}<br>{% endif %}
+          <strong>Homepage:</strong> <a href="{{ homepage_url }}" style="color:#18181b;">{{ homepage_url }}</a><br>{% if pricing_url %}
+          <strong>Pricing:</strong> <a href="{{ pricing_url }}" style="color:#18181b;">{{ pricing_url }}</a><br>{% endif %}
+          <strong>Submitted by:</strong> {{ submitter_email }}{% if contact_email %} (contact: {{ contact_email }}){% endif %}{% if submitter_is_owner %}<br>
+          Says they work for the vendor - route to the claim flow on approval.{% endif %}
+        </mj-text>
+        <mj-text padding="0 0 4px"><strong>Description</strong></mj-text>
+        <mj-text>{{ description|linebreaksbr }}</mj-text>
+        <mj-text>{% if notes %}<strong>Notes</strong><br>{{ notes|linebreaksbr }}{% endif %}</mj-text>
+        <mj-button href="{{ admin_url }}" background-color="#18181b" color="#ffffff" font-size="15px" border-radius="6px" align="left" padding="8px 0 16px">Review in the admin</mj-button>
+      </mj-column>
+    </mj-section>
+    <mj-include path="../_partials/footer.mjml" />
+  </mj-body>
+</mjml>

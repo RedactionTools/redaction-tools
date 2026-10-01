@@ -19,6 +19,7 @@ Run `make backend` / `make frontend` rather than `uv run manage.py runserver` or
 | Backend | http://localhost:8007 (`/admin/`, `/api/v1/docs`, `/api/v1/health`) |
 | Frontend | http://localhost:3007 |
 | Postgres | 5432 by default; **5433 on this machine** (5432 is taken) |
+| Mailpit | http://localhost:8025 (dev inbox; SMTP on 1025) |
 
 ## The API contract is generated, in two steps
 
@@ -126,6 +127,22 @@ The parts that bite if you miss them:
 - **A staff claim link grants a listing with no review** (`ToolClaimInvite`, `/claim/<token>`).
   Only its hash is stored, it never expires and it redeems once. The off switch is the admin's
   revoke action, not a TTL.
+
+## Email
+
+Templates live in `backend/apps/core/templates/email/<name>/`; `DEVELOPMENT.md` has the
+details. What bites:
+
+- **`body.html` is generated from `body.mjml`** by `make backend-emails` and committed; CI
+  fails if it is stale. Never hand-edit it. The compiler is the frontend's pinned `mjml`.
+- **Every email needs a `preview.json`** that fills all its variables - a test renders each
+  one with it. `make backend-email NAME=<name>` sends it to Mailpit.
+- **`subject.txt` and `body.txt` need `{% autoescape off %}`**, or `&` arrives as `&amp;`.
+- **Event mail is queued on django-q2 inside `transaction.on_commit`** (`apps/accounts/emails.py`,
+  `apps/catalog/emails.py`), one task per email so a retry cannot resend a sibling. Tests
+  need `django_capture_on_commit_callbacks(execute=True)` to see it in `mail.outbox`.
+- **Brevo wins whenever `BREVO_API_KEY` is set** (`config/mail.py`), in any environment
+  except tests.
 
 ## Conventions
 

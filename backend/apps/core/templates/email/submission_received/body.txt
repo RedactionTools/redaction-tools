@@ -1,0 +1,8 @@
+{% autoescape off %}Thanks for submitting {{ name }} ({{ homepage_url }}) to Redaction Tools.
+
+Every submission is reviewed by a person before anything appears on the site. If it fits the catalog we write the listing ourselves - with our own assessment and prices we check against the vendor's page - so it can take a while, and not every submission becomes a listing.
+
+-- 
+Redaction Tools
+{{ site_url }}
+{% endautoescape %}

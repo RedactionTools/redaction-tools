@@ -14,6 +14,7 @@ from types import SimpleNamespace
 
 from django.conf import settings
 from django.http import HttpRequest
+from django.urls import reverse
 from django.utils import timezone
 from ninja import File, Form, Query, Router, Status
 from ninja.errors import HttpError, ValidationError
@@ -32,6 +33,7 @@ from apps.catalog.claims import (
     verify_claim_code,
 )
 from apps.catalog.constants import OWNER_EDITABLE_FIELDS, URL_FIELDS
+from apps.catalog.emails import queue_submission_emails
 from apps.catalog.filters import ToolFilters, apply_filters
 from apps.catalog.images import ImageRejected
 from apps.catalog.models import (
@@ -405,6 +407,12 @@ def submit_tool(request: HttpRequest, payload: ToolSubmissionIn):
         submitted_by=request.auth,
         source_ip=client_ip(request),
         user_agent=request.META.get("HTTP_USER_AGENT", "")[:512],
+    )
+    queue_submission_emails(
+        submission,
+        admin_url=request.build_absolute_uri(
+            reverse("admin:catalog_toolsubmission_change", args=[submission.pk])
+        ),
     )
     return Status(201, submission)
 

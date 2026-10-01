@@ -252,6 +252,62 @@ Things to know:
 - Accepting takes a button press. Opening the link does not redeem it, because mail scanners
   open links before people do. The page is `noindex` and sends no referrer.
 
+## Email
+
+Transactional mail is rendered from templates in the repo and sent through whatever
+`MAILERS` selects (`backend/config/mail.py`): Brevo's HTTP API when `BREVO_API_KEY` is
+set, otherwise `EMAIL_BACKEND` - Mailpit over SMTP in development, the SMTP relay in
+production. Tests always use the in-memory backend.
+
+### What is sent, and when
+
+| Email | Sent when | To |
+| --- | --- | --- |
+| `welcome` | allauth's `user_signed_up` - a first Google sign-in, not an account made in the admin | the new user |
+| `submission_received` | a tool is submitted (`POST /catalog/submissions`) | `contact_email`, else the account |
+| `submission_staff_notice` | the same, with a link to the row in the admin | every active `is_staff` account |
+| `claim_code` | a vendor claims a listing | the claimant's work email |
+
+All but `claim_code` go through the django-q2 queue after the transaction commits, so a
+sign-in or a submission never waits on - or fails with - the mail provider, and a
+rolled-back request mails nobody. On the host that means they only leave while
+`make backend-worker` runs (or with `Q_SYNC=true` in `backend/.env`); the Docker stack
+runs a qcluster already.
+
+### Previewing
+
+`make up` starts Mailpit beside Postgres, and development sends every mail to it: read
+them at <http://localhost:8025>, with HTML, text, headers and Mailpit's HTML check
+(which CSS each mail client drops). To look at one email without walking through the
+flow that sends it:
+
+```bash
+make backend-email NAME=claim_code   # or no NAME for all of them
+```
+
+That fills the email with its `preview.json`. An older `backend/.env` may still set
+`EMAIL_BACKEND=...console.EmailBackend`, which prints mail instead - delete the line.
+
+### Writing one
+
+Each email is a folder under `backend/apps/core/templates/email/<name>/`:
+
+| File | Notes |
+| --- | --- |
+| `subject.txt` | Collapsed to one line. Wrap it in `{% autoescape off %}`. |
+| `body.txt` | The plain-text part, written rather than derived. Also `{% autoescape off %}`, or a tool called "AT&T" arrives as `AT&amp;T`. |
+| `body.mjml` | The HTML part's source. Shared head, header and footer come from `_partials/` via `mj-include`. |
+| `body.html` | **Generated** by `make backend-emails` and committed; CI fails if it is stale. Never edit it. |
+| `preview.json` | Sample context. A test renders every email with it and fails on any variable it leaves unfilled. |
+
+MJML compiles first and Django renders the result, so `{{ variables }}` pass straight
+through - but keep `{% tags %}` inside an `mj-text`, where MJML leaves text alone. The
+compiler is the frontend's pinned `mjml` (so `make frontend-install` first), and the
+target fails on any compiler warning, because mjml exits 0 on a broken include.
+
+Send with `send_templated_email("<name>", context, to=[...])` from `apps.core.email`;
+`site_url` (`FRONTEND_URL`) is in every context.
+
 ## OpenAPI schema for the frontend
 
 `backend/openapi.json` is committed and is what Orval generates the TypeScript client into

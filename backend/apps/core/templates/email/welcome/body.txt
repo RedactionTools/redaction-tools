@@ -1,0 +1,15 @@
+{% autoescape off %}Hi{% if name %} {{ name }}{% endif %},
+
+Welcome to Redaction Tools - an independent catalog of redaction software, with prices we check and benchmarks we run ourselves.
+
+A few places to start:
+
+- Compare tools by price, detection method and deployment: {{ site_url }}/
+- Work out what a job costs across every tool: {{ site_url }}/price-calculator
+- See how many sensitive values each tool leaves recoverable: {{ site_url }}/benchmarks
+- Know a tool we are missing, or make one? Submit it: {{ site_url }}/submit
+
+-- 
+Redaction Tools
+{{ site_url }}
+{% endautoescape %}
