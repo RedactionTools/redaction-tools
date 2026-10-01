@@ -60,9 +60,7 @@ export function ToolTable({ filters }: { filters: CatalogFilters }) {
   return (
     <div className="space-y-3">
       <Table>
-        <TableCaption>
-          {data.count} redaction tools, with prices as last verified. Sorted by entry price.
-        </TableCaption>
+        <TableCaption>{data.count} redaction tools, with prices as last verified.</TableCaption>
         <TableHead>
           <TableRow>
             <TableHeader>Tool</TableHeader>
