@@ -32,6 +32,16 @@ describe('ToolTable', () => {
     )
   })
 
+  // The hub follows the editors' order, not price: a caption claiming otherwise
+  // tells a reader the first row is the cheapest when it may not be.
+  it('makes no claim about the order in its caption', () => {
+    render()
+
+    const caption = document.querySelector('caption')
+    expect(caption).toHaveTextContent('redaction tools, with prices as last verified.')
+    expect(caption).not.toHaveTextContent(/sorted/i)
+  })
+
   it('shows the vendor and the entry price', () => {
     render()
 
