@@ -70,6 +70,25 @@ backend-check:  ## Django system checks and missing-migration check
 backend-schema:  ## Regenerate backend/openapi.json (input for Orval)
 	cd $(BACKEND) && uv run manage.py export_openapi_schema --api config.api.api --output openapi.json --indent 2
 
+.PHONY: backend-emails
+EMAIL_TEMPLATES := $(CURDIR)/$(BACKEND)/apps/core/templates/email
+
+# mjml comes from the frontend's lockfile, so every machine compiles identically.
+# It only warns about a denied or broken mj-include - and still exits 0 - so any
+# output on stderr fails the target rather than committing half an email.
+backend-emails:  ## Compile the MJML email templates to the HTML Django renders
+	@for src in $(EMAIL_TEMPLATES)/*/body.mjml; do \
+		errors=$$(cd $(FRONTEND) && bun x mjml "$$src" -o "$${src%.mjml}.html" \
+			--config.allowIncludes true --config.includePath "$(EMAIL_TEMPLATES)" \
+			--config.validationLevel strict 2>&1 >/dev/null); \
+		if [ $$? -ne 0 ] || [ -n "$$errors" ]; then echo "$$errors" >&2; exit 1; fi; \
+		html=$${src%.mjml}.html; echo "compiled $${html#$(CURDIR)/}"; \
+	done
+
+.PHONY: backend-email
+backend-email:  ## Send an email with its sample data to Mailpit (NAME=claim_code, or all)
+	cd $(BACKEND) && uv run manage.py send_preview_email $(or $(NAME),--all)
+
 # --- Frontend --------------------------------------------------------------
 
 .PHONY: frontend
@@ -111,8 +130,8 @@ frontend-api:  ## Regenerate the Orval client from backend/openapi.json
 # --- Infrastructure --------------------------------------------------------
 
 .PHONY: up
-up:  ## Start Postgres only (for running the backend on the host)
-	docker compose up -d db
+up:  ## Start Postgres and Mailpit (for running the backend on the host)
+	docker compose up -d db mailpit
 
 .PHONY: stack
 stack:  ## Build and start the whole stack in Docker

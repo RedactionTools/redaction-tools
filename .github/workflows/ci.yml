@@ -89,6 +89,14 @@ jobs:
         run: |
           bun run api:generate
           git diff --exit-code src/lib/api/generated
+      # The email HTML is compiled from MJML with this job's mjml and committed. Status,
+      # not diff: a newly added email's body.html would be untracked, not modified.
+      - name: Check the compiled email templates are current
+        working-directory: .
+        run: |
+          make backend-emails
+          changed=$(git status --porcelain backend/apps/core/templates/email)
+          if [ -n "$changed" ]; then echo "$changed"; git diff; exit 1; fi
       - run: bun run lint
       - run: bun run format:check
       # `next typegen` writes .next/types, which tsconfig.json includes for the

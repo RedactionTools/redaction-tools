@@ -74,6 +74,22 @@ def test_a_claim_starts_unverified_and_emails_a_code(client, bearer):
 
 
 @pytest.mark.django_db
+def test_the_claim_code_email_is_the_templated_one(client, bearer):
+    client.post(
+        URL,
+        {"tool": "adobe-acrobat", "work_email": "rep@adobe.com"},
+        content_type="application/json",
+        **bearer,
+    )
+
+    [message] = mail.outbox
+    assert message.subject == "Your code to claim Adobe Acrobat"
+    [(html, mimetype)] = message.alternatives
+    assert mimetype == "text/html"
+    assert "rep@adobe.com" in html
+
+
+@pytest.mark.django_db
 def test_the_emailed_code_is_never_stored_in_the_clear(client, bearer):
     client.post(
         URL,
