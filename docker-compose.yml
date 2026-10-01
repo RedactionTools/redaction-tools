@@ -35,6 +35,8 @@ services:
       PUBLIC_MEDIA_URL: ${PUBLIC_MEDIA_URL:-http://localhost:8007/media}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      # Mail is caught by Mailpit and read at http://localhost:8025.
+      EMAIL_HOST: mailpit
     volumes:
       - ./backend:/app
     ports:
@@ -42,6 +44,15 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      mailpit:
+        condition: service_started
+
+  # Catches every mail development sends: SMTP on 1025, the inbox on 8025.
+  mailpit:
+    image: axllent/mailpit:v1.31
+    ports:
+      - "${MAILPIT_SMTP_PORT:-1025}:1025"
+      - "${MAILPIT_PORT:-8025}:8025"
 
   qcluster:
     build:
