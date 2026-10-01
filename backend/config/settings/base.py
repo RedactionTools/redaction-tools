@@ -10,6 +10,8 @@ from pathlib import Path
 
 import environ
 
+from config.mail import default_mailer
+
 # backend/
 BASE_DIR = Path(__file__).resolve().parents[2]
 
@@ -260,10 +262,11 @@ CACHES = {
     }
 }
 
+# Brevo when BREVO_API_KEY is set, else EMAIL_BACKEND (see config/mail.py).
 MAILERS = {
-    "default": {
-        "BACKEND": env("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend"),
-    },
+    "default": default_mailer(
+        env, default_backend="django.core.mail.backends.console.EmailBackend"
+    ),
 }
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="noreply@redaction-tools.com")
 

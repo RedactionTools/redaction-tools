@@ -1,0 +1,10 @@
+{% autoescape off %}Your verification code for claiming {{ tool_name }} is {{ code }}.
+
+It confirms you can receive mail at {{ email }} and expires in {{ ttl_minutes }} minutes. It is not a sign-in code and cannot be used to access an account.
+
+A member of our team reviews every claim before any listing changes hands.
+
+-- 
+Redaction Tools
+{{ site_url }}
+{% endautoescape %}

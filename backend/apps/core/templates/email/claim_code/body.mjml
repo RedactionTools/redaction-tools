@@ -1,0 +1,19 @@
+<mjml lang="en">
+  <mj-head>
+    <mj-title>Your code to claim {{ tool_name }}</mj-title>
+    <mj-preview>Your verification code is {{ code }}</mj-preview>
+    <mj-include path="../_partials/head.mjml" />
+  </mj-head>
+  <mj-body background-color="#f4f4f5" width="624px">
+    <mj-include path="../_partials/header.mjml" />
+    <mj-section padding="0 32px" background-color="#f4f4f5">
+      <mj-column background-color="#ffffff" padding="32px 32px 16px">
+        <mj-text>Your verification code for claiming <strong>{{ tool_name }}</strong> is:</mj-text>
+        <mj-text font-size="28px" font-weight="600" letter-spacing="6px" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" padding="0 0 24px">{{ code }}</mj-text>
+        <mj-text>It confirms you can receive mail at {{ email }} and expires in {{ ttl_minutes }} minutes. It is not a sign-in code and cannot be used to access an account.</mj-text>
+        <mj-text>A member of our team reviews every claim before any listing changes hands.</mj-text>
+      </mj-column>
+    </mj-section>
+    <mj-include path="../_partials/footer.mjml" />
+  </mj-body>
+</mjml>

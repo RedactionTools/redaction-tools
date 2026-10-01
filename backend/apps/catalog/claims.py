@@ -6,11 +6,11 @@ import secrets
 from urllib.parse import urlparse
 
 from django.conf import settings
-from django.core.mail import send_mail
 from django.db import transaction
 from django.utils import timezone
 
 from apps.catalog.models import ToolClaim, ToolClaimCode, ToolClaimInvite, ToolClaimStatus
+from apps.core.email import send_templated_email
 
 logger = logging.getLogger(__name__)
 
@@ -78,17 +78,15 @@ def issue_claim_code(claim) -> str:
     )
 
     try:
-        send_mail(
-            subject=f"Your code to claim {claim.tool.name}",
-            message=(
-                f"Your verification code is {raw}.\n\n"
-                f"It confirms you can receive mail at {claim.work_email} and expires in "
-                f"{CODE_TTL_MINUTES} minutes. It is not a sign-in code and cannot be used "
-                "to access an account.\n\n"
-                "A member of our team reviews every claim before any listing changes hands."
-            ),
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[claim.work_email],
+        send_templated_email(
+            "claim_code",
+            {
+                "tool_name": claim.tool.name,
+                "code": raw,
+                "email": claim.work_email,
+                "ttl_minutes": CODE_TTL_MINUTES,
+            },
+            to=[claim.work_email],
         )
     except Exception:
         logger.exception("Could not email a claim code for claim %s", claim.pk)

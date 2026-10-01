@@ -1,0 +1,27 @@
+<mjml lang="en">
+  <mj-head>
+    <mj-title>Welcome to Redaction Tools</mj-title>
+    <mj-preview>Compare redaction software by price, method and measured leak rate.</mj-preview>
+    <mj-include path="../_partials/head.mjml" />
+  </mj-head>
+  <mj-body background-color="#f4f4f5" width="624px">
+    <mj-include path="../_partials/header.mjml" />
+    <mj-section padding="0 32px" background-color="#f4f4f5">
+      <mj-column background-color="#ffffff" padding="32px 32px 16px">
+        <mj-text>Hi{% if name %} {{ name }}{% endif %},</mj-text>
+        <mj-text>Welcome to Redaction Tools - an independent catalog of redaction software, with prices we check and benchmarks we run ourselves.</mj-text>
+        <mj-text padding="0 0 8px">A few places to start:</mj-text>
+        <mj-text>
+          <ul style="margin:0;padding-left:20px;">
+            <li style="margin-bottom:8px;"><a href="{{ site_url }}/" style="color:#18181b;">Compare tools</a> by price, detection method and deployment.</li>
+            <li style="margin-bottom:8px;"><a href="{{ site_url }}/price-calculator" style="color:#18181b;">Work out what a job costs</a> across every tool.</li>
+            <li style="margin-bottom:8px;"><a href="{{ site_url }}/benchmarks" style="color:#18181b;">See the benchmarks</a>: how many sensitive values each tool leaves recoverable.</li>
+            <li>Know a tool we are missing, or make one? <a href="{{ site_url }}/submit" style="color:#18181b;">Submit it</a>.</li>
+          </ul>
+        </mj-text>
+        <mj-button href="{{ site_url }}/" background-color="#18181b" color="#ffffff" font-size="15px" border-radius="6px" align="left" padding="8px 0 16px">Browse the catalog</mj-button>
+      </mj-column>
+    </mj-section>
+    <mj-include path="../_partials/footer.mjml" />
+  </mj-body>
+</mjml>

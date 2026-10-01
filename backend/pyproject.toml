@@ -22,6 +22,7 @@ dependencies = [
     # The benchmark scorer, vendored as a git submodule so the backend scores uploads with
     # exactly the code the CLI publishes with. Bump it with the submodule, never alone.
     "pdfredeval[score]",
+    "django-anymail[brevo]>=15.2",
 ]
 
 [tool.uv.sources]
