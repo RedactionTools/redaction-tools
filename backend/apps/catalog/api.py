@@ -13,6 +13,7 @@ being true is the point to move the bar into SQL.
 from types import SimpleNamespace
 
 from django.conf import settings
+from django.db.models import Exists, OuterRef
 from django.http import HttpRequest
 from django.urls import reverse
 from django.utils import timezone
@@ -89,8 +90,14 @@ MAX_PAGE_SIZE = 100
 
 
 def _base_queryset():
+    # In the same query as the tool: a per-row lookup would cost the hub one query
+    # for every tool it lists.
+    maintained = ToolClaim.objects.filter(
+        tool=OuterRef("pk"), status=ToolClaimStatus.APPROVED, user__is_active=True
+    )
     return (
         Tool.objects.published()
+        .annotate(is_vendor_maintained=Exists(maintained))
         .select_related("vendor")
         .prefetch_related(
             "facets__value__dimension", "plans__prices", "plans__limits", "screenshots"
@@ -141,6 +148,7 @@ def _row(tool):
         "summary": tool.summary,
         "logo_url": tool.logo_url,
         "is_first_party": tool.is_first_party,
+        "is_vendor_maintained": tool.is_vendor_maintained,
         "vendor": tool.vendor,
         "facet_slugs": tool.facet_slugs,
         "price_summary": price_summary(tool),

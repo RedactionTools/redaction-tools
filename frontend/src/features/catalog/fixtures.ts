@@ -19,6 +19,7 @@ export function makeTool(overrides: Partial<ToolListItemOut> = {}): ToolListItem
     summary: 'Adobe Acrobat Pro includes search-and-redact at $22.99 per month.',
     logo_url: '/images/tools/adobe-acrobat.svg',
     is_first_party: false,
+    is_vendor_maintained: false,
     vendor: { slug: 'adobe', name: 'Adobe', hq_country: 'US' },
     facet_slugs: ['pdf', 'desktop', 'manual-redaction'],
     price_summary: {

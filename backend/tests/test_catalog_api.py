@@ -345,3 +345,77 @@ def test_detail_drops_a_malformed_faq_entry_rather_than_failing(client):
 
     assert response.status_code == 200
     assert response.json()["faq"] == [{"question": "Kept?", "answer": "Yes."}]
+
+
+# --- Vendor-maintained ------------------------------------------------------------
+
+
+def _claim(slug, *, status="approved", active=True):
+    from django.contrib.auth import get_user_model
+
+    from apps.catalog.models import ToolClaim
+
+    account = get_user_model().objects.create_user(
+        email=f"rep-{status}-{active}@{slug}.example", is_active=active
+    )
+    return ToolClaim.objects.create(
+        tool=Tool.objects.get(slug=slug),
+        user=account,
+        work_email=account.email,
+        email_domain=f"{slug}.example",
+        status=status,
+    )
+
+
+def _maintained(client):
+    return {
+        tool["slug"]: tool["is_vendor_maintained"] for tool in client.get(LIST_URL).json()["items"]
+    }
+
+
+@pytest.mark.django_db
+def test_an_approved_claim_marks_a_tool_vendor_maintained(client):
+    _claim("caseguard")
+
+    maintained = _maintained(client)
+
+    assert maintained["caseguard"] is True
+    assert maintained["adobe-acrobat"] is False
+    assert client.get(f"{LIST_URL}/caseguard").json()["is_vendor_maintained"] is True
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "status", ["pending_verification", "pending_review", "rejected", "revoked"]
+)
+def test_a_claim_that_is_not_approved_marks_nothing(client, status):
+    _claim("caseguard", status=status)
+
+    assert _maintained(client)["caseguard"] is False
+
+
+@pytest.mark.django_db
+def test_a_claim_held_by_a_deactivated_account_marks_nothing(client):
+    """Nobody can sign in to maintain it, so the badge would be a claim we cannot back."""
+    _claim("caseguard", active=False)
+
+    assert _maintained(client)["caseguard"] is False
+
+
+@pytest.mark.django_db
+def test_the_mark_costs_no_query_per_tool(client):
+    from django.db import connection
+    from django.test.utils import CaptureQueriesContext
+
+    def queries():
+        with CaptureQueriesContext(connection) as captured:
+            client.get(LIST_URL)
+        return len(captured)
+
+    _claim("caseguard")
+    client.get(LIST_URL)  # warm anything cached per process
+    one_claimed = queries()
+    for slug in ("redactable", "ilovepdf", "foxit-editor", "nitro-pdf"):
+        _claim(slug)
+
+    assert queries() == one_claimed
