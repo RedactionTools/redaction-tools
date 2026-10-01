@@ -1,8 +1,28 @@
-import { render, screen } from '@testing-library/react'
+import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import type { ReactElement } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { UserMenu } from '@/features/account/user-menu'
+import { getGetMeQueryKey } from '@/lib/api/generated/auth/auth'
+import { getStaffListCommentsQueryKey } from '@/lib/api/generated/comments-staff/comments-staff'
+import { makeTestQueryClient, renderWithProviders } from '@/test/render'
+
+/** Seeds the account as staff or not, so the menu never asks the network. */
+function render(ui: ReactElement, { staff = false, pending = 0 } = {}) {
+  const queryClient = makeTestQueryClient()
+  queryClient.setQueryData(getGetMeQueryKey(), {
+    id: 'u1',
+    email: 'ada@example.com',
+    name: 'Ada Lovelace',
+    is_staff: staff,
+  })
+  queryClient.setQueryData(
+    getStaffListCommentsQueryKey({ status: 'pending', limit: 1, offset: 0 }),
+    { count: pending, items: [] },
+  )
+  return renderWithProviders(ui, { queryClient })
+}
 
 const useSession = vi.fn()
 const signIn = vi.fn()
@@ -99,6 +119,28 @@ describe('UserMenu when signed in', () => {
       'href',
       '/my-listings',
     )
+  })
+
+  it('links staff to the comments waiting for review, with the count', async () => {
+    const user = userEvent.setup()
+    render(<UserMenu />, { staff: true, pending: 2 })
+
+    await openMenu(user)
+
+    expect(await screen.findByRole('menuitem', { name: 'Moderate comments (2)' })).toHaveAttribute(
+      'href',
+      '/staff/comments',
+    )
+  })
+
+  it('does not offer moderation to a reader', async () => {
+    const user = userEvent.setup()
+    render(<UserMenu />)
+
+    await openMenu(user)
+
+    await screen.findByRole('menuitem', { name: 'My listings' })
+    expect(screen.queryByRole('menuitem', { name: /moderate/i })).not.toBeInTheDocument()
   })
 
   it('signs out from the menu', async () => {

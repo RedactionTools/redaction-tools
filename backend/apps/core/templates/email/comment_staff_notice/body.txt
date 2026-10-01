@@ -1,0 +1,7 @@
+{% autoescape off %}{{ author_name }} commented on {{ page_title }}, and it is waiting for review.
+
+{{ comment_excerpt }}
+
+Review it: {{ queue_url }}
+In place: {{ comment_url }}
+{% endautoescape %}

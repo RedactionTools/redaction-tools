@@ -8,6 +8,7 @@ import {
   getGetToolQueryKey,
   getListExchangeRatesQueryOptions,
 } from '@/lib/api/generated/catalog/catalog'
+import { getListToolCommentsQueryOptions } from '@/lib/api/generated/comments/comments'
 import { fetchTool } from '@/lib/catalog/server'
 import { clientEnv } from '@/lib/env'
 import { toolMetaDescription } from '@/lib/seo/description'
@@ -48,7 +49,12 @@ export default async function ToolPage({ params }: PageProps<'/tool/[slug]'>) {
   queryClient.setQueryData(getGetToolQueryKey(slug), tool)
   // For the cost table's currency picker. `prefetchQuery` swallows a failure,
   // and the table then prices each plan in its own currency, as it did before.
-  await queryClient.prefetchQuery(getListExchangeRatesQueryOptions())
+  // The comments are prefetched so the published thread is in the HTML a
+  // crawler reads; if that fails, the browser asks again.
+  await Promise.all([
+    queryClient.prefetchQuery(getListExchangeRatesQueryOptions()),
+    queryClient.prefetchQuery(getListToolCommentsQueryOptions(slug)),
+  ])
 
   const site = clientEnv.NEXT_PUBLIC_SITE_URL
   // The FAQ node is spread rather than listed: it is undefined when the

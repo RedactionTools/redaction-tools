@@ -271,6 +271,8 @@ production. Tests always use the in-memory backend.
 | `benchmark_scored` | scoring settles: waiting for review, or failed with each case's error | the submitter |
 | `benchmark_staff_notice` | the same, only when it is waiting for review; links to the admin via `BACKEND_URL` | every active `is_staff` account |
 | `benchmark_reviewed` | an editor approves (links to the tool's report) or rejects (passes on the note) | the submitter |
+| `comment_staff_notice` | a comment lands awaiting review, or an edit sends a published one back | every active `is_staff` account |
+| `comment_reply` | a reply is published - on posting or on approval - and not by the author it answers | the parent comment's author |
 
 A staff member's own benchmark submission approves itself on scoring and mails nobody.
 
@@ -448,6 +450,39 @@ backend. What to know:
 - **What reads the posts:** `/blog`, `/blog/page/N`, `/blog/[slug]` (with its own share card),
   `/blog/tags/...`, the RSS feeds at `/blog/rss.xml` and `/blog/tags/<tag>/rss.xml`, the sitemap and
   `llms.txt`. The feeds are exempt from the auth proxy, like the other machine-read files.
+
+## Comments
+
+Signed-in readers comment on tool pages and blog posts; `backend/apps/comments/` holds it all. A
+comment hangs off a `Tool` (foreign key) or a blog post (`blog_slug`) - the posts are MDX in the
+frontend, so a slug is all the backend can know about one, and it checks only the slug's format. A
+comment on a slug with no post never renders, and still shows up in the queue.
+
+Replies nest to `COMMENTS_MAX_DEPTH`. The API returns each page's thread flat, oldest first, and
+`src/features/comments/build-tree.ts` nests it. A comment that leaves the page while it still has
+a published reply below it stays as a blank placeholder, so the replies are not orphaned.
+
+**Who skips review** is decided in one place, `services.initial_status()`: staff always; everyone
+while auto-approve is on; and an account with `trusted_after` published comments. Both switches
+live in the `CommentSettings` row, not in an env var, so staff can flip them during a spam wave
+without a deploy. An edit runs the same check again, which is what stops a comment being approved
+for one text and edited into another.
+
+**Moderation** has three front doors onto `apps/comments/staff.py`:
+
+| Where | What |
+| --- | --- |
+| The page itself | Staff see the page's pending comments in the thread, with Publish / Reject / Remove |
+| `/staff/comments` | The site-wide queue by status, with an optional note, and the auto-approve switch |
+| The staff MCP | `comments_list`, `comments_review`, `comments_get_settings`, `comments_set_settings` |
+
+There are no Django admin actions. Removing a comment keeps its text for the record; an author's
+own delete blanks it.
+
+Abuse controls are login, `COMMENTS_POST_RATE` per account, and `COMMENTS_MAX_PENDING` - how many
+comments one account may leave waiting. Bodies are plain text and render as text, never as HTML or
+markdown. The public thread never carries an email address: `User.__str__` is one, so names come
+from `user.name`, falling back to "Member".
 
 ## Rendering and the API-down build
 

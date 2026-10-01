@@ -50,7 +50,7 @@ def payload(result):
 def test_the_server_offers_exactly_the_staff_catalog_tools(mcp):
     names = {tool["name"] for tool in mcp("tools/list").json()["result"]["tools"]}
 
-    assert names == TOOLS
+    assert {name for name in names if name.startswith("catalog_")} == TOOLS
 
 
 def test_list_tools_pages_the_catalog(call_tool):

@@ -32,6 +32,17 @@ describe('ToolTable', () => {
     )
   })
 
+  it('links the logo to the same page as the name', () => {
+    render()
+
+    const row = screen.getByTestId('tool-row-adobe-acrobat')
+    const logo = row.querySelector('img, [data-testid="tool-monogram"]')!
+    expect(logo.closest('a')).toHaveAttribute('href', '/tool/adobe-acrobat')
+    // One link per tool for a keyboard or a screen reader: the logo's is a
+    // shortcut for the pointer, beside the name's.
+    expect(within(row).getAllByRole('link')).toHaveLength(1)
+  })
+
   // The hub follows the editors' order, not price: a caption claiming otherwise
   // tells a reader the first row is the cheapest when it may not be.
   it('makes no claim about the order in its caption', () => {

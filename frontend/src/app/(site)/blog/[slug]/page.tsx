@@ -8,6 +8,7 @@ import { PostNav } from '@/components/blog/post-nav'
 import { PostToc } from '@/components/blog/post-toc'
 import { TagList } from '@/components/blog/tag-list'
 import { getMDXComponents } from '@/components/mdx'
+import { CommentSection } from '@/features/comments/comment-section'
 import { getAuthor } from '@/lib/blog/authors'
 import { adjacentPosts } from '@/lib/blog/posts'
 import { getPost, getPostMetas, getPosts } from '@/lib/blog/source'
@@ -111,6 +112,8 @@ export default async function BlogPostPage(props: PageProps<'/blog/[slug]'>) {
           </div>
         </aside>
       </div>
+
+      <CommentSection targetType="blog" slug={post.slug} />
 
       <PostNav prev={prev} next={next} />
     </article>
