@@ -1,4 +1,5 @@
 import { screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 
 import { getGetToolQueryKey } from '@/lib/api/generated/catalog/catalog'
@@ -32,6 +33,19 @@ describe('ToolProfile', () => {
     const link = screen.getByRole('link', { name: /pdf redaction benchmark/i })
     expect(link).toHaveAttribute('href', '/benchmarks/pdf/tools/adobe-acrobat')
     expect(link).not.toHaveAttribute('rel')
+  })
+
+  // Our measurement is the page's lead call to action, so it is the filled button
+  // and the way out to the vendor is the outlined one beside it.
+  it('shows the benchmark link as the primary button', () => {
+    render(makeToolDetail({ benchmarks: [{ suite: 'pdf', name: 'PDF redaction' }] }))
+
+    expect(screen.getByRole('link', { name: /pdf redaction benchmark/i })).toHaveClass(
+      'bg-foreground',
+    )
+    expect(screen.getByRole('link', { name: /visit adobe acrobat/i })).not.toHaveClass(
+      'bg-foreground',
+    )
   })
 
   it('offers no benchmark link before the tool has results', () => {
@@ -171,6 +185,22 @@ describe('ToolProfile', () => {
     render()
 
     expect(screen.queryByTestId('vendor-copy')).not.toBeInTheDocument()
+  })
+
+  it('says when the vendor maintains the listing, and what that means', async () => {
+    const user = userEvent.setup()
+    render(makeToolDetail({ is_vendor_maintained: true }))
+
+    const badge = screen.getByText('Vendor-maintained')
+    await user.hover(badge)
+
+    expect(await screen.findByRole('tooltip')).toHaveTextContent(/reviewed by our editors/i)
+  })
+
+  it('makes no such claim for a listing nobody from the vendor maintains', () => {
+    render()
+
+    expect(screen.queryByText('Vendor-maintained')).not.toBeInTheDocument()
   })
 
   it('discloses a first-party listing', () => {

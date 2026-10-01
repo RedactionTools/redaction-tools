@@ -1,0 +1,14 @@
+{% autoescape off %}{% if failed %}We could not score every case in your {{ tool_name }} submission to the {{ suite_name }} benchmark ({{ revision }}):
+{% for failure in failures %}
+- {{ failure.case }}: {{ failure.error }}{% endfor %}
+
+A submission with a failed case cannot be published. Fix the output and send a new submission.{% else %}Your {{ tool_name }} submission to the {{ suite_name }} benchmark ({{ revision }}) is scored - {{ case_count }} case{{ case_count|pluralize }}.
+
+A person reviews it next. We will email you when it is approved and published.{% endif %}
+
+See the details: {{ site_url }}/benchmarks/submissions
+
+-- 
+Redaction Tools
+{{ site_url }}
+{% endautoescape %}

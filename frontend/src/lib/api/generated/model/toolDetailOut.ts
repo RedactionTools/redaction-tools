@@ -20,6 +20,7 @@ export interface ToolDetailOut {
   summary: string;
   logo_url: string;
   is_first_party: boolean;
+  is_vendor_maintained: boolean;
   vendor: VendorOut;
   facet_slugs: string[];
   price_summary: PriceSummaryOut;

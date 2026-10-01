@@ -1,0 +1,12 @@
+{
+  "tool_name": "PDF Redaction",
+  "tool_slug": "pdf-redaction",
+  "suite_name": "PDF redaction",
+  "suite_slug": "pdf",
+  "revision": "v0.1.1",
+  "case_count": 12,
+  "failed": true,
+  "failures": [
+    {"case": "extraction-conditions-1", "error": "pdfium could not open the file"}
+  ]
+}

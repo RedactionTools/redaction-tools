@@ -21,7 +21,7 @@ from django.conf import settings
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
-from apps.benchmarks import files
+from apps.benchmarks import emails, files
 from apps.benchmarks.files import FileRejected
 from apps.benchmarks.models import (
     Case,
@@ -352,6 +352,7 @@ def finalize(*, user, submission):
     submission.status = SubmissionStatus.SCORING
     submission.submitted_at = timezone.now()
     submission.save(update_fields=["status", "submitted_at", "updated_at"])
+    emails.queue_sent(submission)
     for run in runs:
         scoring.enqueue(run)
     submission.refresh_from_db()
@@ -384,6 +385,7 @@ def review(*, user, submission, status, note=""):
     submission.save(
         update_fields=["status", "reviewed_by", "reviewed_at", "review_note", "updated_at"]
     )
+    emails.queue_reviewed(submission)
     return submission
 
 

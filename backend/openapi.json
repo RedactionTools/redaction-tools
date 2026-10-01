@@ -3508,6 +3508,10 @@
             "title": "Is First Party",
             "type": "boolean"
           },
+          "is_vendor_maintained": {
+            "title": "Is Vendor Maintained",
+            "type": "boolean"
+          },
           "vendor": {
             "$ref": "#/components/schemas/VendorOut"
           },
@@ -3536,6 +3540,7 @@
           "summary",
           "logo_url",
           "is_first_party",
+          "is_vendor_maintained",
           "vendor",
           "facet_slugs",
           "price_summary",
@@ -3653,6 +3658,10 @@
             "title": "Is First Party",
             "type": "boolean"
           },
+          "is_vendor_maintained": {
+            "title": "Is Vendor Maintained",
+            "type": "boolean"
+          },
           "vendor": {
             "$ref": "#/components/schemas/VendorOut"
           },
@@ -3748,6 +3757,7 @@
           "summary",
           "logo_url",
           "is_first_party",
+          "is_vendor_maintained",
           "vendor",
           "facet_slugs",
           "price_summary",

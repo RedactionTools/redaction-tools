@@ -32,6 +32,16 @@ describe('ToolTable', () => {
     )
   })
 
+  // The hub follows the editors' order, not price: a caption claiming otherwise
+  // tells a reader the first row is the cheapest when it may not be.
+  it('makes no claim about the order in its caption', () => {
+    render()
+
+    const caption = document.querySelector('caption')
+    expect(caption).toHaveTextContent('redaction tools, with prices as last verified.')
+    expect(caption).not.toHaveTextContent(/sorted/i)
+  })
+
   it('shows the vendor and the entry price', () => {
     render()
 
@@ -132,6 +142,18 @@ describe('ToolTable', () => {
     expect(within(row).getByTestId('provenance-adobe-acrobat')).toHaveAccessibleName(
       /entered by our editors/i,
     )
+  })
+
+  it('marks a tool its vendor maintains here', () => {
+    render([
+      makeTool({ slug: 'caseguard', name: 'CaseGuard', is_vendor_maintained: true }),
+      makeTool(),
+    ])
+
+    const maintained = screen.getByTestId('tool-row-caseguard')
+    expect(within(maintained).getByText('Vendor-maintained')).toBeInTheDocument()
+    const other = screen.getByTestId('tool-row-adobe-acrobat')
+    expect(within(other).queryByText('Vendor-maintained')).not.toBeInTheDocument()
   })
 
   it('does not clutter the table with the first-party note', () => {

@@ -22,6 +22,7 @@ import { formatCost, priceHeadline } from '@/lib/catalog/format'
 import { MethodIcons, MethodLegend } from './method-icons'
 import { PriceProvenanceBadge } from './price-provenance-badge'
 import { ToolLogo } from './tool-logo'
+import { VendorMaintainedBadge } from './vendor-maintained-badge'
 
 /**
  * The month every row is costed at: 100 ten-page documents, 1,000 pages.
@@ -59,9 +60,7 @@ export function ToolTable({ filters }: { filters: CatalogFilters }) {
   return (
     <div className="space-y-3">
       <Table>
-        <TableCaption>
-          {data.count} redaction tools, with prices as last verified. Sorted by entry price.
-        </TableCaption>
+        <TableCaption>{data.count} redaction tools, with prices as last verified.</TableCaption>
         <TableHead>
           <TableRow>
             <TableHeader>Tool</TableHeader>
@@ -89,9 +88,14 @@ export function ToolTable({ filters }: { filters: CatalogFilters }) {
                 <div className="flex items-center gap-3">
                   <ToolLogo name={tool.name} logoUrl={tool.logo_url} />
                   <div>
-                    <Link href={`/tool/${tool.slug}`} className="font-medium hover:underline">
-                      {tool.name}
-                    </Link>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Link href={`/tool/${tool.slug}`} className="font-medium hover:underline">
+                        {tool.name}
+                      </Link>
+                      {tool.is_vendor_maintained ? (
+                        <VendorMaintainedBadge vendor={tool.vendor.name} />
+                      ) : null}
+                    </div>
                     <p className="text-muted-foreground text-xs">{tool.vendor.name}</p>
                   </div>
                 </div>

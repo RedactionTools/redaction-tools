@@ -85,6 +85,9 @@ class ToolListItemOut(Schema):
     summary: str
     logo_url: str
     is_first_party: bool
+    # Someone from the vendor holds an approved claim and maintains the listing.
+    # Their changes are still proposals an editor reviews.
+    is_vendor_maintained: bool
     vendor: VendorOut
     facet_slugs: list[str]
     price_summary: PriceSummaryOut

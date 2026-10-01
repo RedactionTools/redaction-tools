@@ -89,14 +89,26 @@ describe('UserMenu when signed in', () => {
     expect(screen.getByText('ada@example.com')).toBeInTheDocument()
   })
 
+  it('links to the listings the account manages', async () => {
+    const user = userEvent.setup()
+    render(<UserMenu />)
+
+    await openMenu(user)
+
+    expect(await screen.findByRole('menuitem', { name: 'My listings' })).toHaveAttribute(
+      'href',
+      '/my-listings',
+    )
+  })
+
   it('signs out from the menu', async () => {
     const user = userEvent.setup()
     render(<UserMenu />)
 
     await openMenu(user)
-    // Opening focuses "Account"; arrow down to "Sign out" and activate it.
+    // Opening focuses "Account"; arrow down past "My listings" to "Sign out".
     await screen.findByRole('menuitem', { name: /sign out/i })
-    await user.keyboard('{ArrowDown}{Enter}')
+    await user.keyboard('{ArrowDown}{ArrowDown}{Enter}')
 
     expect(signOut).toHaveBeenCalled()
   })

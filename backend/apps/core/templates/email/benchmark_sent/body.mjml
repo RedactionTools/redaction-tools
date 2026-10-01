@@ -1,0 +1,18 @@
+<mjml lang="en">
+  <mj-head>
+    <mj-title>Scoring your {{ tool_name }} benchmark submission</mj-title>
+    <mj-preview>We are scoring it now, and will email you when it is done.</mj-preview>
+    <mj-include path="../_partials/head.mjml" />
+  </mj-head>
+  <mj-body background-color="#f4f4f5" width="624px">
+    <mj-include path="../_partials/header.mjml" />
+    <mj-section padding="0 32px" background-color="#f4f4f5">
+      <mj-column background-color="#ffffff" padding="32px 32px 16px">
+        <mj-text>Thanks for submitting <strong>{{ tool_name }}</strong> to the {{ suite_name }} benchmark ({{ revision }}) - {{ case_count }} case{{ case_count|pluralize }}.</mj-text>
+        <mj-text>We are scoring {{ case_count|pluralize:"it,them" }} now and will email you when scoring is done. After that a person reviews the submission before anything is published.</mj-text>
+        <mj-button href="{{ site_url }}/benchmarks/submissions" background-color="#18181b" color="#ffffff" font-size="15px" border-radius="6px" align="left" padding="8px 0 16px">Follow your submission</mj-button>
+      </mj-column>
+    </mj-section>
+    <mj-include path="../_partials/footer.mjml" />
+  </mj-body>
+</mjml>

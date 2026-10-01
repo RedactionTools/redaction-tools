@@ -11,6 +11,7 @@ plain-text client or a spam filter reads, so it is written, not derived.
 from pathlib import Path
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 
@@ -41,3 +42,13 @@ def send_templated_email(name: str, context: dict, *, to: list[str]) -> None:
     )
     message.attach_alternative(render_to_string(f"{folder}/body.html", context), "text/html")
     message.send()
+
+
+def staff_addresses() -> list[str]:
+    """Where staff notices go: every active staff account."""
+    return list(
+        get_user_model()
+        .objects.filter(is_staff=True, is_active=True)
+        .order_by("email")
+        .values_list("email", flat=True)
+    )

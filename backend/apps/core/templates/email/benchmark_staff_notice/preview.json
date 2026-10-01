@@ -1,0 +1,13 @@
+{
+  "tool_name": "PDF Redaction",
+  "tool_slug": "pdf-redaction",
+  "suite_name": "PDF redaction",
+  "suite_slug": "pdf",
+  "revision": "v0.1.1",
+  "case_count": 12,
+  "submitter_name": "Ada Lovelace",
+  "submitter_role": "Community",
+  "origin": "Uploaded outputs, scored by us",
+  "notes": "Ran on the Pro tier with OCR switched on.",
+  "admin_url": "http://localhost:8007/admin/benchmarks/submission/00000000-0000-0000-0000-000000000000/change/"
+}
