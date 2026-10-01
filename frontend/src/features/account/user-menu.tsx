@@ -14,7 +14,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useIsStaff } from '@/features/catalog/staff/use-is-staff'
 import { analytics } from '@/lib/analytics'
+import { useStaffListComments } from '@/lib/api/generated/comments-staff/comments-staff'
 
 /** "Ada Lovelace" -> "AL"; falls back to the email's first letter. */
 function initials(name?: string | null, email?: string | null): string {
@@ -74,8 +76,28 @@ export function UserMenu() {
         <DropdownMenuItem asChild>
           <Link href="/my-listings">My listings</Link>
         </DropdownMenuItem>
+        <ModerationItem />
         <DropdownMenuItem onSelect={handleSignOut}>Sign out</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+  )
+}
+
+/**
+ * Staff only, and asked only once the menu is open: the menu content mounts on
+ * open, so a closed menu costs no request.
+ */
+function ModerationItem() {
+  const isStaff = useIsStaff()
+  const { data } = useStaffListComments(
+    { status: 'pending', limit: 1, offset: 0 },
+    { query: { enabled: isStaff } },
+  )
+  if (!isStaff) return null
+
+  return (
+    <DropdownMenuItem asChild>
+      <Link href="/staff/comments">Moderate comments{data?.count ? ` (${data.count})` : ''}</Link>
+    </DropdownMenuItem>
   )
 }

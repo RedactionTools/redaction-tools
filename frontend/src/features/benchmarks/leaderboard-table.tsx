@@ -32,6 +32,8 @@ export function LeaderboardTable({
   rows: LeaderboardRowOut[]
   caseCount: number
 }) {
+  const reportHref = (slug: string) => `/benchmarks/${suite}/tools/${slug}?revision=${revision}`
+
   if (rows.length === 0) {
     return (
       <p className="text-muted-foreground border-border rounded-md border border-dashed py-10 text-center">
@@ -68,13 +70,18 @@ export function LeaderboardTable({
             </TableCell>
             <TableCell>
               <div className="flex items-center gap-3">
-                <ToolLogo name={row.tool.name} logoUrl={row.tool.logo_url} />
+                {row.tool.listable ? (
+                  // Where the name goes, for the pointer only: a second link per
+                  // row would make a keyboard tab through every result twice.
+                  <Link href={reportHref(row.tool.slug)} tabIndex={-1} aria-hidden="true">
+                    <ToolLogo name={row.tool.name} logoUrl={row.tool.logo_url} />
+                  </Link>
+                ) : (
+                  <ToolLogo name={row.tool.name} logoUrl={row.tool.logo_url} />
+                )}
                 <div>
                   {row.tool.listable ? (
-                    <Link
-                      href={`/benchmarks/${suite}/tools/${row.tool.slug}?revision=${revision}`}
-                      className="font-medium hover:underline"
-                    >
+                    <Link href={reportHref(row.tool.slug)} className="font-medium hover:underline">
                       {row.tool.name}
                     </Link>
                   ) : (

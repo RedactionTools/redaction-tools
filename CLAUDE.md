@@ -128,6 +128,20 @@ The parts that bite if you miss them:
   Only its hash is stored, it never expires and it redeems once. The off switch is the admin's
   revoke action, not a TTL.
 
+## Comments live in `apps/comments/`
+
+`DEVELOPMENT.md` has the details. What bites:
+
+- **A blog target is just a slug.** Posts are frontend MDX, so the backend checks the format and
+  nothing else. Tool targets go through `Tool.is_listable()` like every public route.
+- **`services.initial_status()` is the only place that decides whether a comment skips review**
+  (staff, auto-approve, or `trusted_after` published comments). Edits run it again on purpose.
+- **Auto-approve is a `CommentSettings` row, not an env var**, so staff can switch it at runtime.
+- **Same rule as the catalog: moderation writes go through `apps/comments/staff.py`.** The staff
+  routes (`/comments/staff/`, in the generated contract) and the MCP tools (`comments_*`, not in
+  it) only translate. The emails are queued from the services, so every surface sends them.
+- **Never serialise `str(user)` on a comment** - it is the email. Use `services.serialize()`.
+
 ## Email
 
 Templates live in `backend/apps/core/templates/email/<name>/`; `DEVELOPMENT.md` has the

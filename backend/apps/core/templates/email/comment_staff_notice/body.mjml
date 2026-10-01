@@ -1,0 +1,18 @@
+<mjml lang="en">
+  <mj-head>
+    <mj-title>Comment to review on {{ page_title }}</mj-title>
+    <mj-preview>{{ author_name }} commented on {{ page_title }}, and it is waiting for review.</mj-preview>
+    <mj-include path="../_partials/head.mjml" />
+  </mj-head>
+  <mj-body background-color="#f4f4f5" width="624px">
+    <mj-include path="../_partials/header.mjml" />
+    <mj-section padding="0 32px" background-color="#f4f4f5">
+      <mj-column background-color="#ffffff" padding="32px 32px 16px">
+        <mj-text><strong>{{ author_name }}</strong> commented on <a href="{{ comment_url }}">{{ page_title }}</a>, and it is waiting for review.</mj-text>
+        <mj-text color="#3f3f46" padding-left="16px">{{ comment_excerpt|linebreaksbr }}</mj-text>
+        <mj-button href="{{ queue_url }}" background-color="#18181b" color="#ffffff" font-size="15px" border-radius="6px" align="left" padding="8px 0 16px">Open the review queue</mj-button>
+      </mj-column>
+    </mj-section>
+    <mj-include path="../_partials/footer.mjml" />
+  </mj-body>
+</mjml>

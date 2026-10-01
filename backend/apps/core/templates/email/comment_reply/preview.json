@@ -1,0 +1,7 @@
+{
+  "author_name": "Grace Hopper",
+  "page_title": "PDF Redaction",
+  "parent_excerpt": "Does the OCR pass catch text inside scanned tables?",
+  "comment_excerpt": "It did in our tests, as long as the scan was 300 dpi or better.",
+  "comment_url": "http://localhost:3007/tool/pdf-redaction#comment-2"
+}

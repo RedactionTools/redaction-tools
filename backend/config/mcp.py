@@ -14,6 +14,7 @@ from django_mcpz.server import MCPServer
 
 from apps.accounts.mcp_auth import staff_auth
 from apps.catalog.mcp import register as register_catalog
+from apps.comments.mcp import register as register_comments
 
 INSTRUCTIONS = """\
 Staff console for the redaction-tools catalog. "Tool" here means a product
@@ -54,16 +55,27 @@ description_md must be our own editorial. Vendor copy never counts toward the
 
 Never invent a figure. Every price must come from the vendor's own page, and
 source_evidence_url should point at it.
+
+Reader comments on tool pages and blog posts are moderated with the comments_
+tools. comments_list with status='pending' is the queue; comments_review
+publishes, rejects or removes one. A comment skips the queue when its author is
+staff, when auto-approve is on, or when the author already has trusted_after
+published comments - comments_get_settings and comments_set_settings read and
+change those two switches.
 """
 
 server = MCPServer(
     name="redaction-tools-staff",
     title="redaction-tools (staff)",
     version="1.0.0",
-    description="Read and edit the redaction-tools catalog: listings, plans and prices.",
+    description=(
+        "Read and edit the redaction-tools catalog: listings, plans and prices. "
+        "Moderate reader comments."
+    ),
     website_url="https://redaction-tools.com",
     instructions=INSTRUCTIONS,
     auth=staff_auth,
 )
 
 register_catalog(server)
+register_comments(server)
