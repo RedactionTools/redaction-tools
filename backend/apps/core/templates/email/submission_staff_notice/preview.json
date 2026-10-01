@@ -1,0 +1,12 @@
+{
+  "name": "Acme Redact",
+  "vendor_name": "Acme",
+  "homepage_url": "https://acme.example/",
+  "pricing_url": "https://acme.example/pricing",
+  "description": "Redacts PDFs and scanned images in the browser.\nNo upload: everything runs locally.",
+  "notes": "We have an education discount.",
+  "submitter_email": "founder@acme.example",
+  "contact_email": "",
+  "submitter_is_owner": true,
+  "admin_url": "http://localhost:8007/admin/catalog/toolsubmission/1/change/"
+}

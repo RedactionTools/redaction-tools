@@ -1,0 +1,17 @@
+<mjml lang="en">
+  <mj-head>
+    <mj-title>We received your submission: {{ name }}</mj-title>
+    <mj-preview>Every submission is reviewed by a person.</mj-preview>
+    <mj-include path="../_partials/head.mjml" />
+  </mj-head>
+  <mj-body background-color="#f4f4f5" width="624px">
+    <mj-include path="../_partials/header.mjml" />
+    <mj-section padding="0 32px" background-color="#f4f4f5">
+      <mj-column background-color="#ffffff" padding="32px 32px 16px">
+        <mj-text>Thanks for submitting <strong>{{ name }}</strong> (<a href="{{ homepage_url }}" style="color:#18181b;">{{ homepage_url }}</a>) to Redaction Tools.</mj-text>
+        <mj-text>Every submission is reviewed by a person before anything appears on the site. If it fits the catalog we write the listing ourselves - with our own assessment and prices we check against the vendor's page - so it can take a while, and not every submission becomes a listing.</mj-text>
+      </mj-column>
+    </mj-section>
+    <mj-include path="../_partials/footer.mjml" />
+  </mj-body>
+</mjml>

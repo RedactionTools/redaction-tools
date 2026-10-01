@@ -1,0 +1,17 @@
+{% autoescape off %}A tool was submitted and is waiting for review.
+
+Tool: {{ name }}{% if vendor_name %}
+Vendor: {{ vendor_name }}{% endif %}
+Homepage: {{ homepage_url }}{% if pricing_url %}
+Pricing: {{ pricing_url }}{% endif %}
+Submitted by: {{ submitter_email }}{% if contact_email %} (contact: {{ contact_email }}){% endif %}{% if submitter_is_owner %}
+Says they work for the vendor - route to the claim flow on approval.{% endif %}
+
+Description:
+{{ description }}
+{% if notes %}
+Notes:
+{{ notes }}
+{% endif %}
+Review it: {{ admin_url }}
+{% endautoescape %}
