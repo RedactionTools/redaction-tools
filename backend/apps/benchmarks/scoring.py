@@ -21,7 +21,7 @@ from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
-from apps.benchmarks import files
+from apps.benchmarks import emails, files
 from apps.benchmarks.files import FileRejected
 from apps.benchmarks.models import (
     Run,
@@ -96,6 +96,7 @@ def settle(submission_pk):
         else:
             submission.status = SubmissionStatus.PENDING_REVIEW
         submission.save(update_fields=["status", "reviewed_by", "reviewed_at", "updated_at"])
+        emails.queue_scored(submission)
         return submission
 
 

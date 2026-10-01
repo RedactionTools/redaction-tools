@@ -139,7 +139,7 @@ details. What bites:
   one with it. `make backend-email NAME=<name>` sends it to Mailpit.
 - **`subject.txt` and `body.txt` need `{% autoescape off %}`**, or `&` arrives as `&amp;`.
 - **Event mail is queued on django-q2 inside `transaction.on_commit`** (`apps/accounts/emails.py`,
-  `apps/catalog/emails.py`), one task per email so a retry cannot resend a sibling. Tests
+  `apps/catalog/emails.py`, `apps/benchmarks/emails.py`), one task per email so a retry cannot resend a sibling. Tests
   need `django_capture_on_commit_callbacks(execute=True)` to see it in `mail.outbox`.
 - **Brevo wins whenever `BREVO_API_KEY` is set** (`config/mail.py`), in any environment
   except tests.

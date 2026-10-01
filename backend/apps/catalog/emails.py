@@ -1,10 +1,9 @@
 """Mail sent about the catalog: a receipt and a staff notice for each tool submission."""
 
-from django.contrib.auth import get_user_model
 from django.db import transaction
 
 from apps.catalog.models import ToolSubmission
-from apps.core.email import send_templated_email
+from apps.core.email import send_templated_email, staff_addresses
 
 
 def queue_submission_emails(submission, *, admin_url):
@@ -41,12 +40,7 @@ def send_submission_receipt(submission_pk):
 
 
 def send_submission_notice(submission_pk, admin_url):
-    staff = list(
-        get_user_model()
-        .objects.filter(is_staff=True, is_active=True)
-        .order_by("email")
-        .values_list("email", flat=True)
-    )
+    staff = staff_addresses()
     if not staff:
         return
 

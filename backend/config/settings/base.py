@@ -40,6 +40,10 @@ CSRF_TRUSTED_ORIGINS = env("CSRF_TRUSTED_ORIGINS")
 # The Next.js frontend; used for CORS and for the links allauth puts in emails.
 FRONTEND_URL = env("FRONTEND_URL").rstrip("/")
 
+# This API's own public origin; staff mail links into its admin. Work queued for the
+# qcluster has no request to build an absolute URL from, hence a setting.
+BACKEND_URL = env("BACKEND_URL", default="http://localhost:8007").rstrip("/")
+
 INSTALLED_APPS = [
     # Unfold has to precede django.contrib.admin to override its templates.
     "unfold",

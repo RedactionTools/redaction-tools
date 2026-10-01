@@ -1,0 +1,10 @@
+{% autoescape off %}Thanks for submitting {{ tool_name }} to the {{ suite_name }} benchmark ({{ revision }}) - {{ case_count }} case{{ case_count|pluralize }}.
+
+We are scoring {{ case_count|pluralize:"it,them" }} now and will email you when scoring is done. After that a person reviews the submission before anything is published.
+
+Follow it here: {{ site_url }}/benchmarks/submissions
+
+-- 
+Redaction Tools
+{{ site_url }}
+{% endautoescape %}

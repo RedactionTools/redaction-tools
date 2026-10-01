@@ -45,6 +45,9 @@ services:
       # container listens on - listing claim codes would be minted and never
       # delivered, and the claim flow depends on them arriving.
       BREVO_API_KEY: ${BREVO_API_KEY:-}
+      # The API's public origin, for admin links in staff mail - the same host the
+      # frontend calls, so it defaults to that.
+      BACKEND_URL: ${BACKEND_URL:-${NEXT_PUBLIC_API_URL:?set NEXT_PUBLIC_API_URL in .env}}
       EMAIL_BACKEND: ${EMAIL_BACKEND:-django.core.mail.backends.smtp.EmailBackend}
       EMAIL_HOST: ${EMAIL_HOST:-localhost}
       EMAIL_PORT: ${EMAIL_PORT:-587}

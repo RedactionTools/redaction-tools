@@ -1,0 +1,12 @@
+{% autoescape off %}A benchmark submission is scored and waiting for review.
+
+Tool: {{ tool_name }}
+Benchmark: {{ suite_name }} ({{ revision }}), {{ case_count }} case{{ case_count|pluralize }}
+Submitted by: {{ submitter_name }} ({{ submitter_role }})
+Origin: {{ origin }}
+{% if notes %}
+Notes:
+{{ notes }}
+{% endif %}
+Review it: {{ admin_url }}
+{% endautoescape %}

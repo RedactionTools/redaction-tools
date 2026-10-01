@@ -1,0 +1,19 @@
+<mjml lang="en">
+  <mj-head>
+    <mj-title>{% if approved %}Your {{ tool_name }} results are published{% else %}Your {{ tool_name }} submission was not approved{% endif %}</mj-title>
+    <mj-preview>{% if approved %}They are live on the {{ suite_name }} benchmark.{% else %}The reviewer left a note.{% endif %}</mj-preview>
+    <mj-include path="../_partials/head.mjml" />
+  </mj-head>
+  <mj-body background-color="#f4f4f5" width="624px">
+    <mj-include path="../_partials/header.mjml" />
+    <mj-section padding="0 32px" background-color="#f4f4f5">
+      <mj-column background-color="#ffffff" padding="32px 32px 16px">
+        <mj-text>Your <strong>{{ tool_name }}</strong> submission to the {{ suite_name }} benchmark ({{ revision }}) {% if approved %}is approved, and the results are live.{% else %}was not approved. The reviewer wrote:{% endif %}</mj-text>
+        <mj-text>{% if review_note %}<blockquote style="margin:0;padding-left:12px;border-left:3px solid #e4e4e7;color:#3f3f46;">{{ review_note|linebreaksbr }}</blockquote>{% endif %}</mj-text>
+        <mj-text>{% if not approved %}Nothing from it was published. You are welcome to send a new submission that addresses this.{% endif %}</mj-text>
+        <mj-button href="{% if approved %}{{ site_url }}/benchmarks/{{ suite_slug }}/tools/{{ tool_slug }}{% else %}{{ site_url }}/benchmarks/submissions{% endif %}" background-color="#18181b" color="#ffffff" font-size="15px" border-radius="6px" align="left" padding="8px 0 16px">{% if approved %}See the results{% else %}Your submissions{% endif %}</mj-button>
+      </mj-column>
+    </mj-section>
+    <mj-include path="../_partials/footer.mjml" />
+  </mj-body>
+</mjml>
