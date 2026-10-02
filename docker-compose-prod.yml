@@ -131,6 +131,41 @@ services:
         condition: service_started
     restart: unless-stopped
 
+  db-backup:
+    # pg_dump to S3 on a cron schedule; backup/ has the scripts and DEPLOY.md
+    # the restore. Off redactionnet like `db`, so it can reach only ours.
+    build:
+      context: ./backup
+    environment:
+      POSTGRES_HOST: redaction-tools-db
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      # Not `:?`: a missing S3 setting stops this container with an error in its
+      # logs, rather than blocking the whole stack from deploying.
+      S3_BUCKET: ${POSTGRES_BACKUP_S3_BUCKET:-}
+      S3_FOLDER: ${POSTGRES_BACKUP_S3_FOLDER:-redaction-tools}
+      # Empty means AWS S3 itself.
+      S3_ENDPOINT: ${POSTGRES_BACKUP_S3_ENDPOINT:-}
+      AWS_ACCESS_KEY_ID: ${POSTGRES_BACKUP_AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${POSTGRES_BACKUP_AWS_SECRET_ACCESS_KEY:-}
+      # The container's clock is UTC.
+      SCHEDULE: ${POSTGRES_BACKUP_SCHEDULE:-0 2 * * *}
+      COMPRESSION: ${POSTGRES_BACKUP_COMPRESSION:-pigz}
+      RUN_ON_STARTUP: ${POSTGRES_BACKUP_RUN_ON_STARTUP:-false}
+      BACKUP_INCLUDE_HOSTNAME: ${POSTGRES_BACKUP_INCLUDE_HOSTNAME:-false}
+      BACKUP_KEEP_DAYS: ${POSTGRES_BACKUP_KEEP_DAYS:-30}
+    healthcheck:
+      test: ["CMD", "pgrep", "crond"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
   postgres_data:
   media_data:
