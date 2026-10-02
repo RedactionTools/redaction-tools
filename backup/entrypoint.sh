@@ -30,6 +30,12 @@ log "Configuring mc alias 'backup' -> ${S3_URL}"
 mc alias set backup "${S3_URL}" "${AWS_ACCESS_KEY_ID}" "${AWS_SECRET_ACCESS_KEY}" --api S3v4 > /dev/null \
     || error_exit "Failed to configure mc alias"
 
+# A command means a one-off run rather than the cron service - the deploy's
+# pre-migration backup is `docker compose run --rm db-backup /app/backup.sh`.
+if [ $# -gt 0 ]; then
+    exec "$@"
+fi
+
 # cron starts its jobs with an empty environment, so hand them the container's.
 # %q-quoted so a password with shell metacharacters survives the round trip.
 : > /app/backup.env

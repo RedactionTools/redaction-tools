@@ -142,8 +142,8 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      # Not `:?`: a missing S3 setting stops this container with an error in its
-      # logs, rather than blocking the whole stack from deploying.
+      # Not `:?`, which would fail every compose command, `logs` included. A
+      # missing setting fails the deploy's backup step with a clear error.
       S3_BUCKET: ${POSTGRES_BACKUP_S3_BUCKET:-}
       S3_FOLDER: ${POSTGRES_BACKUP_S3_FOLDER:-redaction-tools}
       # Empty means AWS S3 itself.
