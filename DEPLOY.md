@@ -49,8 +49,13 @@ locally, a matching `DEPLOY_STAGING_*` variable set, adding `staging` to the
    git checkout prod
    git reset --hard origin/prod
    git submodule sync --recursive && git submodule update --init --recursive
-   docker compose -f docker-compose-prod.yml up -d --build
+   docker compose -f docker-compose-prod.yml run --rm --build db-backup /app/backup.sh \
+     && docker compose -f docker-compose-prod.yml up -d --build
    ```
+   The `run` uploads a backup of the database as it stands before this deploy's
+   migrations (see [Backups to S3](#backups-to-s3)). If it fails, nothing is
+   rebuilt and the running containers keep serving. Until the S3 settings are
+   filled in, that means every deploy stops here.
 3. The compose file's `migrate` service runs `manage.py migrate --noinput` and
    must exit 0 before `backend` and `qcluster` start (`depends_on: ... :
    service_completed_successfully`). This replaces the dev compose's
@@ -154,8 +159,8 @@ service is for.
 `s3://$POSTGRES_BACKUP_S3_BUCKET/$POSTGRES_BACKUP_S3_FOLDER/backup_<timestamp>.sql.gz`,
 then deletes uploads older than `POSTGRES_BACKUP_KEEP_DAYS`. `.env.example` lists
 the settings. Any S3-compatible store works: set `POSTGRES_BACKUP_S3_ENDPOINT`.
-The bucket must already exist. Without a bucket and keys the container exits with
-an error in its logs, but the rest of the stack still deploys.
+The bucket must already exist. Every deploy also takes a backup before it
+migrates, and without a bucket and keys that backup fails and the deploy stops.
 
 Its output goes to `docker compose logs db-backup`. A dump that fails is never
 uploaded. To take a backup now, or list what is stored:
