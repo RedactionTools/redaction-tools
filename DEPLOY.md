@@ -144,11 +144,43 @@ GitHub secret names are case-insensitive, so `DEPLOY_PROD_SSH_KEY` and
 
 Postgres runs as a container on the same VM, backed by the named volume
 `postgres_data`. This survives `docker compose down` and container recreation,
-but not `docker volume rm` or VM disk loss. Back it up periodically with:
+but not `docker volume rm` or VM disk loss, which is what the `db-backup`
+service is for.
+
+### Backups to S3
+
+`db-backup` (built from `backup/`) runs `pg_dump` on `POSTGRES_BACKUP_SCHEDULE`
+(cron syntax, UTC; nightly at 02:00 by default), compresses it and uploads it to
+`s3://$POSTGRES_BACKUP_S3_BUCKET/$POSTGRES_BACKUP_S3_FOLDER/backup_<timestamp>.sql.gz`,
+then deletes uploads older than `POSTGRES_BACKUP_KEEP_DAYS`. `.env.example` lists
+the settings. Any S3-compatible store works: set `POSTGRES_BACKUP_S3_ENDPOINT`.
+The bucket must already exist. Without a bucket and keys the container exits with
+an error in its logs, but the rest of the stack still deploys.
+
+Its output goes to `docker compose logs db-backup`. A dump that fails is never
+uploaded. To take a backup now, or list what is stored:
 
 ```
-ssh <deploy_user>@<host> 'cd /srv/redaction-tools && docker compose -f docker-compose-prod.yml exec -T db pg_dump -U <user> <db>' > backup.sql
+docker compose -f docker-compose-prod.yml exec db-backup /app/backup.sh
+docker compose -f docker-compose-prod.yml exec db-backup sh -c 'mc ls backup/$S3_BUCKET/$S3_FOLDER/'
 ```
+
+To restore, stop the writers first, then name a file from that list:
+
+```
+docker compose -f docker-compose-prod.yml stop backend qcluster
+docker compose -f docker-compose-prod.yml exec db-backup /app/restore.sh backup_20261002_020000.sql.gz
+docker compose -f docker-compose-prod.yml start backend qcluster
+```
+
+A second argument restores into another database instead, created if missing,
+which is the way to check a backup without touching production. The restore
+runs in one transaction, so if it fails the database is left as it was.
+Dumps are taken with `--clean`, so each object in the dump replaces its
+current version. Tables created after the dump are not in it and are left in
+place.
+
+Screenshots in `media_data` are **not** in these backups.
 
 If this outgrows a single VM (managed Postgres, replicas), point
 `DATABASE_URL` at the external instance and drop the `db` service from
