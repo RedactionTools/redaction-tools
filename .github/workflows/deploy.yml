@@ -47,4 +47,9 @@ jobs:
             # The backend image builds pdfredeval from the backend/vendor submodule.
             git submodule sync --recursive
             git submodule update --init --recursive
-            docker compose -f ${{ vars[format('DEPLOY_{0}_COMPOSE_FILE', steps.cfg.outputs.server)] || 'docker-compose-prod.yml' }} up -d --build
+            COMPOSE_FILE=${{ vars[format('DEPLOY_{0}_COMPOSE_FILE', steps.cfg.outputs.server)] || 'docker-compose-prod.yml' }}
+            # Back up before `migrate` can touch the data. `&&` because the action
+            # runs on past a failed line: a failed backup must stop the deploy here,
+            # with the old containers still serving.
+            docker compose -f "$COMPOSE_FILE" run --rm --build db-backup /app/backup.sh \
+              && docker compose -f "$COMPOSE_FILE" up -d --build
