@@ -13,6 +13,7 @@ and the Orval client never sees it.
 from django_mcpz.server import MCPServer
 
 from apps.accounts.mcp_auth import staff_auth
+from apps.benchmarks.mcp import register as register_benchmarks
 from apps.catalog.mcp import register as register_catalog
 from apps.comments.mcp import register as register_comments
 
@@ -62,6 +63,16 @@ publishes, rejects or removes one. A comment skips the queue when its author is
 staff, when auto-approve is on, or when the author already has trusted_after
 published comments - comments_get_settings and comments_set_settings read and
 change those two switches.
+
+Benchmark results arrive from the pdfredeval CLI, not from here; what you do here is
+read them and decide on them. benchmarks_list_submissions with
+status='pending_review' is the queue. Read each with benchmarks_get_submission
+before deciding: verification 'mismatch' means our rescore disagrees with what the
+submitter claimed, and verification_diff says where. benchmarks_review_submission
+approves (every run goes on the leaderboard at once) or rejects (a note is
+required, and the submitter reads it). Screenshots added after approval wait in
+benchmarks_list_screenshots until benchmarks_publish_screenshots. The leaderboard
+the site shows is benchmarks_get_leaderboard.
 """
 
 server = MCPServer(
@@ -70,7 +81,7 @@ server = MCPServer(
     version="1.0.0",
     description=(
         "Read and edit the redaction-tools catalog: listings, plans and prices. "
-        "Moderate reader comments."
+        "Moderate reader comments. Review benchmark submissions."
     ),
     website_url="https://redaction-tools.com",
     instructions=INSTRUCTIONS,
@@ -78,4 +89,5 @@ server = MCPServer(
 )
 
 register_catalog(server)
+register_benchmarks(server)
 register_comments(server)

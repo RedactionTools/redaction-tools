@@ -110,6 +110,11 @@ The parts that bite if you miss them:
   separate tools, because a single call that creates all four can half-succeed and because
   a price carries provenance a plan does not. `create_plan` reports
   `has_pricing_position` so a caller can tell it has not finished.
+- **The `benchmarks_*` tools read and decide; they never upload.** Cases and runs still come
+  from the pdfredeval CLI. `apps/benchmarks/staff.py` wraps `services.review` and
+  `services.publish_screenshots` - the functions the admin calls - so a review from Claude
+  follows the same rules and sends the same emails. Unlike the public API, it shows holdout
+  runs whole.
 
 ## Staff edit the tool page in place
 
