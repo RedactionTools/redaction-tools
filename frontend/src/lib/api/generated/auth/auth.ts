@@ -33,6 +33,10 @@ import type {
   CliLoginStartOut,
   CliLoginTokenIn,
   CliLoginTokenOut,
+  GetMcpAuthorizationParams,
+  McpAuthorizationDecisionIn,
+  McpAuthorizationDecisionOut,
+  McpAuthorizationOut,
   UserSchema
 } from '../model';
 
@@ -913,4 +917,199 @@ export const useDenyCliLogin = <TError = unknown,
         TContext
       > => {
       return useMutation(getDenyCliLoginMutationOptions(options), queryClient);
+    }
+    export const getGetMcpAuthorizationUrl = (params?: GetMcpAuthorizationParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/auth/mcp-authorizations?${stringifiedParams}` : `/api/v1/auth/mcp-authorizations`
+}
+
+/**
+ * @summary An MCP connector asking for access
+ */
+export const getMcpAuthorization = async (params?: GetMcpAuthorizationParams, options?: Parameters<typeof customFetch>[1]): Promise<McpAuthorizationOut> => {
+
+  return customFetch<McpAuthorizationOut>(getGetMcpAuthorizationUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetMcpAuthorizationQueryKey = (params?: GetMcpAuthorizationParams,) => {
+    return [
+    `/api/v1/auth/mcp-authorizations`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetMcpAuthorizationQueryOptions = <TData = Awaited<ReturnType<typeof getMcpAuthorization>>, TError = unknown>(params?: GetMcpAuthorizationParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMcpAuthorization>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMcpAuthorizationQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMcpAuthorization>>> = ({ signal }) => getMcpAuthorization(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMcpAuthorization>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetMcpAuthorizationQueryResult = NonNullable<Awaited<ReturnType<typeof getMcpAuthorization>>>
+export type GetMcpAuthorizationQueryError = unknown
+
+
+export function useGetMcpAuthorization<TData = Awaited<ReturnType<typeof getMcpAuthorization>>, TError = unknown>(
+ params: undefined |  GetMcpAuthorizationParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMcpAuthorization>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMcpAuthorization>>,
+          TError,
+          Awaited<ReturnType<typeof getMcpAuthorization>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMcpAuthorization<TData = Awaited<ReturnType<typeof getMcpAuthorization>>, TError = unknown>(
+ params?: GetMcpAuthorizationParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMcpAuthorization>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMcpAuthorization>>,
+          TError,
+          Awaited<ReturnType<typeof getMcpAuthorization>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMcpAuthorization<TData = Awaited<ReturnType<typeof getMcpAuthorization>>, TError = unknown>(
+ params?: GetMcpAuthorizationParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMcpAuthorization>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary An MCP connector asking for access
+ */
+
+export function useGetMcpAuthorization<TData = Awaited<ReturnType<typeof getMcpAuthorization>>, TError = unknown>(
+ params?: GetMcpAuthorizationParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMcpAuthorization>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetMcpAuthorizationQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export const getDecideMcpAuthorizationUrl = () => {
+
+
+
+
+  return `/api/v1/auth/mcp-authorizations`
+}
+
+/**
+ * Checks the request again: what the page showed proves nothing.
+ * @summary Allow or deny an MCP connector
+ */
+export const decideMcpAuthorization = async (mcpAuthorizationDecisionIn: McpAuthorizationDecisionIn, options?: Parameters<typeof customFetch>[1]): Promise<McpAuthorizationDecisionOut> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<McpAuthorizationDecisionOut>(getDecideMcpAuthorizationUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(mcpAuthorizationDecisionIn)
+  }
+);}
+
+
+
+
+
+export const getDecideMcpAuthorizationMutationKey = () => ['decideMcpAuthorization'] as const;
+
+export const getDecideMcpAuthorizationMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof decideMcpAuthorization>>, TError,DecideMcpAuthorizationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof decideMcpAuthorization>>, TError,DecideMcpAuthorizationMutationVariables, TContext> => {
+
+const mutationKey = getDecideMcpAuthorizationMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof decideMcpAuthorization>>, DecideMcpAuthorizationMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  decideMcpAuthorization(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DecideMcpAuthorizationMutationResult = NonNullable<Awaited<ReturnType<typeof decideMcpAuthorization>>>
+    export type DecideMcpAuthorizationMutationBody = McpAuthorizationDecisionIn
+    export type DecideMcpAuthorizationMutationError = unknown
+    export type DecideMcpAuthorizationMutationVariables = {data: McpAuthorizationDecisionIn}
+
+    /**
+ * @summary Allow or deny an MCP connector
+ */
+export const useDecideMcpAuthorization = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof decideMcpAuthorization>>, TError,DecideMcpAuthorizationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof decideMcpAuthorization>>,
+        TError,
+        DecideMcpAuthorizationMutationVariables,
+        TContext
+      > => {
+      return useMutation(getDecideMcpAuthorizationMutationOptions(options), queryClient);
     }

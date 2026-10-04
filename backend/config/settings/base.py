@@ -131,9 +131,9 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
-# The OAuth consent page sends anonymous users here, so it is load-bearing for
-# the MCP connector flow rather than incidental. Django's default happens to be
-# right - it is allauth's login page, which SOCIALACCOUNT_ONLY makes Google-only.
+# Where the admin sends anonymous users: allauth's login page, which
+# SOCIALACCOUNT_ONLY makes Google-only. The MCP consent page no longer comes
+# here - it is the frontend's (apps/accounts/mcp_oauth.py).
 LOGIN_URL = "/accounts/login/"
 LOGIN_REDIRECT_URL = "/admin/"
 
@@ -324,8 +324,9 @@ BENCHMARK_SCORE_TIMEOUT = env.int("BENCHMARK_SCORE_TIMEOUT", default=300)
 BENCHMARK_OCR = env.bool("BENCHMARK_OCR", default=True)
 
 # --- Staff MCP server ------------------------------------------------------
-# The MCP endpoint is /mcp; its OAuth authorization server is /oauth/. Claude's
-# connectors register themselves rather than being configured by hand.
+# The MCP endpoint is /mcp; its OAuth authorization server is /oauth/, except the
+# consent step, which is the frontend's /mcp/authorize (apps/accounts/mcp_oauth.py).
+# Claude's connectors register themselves rather than being configured by hand.
 # Registration alone grants nothing: authorising still needs a staff sign-in and
 # consent, and a non-staff token is refused at the door by
 # `apps.accounts.mcp_auth.staff_auth`. Turn it off and every client has to be

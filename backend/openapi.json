@@ -349,6 +349,192 @@
         ]
       }
     },
+    "/api/v1/auth/mcp-authorizations": {
+      "get": {
+        "operationId": "get_mcp_authorization",
+        "summary": "An MCP connector asking for access",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "client_id",
+            "schema": {
+              "default": "",
+              "title": "Client Id",
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "redirect_uri",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Redirect Uri"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "response_type",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Response Type"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "code_challenge",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Code Challenge"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "code_challenge_method",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Code Challenge Method"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "resource",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Resource"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "scope",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Scope"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "state",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "State"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpAuthorizationOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "auth"
+        ],
+        "security": [
+          {
+            "StaffJWTAuth": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "decide_mcp_authorization",
+        "summary": "Allow or deny an MCP connector",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpAuthorizationDecisionOut"
+                }
+              }
+            }
+          }
+        },
+        "description": "Checks the request again: what the page showed proves nothing.",
+        "tags": [
+          "auth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/McpAuthorizationDecisionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "StaffJWTAuth": []
+          }
+        ]
+      }
+    },
     "/api/v1/catalog/tools": {
       "get": {
         "operationId": "list_tools",
@@ -3492,6 +3678,184 @@
           "expires_at"
         ],
         "title": "CliLoginOut",
+        "type": "object"
+      },
+      "McpAuthorizationParams": {
+        "description": "An OAuth authorization request, passed through from the consent page's URL.\n\nAll optional: checking them is the service's job, so a missing one is reported\nthe way OAuth says rather than as a 422.",
+        "properties": {
+          "client_id": {
+            "default": "",
+            "title": "Client Id",
+            "type": "string"
+          },
+          "redirect_uri": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Redirect Uri"
+          },
+          "response_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Response Type"
+          },
+          "code_challenge": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code Challenge"
+          },
+          "code_challenge_method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code Challenge Method"
+          },
+          "resource": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resource"
+          },
+          "scope": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scope"
+          },
+          "state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "State"
+          }
+        },
+        "title": "McpAuthorizationParams",
+        "type": "object"
+      },
+      "McpAuthorizationOut": {
+        "properties": {
+          "client_name": {
+            "title": "Client Name",
+            "type": "string"
+          },
+          "redirect_uri": {
+            "title": "Redirect Uri",
+            "type": "string"
+          },
+          "redirect_host": {
+            "title": "Redirect Host",
+            "type": "string"
+          },
+          "redirect_is_local": {
+            "title": "Redirect Is Local",
+            "type": "boolean"
+          },
+          "server_title": {
+            "title": "Server Title",
+            "type": "string"
+          },
+          "resource": {
+            "title": "Resource",
+            "type": "string"
+          },
+          "scope": {
+            "title": "Scope",
+            "type": "string"
+          },
+          "redirect_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Redirect Url"
+          }
+        },
+        "required": [
+          "client_name",
+          "redirect_uri",
+          "redirect_host",
+          "redirect_is_local",
+          "server_title",
+          "resource",
+          "scope",
+          "redirect_url"
+        ],
+        "title": "McpAuthorizationOut",
+        "type": "object"
+      },
+      "McpAuthorizationDecisionOut": {
+        "properties": {
+          "redirect_url": {
+            "title": "Redirect Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "redirect_url"
+        ],
+        "title": "McpAuthorizationDecisionOut",
+        "type": "object"
+      },
+      "McpAuthorizationDecisionIn": {
+        "properties": {
+          "params": {
+            "$ref": "#/components/schemas/McpAuthorizationParams"
+          },
+          "decision": {
+            "enum": [
+              "allow",
+              "deny"
+            ],
+            "title": "Decision",
+            "type": "string"
+          }
+        },
+        "required": [
+          "params",
+          "decision"
+        ],
+        "title": "McpAuthorizationDecisionIn",
         "type": "object"
       },
       "ToolFilters": {

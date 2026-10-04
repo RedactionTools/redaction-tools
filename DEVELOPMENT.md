@@ -12,7 +12,7 @@ is, see [`README.md`](README.md).
 | Auth | django-allauth headless + Google, issuing our own JWTs |
 | Admin | django-unfold |
 | Background jobs | django-q2 (ORM broker) |
-| Staff MCP server | django-mcpz (`/mcp`), OAuth at `/oauth/` |
+| Staff MCP server | django-mcpz (`/mcp`), OAuth at `/oauth/`, consent at the frontend's `/mcp/authorize` |
 | Database | PostgreSQL 17 |
 | Tooling | uv, ruff, pytest, pre-commit, make |
 | Frontend | Next.js 16 (App Router), React 19, Tailwind v4, TanStack Query, Orval, NextAuth |
@@ -180,9 +180,23 @@ Or point the MCP Inspector (`npx @modelcontextprotocol/inspector`) at
 ### Using it from claude.ai
 
 Add a custom connector pointing at `https://backend.redaction-tools.com/mcp`. Claude registers
-itself at `/oauth/register` and sends you to `/oauth/authorize`, which bounces an anonymous browser
-through `/accounts/login/` to Google and back to the consent page. `SOCIALACCOUNT_ONLY = True`, so
-Google is the only way in — the account needs `is_staff` **and** a linked `SocialAccount`.
+itself at `/oauth/register` and sends you to the **frontend's** `/mcp/authorize`, which is what the
+backend's authorization-server metadata names (`apps/accounts/mcp_oauth.py` rewrites django-mcpz's
+document). That page signs you in with the site's ordinary Google sign-in, then calls
+`/api/v1/auth/mcp-authorizations` with the normal bearer: a GET to check and describe the request,
+a POST to allow or deny it, which issues the code and returns the client's redirect URL. The Django
+session and `/accounts/login/` play no part. Registration, `/oauth/token` and `/oauth/revoke` stay
+django-mcpz's; the old `/oauth/authorize` only forwards to the frontend.
+
+What bites:
+
+- **Both API calls are staff only** (`StaffJWTAuth`, 403 otherwise) and the POST checks the request
+  again rather than trusting what the page showed.
+- **A `localhost` redirect may change port.** django-mcpz only allows that on `127.0.0.1` and `::1`,
+  but Claude Code registers `http://localhost:<port>/callback` once and listens on a free port each
+  time - the "Unregistered redirect_uri" a second Authenticate used to hit.
+- **`iss` is built from `BACKEND_URL`**, not the request host: the page's server render reaches the
+  backend over the compose network, so the request host is `backend:8007`.
 
 ### Adding a tool
 
