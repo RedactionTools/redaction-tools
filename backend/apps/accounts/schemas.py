@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 from uuid import UUID
 
 from ninja import Field, Schema
@@ -66,3 +67,43 @@ class CliLoginTokenOut(Schema):
     #: Only with `approved`, and only on that one response.
     key: str | None = None
     user: CliLoginUserOut | None = None
+
+
+class McpAuthorizationParams(Schema):
+    """An OAuth authorization request, passed through from the consent page's URL.
+
+    All optional: checking them is the service's job, so a missing one is reported
+    the way OAuth says rather than as a 422.
+    """
+
+    client_id: str = ""
+    redirect_uri: str | None = None
+    response_type: str | None = None
+    code_challenge: str | None = None
+    code_challenge_method: str | None = None
+    resource: str | None = None
+    scope: str | None = None
+    state: str | None = None
+
+
+class McpAuthorizationOut(Schema):
+    client_name: str
+    redirect_uri: str
+    redirect_host: str
+    #: The redirect stays on the asker's own machine - a terminal client like Claude Code.
+    redirect_is_local: bool
+    server_title: str
+    resource: str
+    scope: str
+    #: When set, the request was malformed: send the browser straight here, no consent.
+    redirect_url: str | None
+
+
+class McpAuthorizationDecisionIn(Schema):
+    params: McpAuthorizationParams
+    decision: Literal["allow", "deny"]
+
+
+class McpAuthorizationDecisionOut(Schema):
+    #: The client's redirect URI with the code or the refusal on it. Send the browser there.
+    redirect_url: str

@@ -6,14 +6,14 @@ Obtaining tokens is allauth's job (`/_allauth/app/v1/...`, including
 
 from django.conf import settings
 from django.http import HttpRequest
-from ninja import Router, Status
+from ninja import Query, Router, Status
 from ninja.errors import HttpError
 from ninja.security import HttpBearer
 from ninja.throttling import AnonRateThrottle
 from ninja_apikey.models import APIKey
 from ninja_apikey.security import APIKeyAuth, generate_key
 
-from . import cli_login, jwt
+from . import cli_login, jwt, mcp_oauth
 from .schemas import (
     ApiKeyCreatedOut,
     ApiKeyIn,
@@ -23,6 +23,10 @@ from .schemas import (
     CliLoginStartOut,
     CliLoginTokenIn,
     CliLoginTokenOut,
+    McpAuthorizationDecisionIn,
+    McpAuthorizationDecisionOut,
+    McpAuthorizationOut,
+    McpAuthorizationParams,
     UserSchema,
 )
 
@@ -222,3 +226,55 @@ def deny_cli_login(request: HttpRequest, user_code: str):
         return _cli_login_out(cli_login.decide(user_code, user=request.auth, approve=False))
     except cli_login.CliLoginError as exc:
         raise _cli_error(exc) from exc
+
+
+# --- MCP connector consent ---------------------------------------------------------
+# The authorize step of the /mcp OAuth flow: see apps/accounts/mcp_oauth.py. Staff
+# only, because a code for anyone else mints a token the MCP server refuses anyway.
+
+
+def _consent_out(consent):
+    return {
+        "client_name": consent.client.name,
+        "redirect_uri": consent.redirect_uri,
+        "redirect_host": consent.redirect_host,
+        "redirect_is_local": consent.redirect_is_local,
+        "server_title": consent.server_title,
+        "resource": consent.resource,
+        "scope": consent.scope,
+        "redirect_url": consent.redirect_url,
+    }
+
+
+def _consent(check, *args, **kwargs):
+    try:
+        return check(*args, **kwargs)
+    except mcp_oauth.ConsentError as exc:
+        raise HttpError(400, str(exc)) from exc
+
+
+@router.get(
+    "/mcp-authorizations",
+    response=McpAuthorizationOut,
+    auth=StaffJWTAuth(),
+    summary="An MCP connector asking for access",
+)
+def get_mcp_authorization(request: HttpRequest, params: Query[McpAuthorizationParams]):
+    return _consent_out(_consent(mcp_oauth.check, params.dict()))
+
+
+@router.post(
+    "/mcp-authorizations",
+    response=McpAuthorizationDecisionOut,
+    auth=StaffJWTAuth(),
+    summary="Allow or deny an MCP connector",
+)
+def decide_mcp_authorization(request: HttpRequest, payload: McpAuthorizationDecisionIn):
+    """Checks the request again: what the page showed proves nothing."""
+    url = _consent(
+        mcp_oauth.decide,
+        payload.params.dict(),
+        user=request.auth,
+        allow=payload.decision == "allow",
+    )
+    return {"redirect_url": url}
