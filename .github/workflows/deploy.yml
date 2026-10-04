@@ -1,8 +1,13 @@
 name: Deploy
 
+# Merging to main deploys prod once CI has passed on the merge commit. Hanging off
+# CI's completion rather than the push itself is what stops a red main from going
+# out: a failed or cancelled run (CI cancels a superseded one) deploys nothing.
 on:
-  push:
-    branches: [prod]
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
     inputs:
       server:
@@ -11,18 +16,32 @@ on:
         type: choice
         options: [prod]
 
+# One deploy at a time per server, and never cancel one: it may be mid-migration.
+# A newer queued run replaces an older queued one, so a burst of merges ends on
+# the latest.
+concurrency:
+  group: deploy-${{ github.event.inputs.server || 'prod' }}
+  cancel-in-progress: false
+
 jobs:
   deploy:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-
       # Server targets come from repository variables rather than a file in the
       # repo, so a public checkout never carries a hostname. Set them under
       # Settings > Secrets and variables > Actions. deploy/servers/*.conf is the
       # local equivalent, used by the make deploy-* targets.
+      #
+      # The commit is the one CI tested, not whatever main points at by the time
+      # this runs. A manual run deploys the tip of main.
       - id: cfg
-        run: echo "server=${{ github.event.inputs.server || github.ref_name }}" >>"$GITHUB_OUTPUT"
+        run: |
+          echo "server=${{ github.event.inputs.server || 'prod' }}" >>"$GITHUB_OUTPUT"
+          echo "sha=${{ github.event.workflow_run.head_sha || 'origin/main' }}" >>"$GITHUB_OUTPUT"
 
       - name: Check the target is configured
         env:
@@ -40,16 +59,19 @@ jobs:
           port: ${{ vars[format('DEPLOY_{0}_PORT', steps.cfg.outputs.server)] || 22 }}
           key: ${{ secrets[format('DEPLOY_{0}_SSH_KEY', steps.cfg.outputs.server)] }}
           script: |
+            set -e
             cd ${{ vars[format('DEPLOY_{0}_DIR', steps.cfg.outputs.server)] || '/srv/redaction-tools' }}
-            git fetch origin
-            git checkout ${{ steps.cfg.outputs.server }}
-            git reset --hard origin/${{ steps.cfg.outputs.server }}
+            git fetch origin main
+            # -B moves (or creates) the VM's local main onto the commit, so a checkout
+            # that still sits on the retired `prod` branch switches over by itself.
+            git checkout -B main ${{ steps.cfg.outputs.sha }}
+            git reset --hard ${{ steps.cfg.outputs.sha }}
             # The backend image builds pdfredeval from the backend/vendor submodule.
             git submodule sync --recursive
             git submodule update --init --recursive
             COMPOSE_FILE=${{ vars[format('DEPLOY_{0}_COMPOSE_FILE', steps.cfg.outputs.server)] || 'docker-compose-prod.yml' }}
-            # Back up before `migrate` can touch the data. `&&` because the action
-            # runs on past a failed line: a failed backup must stop the deploy here,
-            # with the old containers still serving.
+            # Back up before `migrate` can touch the data. `&&` as well as `set -e`,
+            # because the action has run on past a failed line: a failed backup must
+            # stop the deploy here, with the old containers still serving.
             docker compose -f "$COMPOSE_FILE" run --rm --build db-backup /app/backup.sh \
               && docker compose -f "$COMPOSE_FILE" up -d --build

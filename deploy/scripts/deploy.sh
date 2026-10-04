@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Re-trigger the deploy workflow for a server without needing a new commit.
+# Deploy the tip of main to a server now, without waiting for a merge.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

@@ -1,16 +1,16 @@
 # Deploy
 
-Git-push-to-branch deploy: pushing to a long-lived branch named after a server
-triggers a GitHub Actions workflow that SSHes into that server's VM and runs
-`docker compose up -d --build` directly from a freshly reset checkout. No
+Merge-to-main deploy: once CI passes on a commit pushed to `main` (a merged PR),
+a GitHub Actions workflow SSHes into the prod VM and runs `docker compose up -d
+--build` directly from a checkout reset to exactly that commit. No
 registry, no Kubernetes, no Terraform — just a plain Ubuntu VM with Docker and
 Docker Compose installed.
 
 ## Servers
 
-| Name   | Branch | Local config               | Compose file              |
-| ------ | ------ | -------------------------- | ------------------------- |
-| `prod` | `prod` | `deploy/servers/prod.conf` | `docker-compose-prod.yml` |
+| Name   | Deploys from | Local config               | Compose file              |
+| ------ | ------------ | -------------------------- | ------------------------- |
+| `prod` | `main`       | `deploy/servers/prod.conf` | `docker-compose-prod.yml` |
 
 A server target is named in two places, because two different things need it.
 
@@ -32,22 +32,25 @@ holds the same values, so the two stay in step by hand — a small cost for
 keeping the host out of a public repo.
 
 Adding a second server (e.g. `staging`) means a `deploy/servers/staging.conf`
-locally, a matching `DEPLOY_STAGING_*` variable set, adding `staging` to the
-`branches:`/`options:` lists in `.github/workflows/deploy.yml`, and running
-`make deploy-setup SERVER=staging` once.
+locally, a matching `DEPLOY_STAGING_*` variable set, adding `staging` to the `options:` list in
+`.github/workflows/deploy.yml` (and deciding what triggers it automatically - today
+only prod follows `main`), and running `make deploy-setup SERVER=staging` once.
 
 ## How a deploy runs
 
-1. `git push origin prod` (or `make deploy SERVER=prod` to re-trigger without
-   a new commit).
-2. `.github/workflows/deploy.yml` reads the `DEPLOY_PROD_*` repository
-   variables, then SSHes into the VM using the `DEPLOY_PROD_SSH_KEY` GitHub
-   secret and runs:
+1. Merge a PR into `main`. CI runs on the merge commit; when it **succeeds**,
+   its completion triggers `.github/workflows/deploy.yml` (`workflow_run`). A
+   failed or cancelled CI run deploys nothing - and CI cancels a run superseded
+   by a newer push, so a burst of merges deploys once, at the latest. A direct
+   push to `main` deploys the same way: `main` is not branch-protected.
+   `make deploy SERVER=prod` re-runs a deploy of the tip of `main` by hand.
+2. The workflow reads the `DEPLOY_PROD_*` repository variables, then SSHes into
+   the VM using the `DEPLOY_PROD_SSH_KEY` GitHub secret and runs:
    ```
    cd $DEPLOY_DIR
-   git fetch origin
-   git checkout prod
-   git reset --hard origin/prod
+   git fetch origin main
+   git checkout -B main <the commit CI tested>
+   git reset --hard <the commit CI tested>
    git submodule sync --recursive && git submodule update --init --recursive
    docker compose -f docker-compose-prod.yml run --rm --build db-backup /app/backup.sh \
      && docker compose -f docker-compose-prod.yml up -d --build
@@ -197,10 +200,10 @@ All take `SERVER=<name>` (currently just `prod`):
 
 | Target              | Does |
 | -------------------- | ---- |
-| `deploy-setup`       | One-time bootstrap: keys, GitHub secret, server branch, initial VM clone |
+| `deploy-setup`       | One-time bootstrap: keys, GitHub secret and variables, initial VM clone |
 | `deploy-env-put`     | Push local `.env.$(SERVER)` to the VM |
 | `deploy-env-get`     | Pull the VM's `.env` down to `.env.$(SERVER)` (backs up any existing local file first) |
-| `deploy`             | Re-trigger the deploy workflow via `gh workflow run` |
+| `deploy`             | Deploy the tip of `main` now, via `gh workflow run` |
 | `deploy-logs`        | Tail the VM's `docker compose logs` |
 | `deploy-restart`     | `docker compose up -d --force-recreate` on the VM (no rebuild) |
 
@@ -218,8 +221,8 @@ which exist yet for `prod`:
 3. Run `make deploy-setup SERVER=prod` from a machine with SSH access to the
    VM and an authenticated `gh` CLI. This generates the trigger keypair,
    installs it on the VM, registers the `DEPLOY_PROD_SSH_KEY` GitHub secret,
-   creates/pushes the `prod` branch, clones the repo into `$DEPLOY_DIR` on the
-   VM, and seeds `.env.prod` from `.env.example`.
+   clones `main` into `$DEPLOY_DIR` on the VM, and seeds `.env.prod` from
+   `.env.example`.
 4. Edit `.env.prod` with real production values (`SECRET_KEY`, `AUTH_SECRET`,
    `POSTGRES_PASSWORD`, Google OAuth credentials, `ALLOWED_HOSTS`,
    `CORS_ALLOWED_ORIGINS`, and the real public `NEXT_PUBLIC_API_URL` — not
@@ -234,12 +237,12 @@ which exist yet for `prod`:
 
    Register `https://backend.redaction-tools.com/accounts/google/login/callback/`
    as an authorized redirect URI in the Google Cloud console while you are
-   there. `SOCIALACCOUNT_ONLY = True`, so it is the only way anyone reaches the
-   MCP OAuth consent page - without it the claude.ai connector flow dead-ends in
-   a Google error.
+   there. `SOCIALACCOUNT_ONLY = True`, so it is the only way into the Django
+   admin. (The MCP consent page is the frontend's `/mcp/authorize` and signs in
+   through the site's own Google flow instead.)
 5. `make deploy-env-put SERVER=prod`.
-6. `git push origin prod` (or `make deploy SERVER=prod`) to run the first
-   deploy, then confirm via `make deploy-logs SERVER=prod` and by hitting
+6. `make deploy SERVER=prod` to run the first deploy (every merge to `main`
+   after that deploys by itself), then confirm via `make deploy-logs SERVER=prod` and by hitting
    `http://<DEPLOY_HOST>:8007/api/v1/health` and `http://<DEPLOY_HOST>:3007`.
 7. For the staff MCP connector, confirm
    `https://backend.redaction-tools.com/.well-known/oauth-protected-resource/mcp`

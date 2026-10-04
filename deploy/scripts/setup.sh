@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # One-time bootstrap for a deploy server: trigger keypair, GitHub secret,
-# server branch, and an initial clone on the VM. Requires local `ssh-copy-id`,
+# variables, and an initial clone of main on the VM. Requires local `ssh-copy-id`,
 # `gh` (authenticated), and SSH access to the VM as DEPLOY_USER.
 set -euo pipefail
 
@@ -35,13 +35,6 @@ gh variable set "DEPLOY_${upper}_PORT" --body "$DEPLOY_PORT"
 gh variable set "DEPLOY_${upper}_DIR" --body "$DEPLOY_DIR"
 gh variable set "DEPLOY_${upper}_COMPOSE_FILE" --body "$DEPLOY_COMPOSE_FILE"
 
-if ! git show-ref --verify --quiet "refs/heads/${server}"; then
-	echo "==> Creating local branch '${server}' from main"
-	git branch "$server" main
-fi
-echo "==> Pushing branch '${server}' to origin"
-git push origin "$server"
-
 echo "==> Cloning the repo into ${DEPLOY_DIR} on the VM (public repo, plain HTTPS)"
 # Our own origin is an SSH URL, but the VM has no GitHub SSH key and does not
 # need one: the repo is public, so rewrite git@host:owner/repo(.git) to HTTPS.
@@ -51,7 +44,7 @@ case "$repo_url" in
 	https://*) ;;
 	*) echo "error: cannot derive an HTTPS clone URL from '$repo_url'" >&2; exit 1 ;;
 esac
-remote_ssh "test -d '${DEPLOY_DIR}/.git' || git clone --recurse-submodules --branch '${server}' '${repo_url}' '${DEPLOY_DIR}'"
+remote_ssh "test -d '${DEPLOY_DIR}/.git' || git clone --recurse-submodules --branch main '${repo_url}' '${DEPLOY_DIR}'"
 
 env_file="$DEPLOY_ROOT/../.env.${server}"
 if [[ ! -f "$env_file" ]]; then
@@ -67,7 +60,7 @@ fi
 echo "==> Done. Next steps:"
 echo "    1. Check ${env_file} has real production values"
 echo "    2. make deploy-env-put SERVER=${server}"
-echo "    3. git push origin ${server} (or make deploy SERVER=${server}) to trigger a deploy"
+echo "    3. make deploy SERVER=${server} for the first deploy; merges to main deploy after that"
 echo
 echo "    The VM serves the backend on :${BACKEND_PORT:-8007} and the frontend on"
 echo "    :${FRONTEND_PORT:-3007}. Put a TLS-terminating reverse proxy in front of"
