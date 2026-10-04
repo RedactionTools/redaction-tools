@@ -2,7 +2,6 @@
 title: 'One name, 54 ways: where PDF redaction tools stop reading'
 description: We planted one name 54 times on a PDF page, rotated, stacked, scanned and handwritten, and ran four redaction tools over it. Every tool removed the easy 13. The rest separated them.
 date: '2026-10-04'
-draft: true
 tags: ['Benchmarks', 'PDF redaction']
 authors: ['mykola-melnyk']
 image: '/images/blog/pdf-redaction-extraction-conditions-benchmark/header.png'
@@ -104,16 +103,34 @@ matters for one of the tools below.
 
 ![Grid of names removed out of names planted, per tool and condition. All four tools score 13/13 on upright real text. AI-Redact and SafeRedact score 0/19 on rotated text, and only Blinded removes vertically stacked text.](/images/blog/pdf-redaction-extraction-conditions-benchmark/results-grid.png)
 
-| Tool                                                 | Names removed | Leak rate, 95% interval | Run                                                |
-| ---------------------------------------------------- | ------------: | ----------------------- | -------------------------------------------------- |
-| [Blinded](/benchmarks/pdf/tools/blinded)             |         51/54 | 0.06 [0.02, 0.15]       | 2026-10-04, submitted by its owner, rescored by us |
-| [PDF Redaction](/benchmarks/pdf/tools/pdf-redaction) |         42/54 | 0.22 [0.13, 0.35]       | 2026-09-25, staff                                  |
-| [AI-Redact](/benchmarks/pdf/tools/ai-redact)         |         30/54 | 0.44 [0.32, 0.58]       | 2026-09-25, staff                                  |
-| [SafeRedact](/benchmarks/pdf/tools/saferedact-app)   |         14/54 | 0.74 [0.61, 0.84]       | 2026-09-25, staff                                  |
+| Tool                                                 | Names removed | Leak rate, 95% interval | Text retention | Run                      | How it was scored       |
+| ---------------------------------------------------- | ------------: | ----------------------- | -------------: | ------------------------ | ----------------------- |
+| [Blinded](/benchmarks/pdf/tools/blinded)             |         51/54 | 0.06 [0.02, 0.15]       |          0.876 | 2026-10-04, by its owner | Scored by us            |
+| [PDF Redaction](/benchmarks/pdf/tools/pdf-redaction) |         42/54 | 0.22 [0.13, 0.35]       |          0.932 | 2026-09-25, by us        | Self-scored · verified  |
+| [AI-Redact](/benchmarks/pdf/tools/ai-redact)         |         30/54 | 0.44 [0.32, 0.58]       |          0.951 | 2026-09-25, by us        | Self-scored · verified  |
+| [SafeRedact](/benchmarks/pdf/tools/saferedact-app)   |         14/54 | 0.74 [0.61, 0.84]       |          0.000 | 2026-09-25, by us        | Self-scored, unverified |
 
-The intervals are Wilson score intervals. With 54 probes, the range of plausible true
-values is wide. The intervals for Blinded and PDF Redaction overlap, so this page alone
+These are the figures on the [live leaderboard](/benchmarks/pdf) for dataset revision
+v0.1.1. The intervals are Wilson score intervals. With 54 probes, the range of plausible
+true values is wide. The intervals for Blinded and PDF Redaction overlap, so this page alone
 cannot settle which of the two is ahead. The other gaps are wider than the intervals.
+
+The last column is the site's [trust badge](/docs/benchmarks/review-and-badges).
+
+- **Scored by us:** the output PDF was uploaded and our server scored it.
+- **Self-scored:** the PDF was scored with the pdfredeval CLI and then sent in. The server
+  rescores it, and "verified" means the two agreed exactly.
+- **SafeRedact is unverified:** our rescore did not finish. Its output is one large image,
+  and the OCR pass timed out on it after 120 seconds. The 14/54 is the CLI's score, and no
+  second score exists. Its overlay and output PDF are on the run page, so you can check
+  them by eye.
+
+> **Blinded does not detect names on its own.** It extracts the page's text, including
+> text it reads by OCR, and redacts what a user searches for. In this run the name was
+> typed into its search, and Blinded removed every copy it could match. Its 51/54 measures
+> how much of the page it can read and match. It says nothing about finding a name nobody
+> searched for, because Blinded has no feature that does that. On a real document,
+> someone has to know every name to search for.
 
 Four findings stand out from the totals.
 
@@ -129,17 +146,18 @@ the table above comes from the other 41 probes.
 AI-Redact removed 30 of 31 upright names and **0 of 23** names that were rotated, skewed
 or stacked. The cause is not a lack of OCR. It removed 17 of 18 upright names that exist
 only as pixels, so it reads images well as long as the text is level. SafeRedact also
-removed 0 of 23. The overlays show more than the counts do:
+removed 0 of 23. The output PDFs themselves show more than the counts do. Here is the bottom of the page as each tool returned it:
 
-![Overlays of the rotated and stacked bands for each tool. Green boxes are names removed and red boxes are names that leaked. AI-Redact and SafeRedact draw bars on many rotated and stacked names that cover only part of each one.](/images/blog/pdf-redaction-extraction-conditions-benchmark/overlays-rotated.png)
+![The rotated and stacked bands of each tool's output PDF, as submitted. Blinded covers almost everything. PDF Redaction covers the rotated names but leaves four letter-by-letter stacks readable. AI-Redact and SafeRedact leave most rotated names readable, with bars covering only parts of some.](/images/blog/pdf-redaction-extraction-conditions-benchmark/outputs-rotated.png)
 
 Many of AI-Redact's grey bars and SafeRedact's black bars land **on** rotated names but
 cover only part of them:
 
 - On slanted names, AI-Redact's bar is level, so both ends of the name stick out (`t033`,
   `t038`).
-- On names turned a quarter turn, AI-Redact's box covers a stretch of the column, and the
-  first and last letters stay readable (`t041`, `t049`).
+- On names turned a quarter turn, AI-Redact's box covers the middle of the column and
+  the rest stays readable. On `t041` the whole word "Freya" shows below it, and on `t049`
+  "Fre" shows below it and "to" above it.
 - SafeRedact's bars cross the turned columns horizontally and black out one or two
   letters of each.
 
@@ -150,6 +168,8 @@ be in the code that maps detected text back onto the page, not in OCR itself.
 ### 3. Vertical stacks defeat three of four tools
 
 Only Blinded removed any of the four vertically stacked names, and it removed all four.
+It was searching for a name it had been given, so this shows that it rebuilds words from
+stacked letters well enough to match them.
 The others removed none, including PDF Redaction, which handled 17 of 19 rotated names.
 
 This failure has nothing to do with OCR. The stacked names are real, selectable text, and
@@ -182,6 +202,9 @@ tier as a new user meets it. A paid plan may behave differently.
 
 Blinded fails one usability check as well. Its text retention is 0.876, below our 0.9
 floor, which means about an eighth of the page's harmless text can no longer be selected.
+That is the better of its two runs. Its owner first submitted a run on 30 September that
+removed 50 of 54 names but kept only **8.7%** of the page's text selectable. The leaderboard
+counts the newest run of each case, so the 4 October run replaced it.
 Its three leaks are all handwriting: an inverse block-capital name, a skewed cursive one
 and an upside-down form entry. One of them shows up in the text layer of its output:
 
@@ -192,9 +215,10 @@ FreyaYamamoe
 
 On the original page that cell is pixels only, with no text behind it. So Blinded ran OCR
 over it, read the name almost right ("Yamamoe"), wrote that reading into a searchable text
-layer, and left the name visible. A likely cause is that the slightly wrong reading did
-not match the name it was looking for. Our tests cannot confirm that. What is certain is
-that the name is now both visible and searchable, which is worse than visible alone.
+layer, and left the name visible. Blinded redacts what matches the name a user searched
+for, and "FreyaYamamoe" does not match "Freya Yamamoto". That is the likely reason this copy
+survived, though from outside we cannot confirm it. What is certain is that the name is now
+both visible and searchable, which is worse than visible alone.
 
 ## Where PDF Redaction leaked
 
@@ -206,7 +230,7 @@ PDF Redaction leaked 12 of 54:
   page: it missed 3 of the 5 screened probes, with handwritten `t027` making the third.
 - **5 handwritten names**, two of them turned (`t040` upside down, `t050` at 270°).
 
-In the overlays, cursive cells `t022` and `t026` are only partly covered: the first
+In its output, cursive cells `t022` and `t026` are only partly covered: the first
 letter or two of each word is still visible outside the box. Our checker counts a partly
 visible name as a leak, and it should. A partly covered name can often still be read.
 
@@ -222,9 +246,15 @@ visible name as a leak, and it should. A partly covered name can often still be 
   includes probes that are hard on other axes, though. The 10pt control group contains
   the rotated and handwritten copies, so 4pt comes out as _easier_ than 10pt. We have
   grouped by condition in this post instead and kept the counts visible.
-- **Plans and settings.** The staff runs used each tool's web interface with default
-  settings, and we did not record the plan except where the output shows it. Vendors can
-  submit their own runs, which is how Blinded's arrived.
+- **Plans and settings.** Our runs used each tool's web interface with default settings.
+  None of the four submissions records its settings or plan. That includes how the tool
+  was told what to redact, so a plan is known only where the output shows it. We know
+  Blinded's run used search, not detection, because that is the only mode it has. Vendors
+  can submit their own runs, which is how Blinded's arrived.
+- **No holdout cases yet.** A holdout case is scored but never published, so a tool cannot
+  be tuned against it. Revision v0.1.1 has none, and this page is public. A vendor can
+  rerun against it until the result improves, as Blinded's two runs show. Holdout cases are
+  how later revisions will guard against that.
 - **Simulated handwriting.** The handwriting is drawn in the Caveat and Dancing Script
   typefaces with small random variations. That is tidier than real handwriting, so treat
   these results as a best case.
