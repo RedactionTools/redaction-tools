@@ -146,6 +146,7 @@ Three layers, and the split is the point:
 | `config/mcp.py` | the server object and its instructions; a manifest, no logic |
 | `apps/catalog/mcp.py` | msgspec parameter and result types, one per tool |
 | `apps/catalog/staff.py` | the rules — no MCP, no ninja, no `request` |
+| `apps/benchmarks/mcp.py`, `staff.py` | the benchmark review tools, over `apps/benchmarks/services.py` |
 
 **It is outside the schema pipeline.** `make backend-schema` exports `config.api.api` only, so
 nothing here reaches `openapi.json` or the generated frontend client, and `make schema` must
@@ -160,8 +161,18 @@ for a non-staff account gets 403, not 401, so a connector does not loop trying t
 ```bash
 make backend-mcp-token EMAIL=you@example.com    # printed once; only the digest is stored
 claude mcp add --transport http --header "Authorization: Bearer mcp_..." \
-  redaction-tools http://localhost:8007/mcp
+  redaction-tools-local http://localhost:8007/mcp
 ```
+
+Production needs no token. Claude Code signs in over the same OAuth flow as claude.ai:
+
+```bash
+claude mcp add --transport http redaction-tools https://backend.redaction-tools.com/mcp
+```
+
+then run `/mcp`, choose `redaction-tools` and **Authenticate**. Every tool then reads and
+writes the **live** catalog. The local server above is named `redaction-tools-local` so the two
+never collide.
 
 Or point the MCP Inspector (`npx @modelcontextprotocol/inspector`) at
 `http://localhost:8007/mcp` over Streamable HTTP with the same header.
