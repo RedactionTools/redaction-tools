@@ -160,7 +160,7 @@ deploy-env-get:  ## Pull the VM's .env down to .env.$(SERVER)
 	deploy/scripts/env.sh get $(SERVER)
 
 .PHONY: deploy
-deploy:  ## Re-trigger the deploy workflow for SERVER
+deploy:  ## Deploy the tip of main to SERVER now (merges to main deploy by themselves)
 	deploy/scripts/deploy.sh $(SERVER)
 
 .PHONY: deploy-logs
