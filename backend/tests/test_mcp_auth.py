@@ -62,7 +62,6 @@ def test_the_authorization_server_metadata_is_discoverable(client):
 
     assert response.status_code == 200
     body = response.json()
-    assert body["authorization_endpoint"].endswith("/oauth/authorize")
     assert body["token_endpoint"].endswith("/oauth/token")
     # Claude registers itself rather than being configured by hand.
     assert body["registration_endpoint"].endswith("/oauth/register")
@@ -97,19 +96,6 @@ def test_a_client_can_register_itself(client):
 
     assert response.status_code == 201
     assert response.json()["client_id"]
-
-
-def test_the_consent_page_sends_an_anonymous_visitor_to_sign_in(client):
-    """And back again afterwards.
-
-    LOGIN_REDIRECT_URL is "/admin/", so without the `next` the visitor would
-    land in the admin and the connector would hang waiting for a code.
-    """
-    response = client.get("/oauth/authorize", {"client_id": "whatever"})
-
-    assert response.status_code == 302
-    assert response.url.startswith("/accounts/login/")
-    assert "next=/oauth/authorize" in response.url
 
 
 def test_an_oauth_token_for_a_non_staff_user_is_still_refused(client, user):

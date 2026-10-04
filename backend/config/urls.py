@@ -2,6 +2,7 @@ from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path, re_path
 
+from apps.accounts import mcp_oauth
 from apps.core.views import serve_media
 from config.api import api
 from config.mcp import server as mcp_server
@@ -19,6 +20,13 @@ urlpatterns = [
     # `mcp`: the protected-resource document is published at
     # /.well-known/oauth-protected-resource/mcp, derived from this path.
     path("mcp", mcp_server),
+    # The consent page is the frontend's, so the metadata names it and the
+    # library's own authorize view only forwards there.
+    path(
+        ".well-known/oauth-authorization-server/<path:issuer_path>",
+        mcp_oauth.authorization_server_metadata,
+    ),
+    path("oauth/authorize", mcp_oauth.forward_to_consent),
     path("oauth/", include("django_mcpz.oauth.urls")),
     path("", include("django_mcpz.oauth.wellknown")),
 ]

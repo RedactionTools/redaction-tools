@@ -95,6 +95,10 @@ The parts that bite if you miss them:
   imports neither ninja nor MCP and takes `user` explicitly, which is what keeps the price
   rules in one place and every write attributable. Refusals are `StaffError`; the MCP layer
   turns them into an in-band `isError` a model can correct from.
+- **Its OAuth consent page is the frontend's `/mcp/authorize`**, not django-mcpz's. The backend
+  metadata points there (`apps/accounts/mcp_oauth.py`), the page uses the ordinary Google sign-in
+  and calls `/api/v1/auth/mcp-authorizations`, which *is* in the generated contract. Token,
+  register and revoke stay django-mcpz's.
 - **`Tool.is_listable()` delegates to `listability_blockers()`** in `models.py`. Change the
   bar there. It is a generator so `is_listable()` still short-circuits, which matters
   because the public list runs it over every published tool on every request.
