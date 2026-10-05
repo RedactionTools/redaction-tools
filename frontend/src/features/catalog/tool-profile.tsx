@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Markdown } from '@/components/markdown'
-import { Card, CardTitle } from '@/components/ui/card'
+import { Card, CardDescription, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table,
@@ -94,6 +94,7 @@ export function ToolProfile({ slug }: { slug: string }) {
       {/* Last, because the page is written for a buyer: the vendor who came to
           correct it will read to the end, and a buyer should not meet a vendor
           call to action before the assessment. */}
+      <SubmitBenchmark tool={tool} />
       <ClaimListing tool={tool} />
       <CommentSection targetType="tool" slug={tool.slug} />
       {/* After everything a reader sees: staff edit the page itself through
@@ -165,6 +166,34 @@ function ToolHeader({ tool }: { tool: ToolDetailOut }) {
         </p>
       ) : null}
     </header>
+  )
+}
+
+/**
+ * An invitation to measure the tool, with or without results so far: anyone with an
+ * account may submit, and the form opens with this tool already chosen. Beside the
+ * claim rather than in the header, because it asks the reader for work - the header
+ * is where a buyer goes next.
+ */
+function SubmitBenchmark({ tool }: { tool: ToolDetailOut }) {
+  const heading = `Benchmark ${tool.name}`
+  return (
+    <section aria-label={heading}>
+      <Card className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <CardTitle>{heading}</CardTitle>
+          <CardDescription className="mt-1">
+            Run our public test documents through {tool.name} and upload what it returns. We score
+            every file, and an editor reviews the result before it is published, credited to you.
+          </CardDescription>
+        </div>
+        <Button asChild variant="outline" className="shrink-0">
+          <Link href={`/benchmarks/pdf/submit?tool=${encodeURIComponent(tool.slug)}`}>
+            Submit results
+          </Link>
+        </Button>
+      </Card>
+    </section>
   )
 }
 

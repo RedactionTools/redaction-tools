@@ -44,6 +44,18 @@ describe('ToolProfile', () => {
     expect(screen.getByRole('link', { name: /visit adobe acrobat/i })).not.toHaveClass('bg-primary')
   })
 
+  // Anyone may benchmark a listed tool, results or not: the link opens the submit
+  // form with this tool already chosen.
+  it('invites the reader to submit benchmark results for this tool', () => {
+    render()
+
+    const section = screen.getByRole('region', { name: /benchmark adobe acrobat/i })
+    expect(within(section).getByRole('link', { name: /submit results/i })).toHaveAttribute(
+      'href',
+      '/benchmarks/pdf/submit?tool=adobe-acrobat',
+    )
+  })
+
   it('offers no benchmark link before the tool has results', () => {
     render()
 

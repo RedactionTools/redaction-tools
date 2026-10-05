@@ -47,7 +47,14 @@ const FALLBACK = 'That did not go through. Try again in a moment.'
  * send. We score them in the background and an editor reviews the result before it is
  * published - the page says so at every step, so nobody expects an instant leaderboard.
  */
-export function SubmitResults({ suite }: { suite: string }) {
+export function SubmitResults({
+  suite,
+  initialTool = '',
+}: {
+  suite: string
+  /** A catalog slug to start with - the tool page links here with `?tool=`. */
+  initialTool?: string
+}) {
   const { data: suiteData } = useGetBenchmarkSuite(suite, SUBMIT_SUITE_PARAMS)
   const { data: tools } = useListTools(SUBMIT_TOOL_PARAMS)
   const create = useCreateBenchmarkSubmission()
@@ -55,7 +62,7 @@ export function SubmitResults({ suite }: { suite: string }) {
   const addShots = useAddBenchmarkRunScreenshots()
   const finalize = useFinalizeBenchmarkSubmission()
 
-  const [tool, setTool] = useState('')
+  const [tool, setTool] = useState(initialTool)
   const [surface, setSurface] = useState('')
   const [tier, setTier] = useState('')
   const [toolVersion, setToolVersion] = useState('')
