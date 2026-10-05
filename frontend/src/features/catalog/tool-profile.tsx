@@ -162,7 +162,11 @@ function ToolHeader({ tool }: { tool: ToolDetailOut }) {
       {tool.is_first_party ? (
         <p className="border-border text-muted-foreground border-l-2 pl-3 text-sm italic">
           This is our own product. It appears in this catalog on the same terms as every other
-          entry, is never sorted to the top, and its pricing is recorded the same way.
+          entry, is never sorted to the top, and its pricing is recorded the same way.{' '}
+          <Link href="/about#disclosure" className="underline underline-offset-4">
+            Read the full disclosure
+          </Link>
+          .
         </p>
       ) : null}
     </header>

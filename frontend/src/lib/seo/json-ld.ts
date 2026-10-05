@@ -3,6 +3,7 @@ import type { Author } from '@/lib/blog/authors'
 import { BLOG_NAME, type BlogPostMeta } from '@/lib/blog/posts'
 
 import { markdownToPlainText } from './plain-text'
+import { FIRST_PARTY_SITE_URL, OPERATOR_NAME, OPERATOR_URL } from './site'
 
 /**
  * Structured data for the catalog.
@@ -182,6 +183,74 @@ export function organizationJsonLd(
     // JSON-LD gets no metadataBase, so every URL in it has to be absolute.
     logo: { '@type': 'ImageObject', url: logo },
     sameAs: [...sameAs],
+    parentOrganization: { '@id': operatorId() },
+  }
+}
+
+/** The about page: about our organization, which is where the operator hangs off. */
+export function aboutPageJsonLd(
+  site: string,
+  { name, description }: { name: string; description: string },
+) {
+  return {
+    '@type': 'AboutPage',
+    '@id': `${site}/about#webpage`,
+    url: `${site}/about`,
+    name,
+    description,
+    inLanguage: 'en',
+    about: { '@id': organizationId(site) },
+    isPartOf: { '@id': websiteId(site) },
+  }
+}
+
+/** The company that runs the site - the @id pdf-redaction.com declares it under. */
+export function operatorId(): string {
+  return `${OPERATOR_URL}/#organization`
+}
+
+/**
+ * The company that runs the site, defined in full on `/about` only - every other
+ * page reaches it through the `parentOrganization` pointer on ours.
+ *
+ * The facts are the ones pdf-redaction.com publishes for the same @id. Keep the
+ * two in step: a crawler merging one entity from two sites that disagree has to
+ * pick a side.
+ */
+export function operatorJsonLd(site: string) {
+  return {
+    '@type': 'Organization',
+    '@id': operatorId(),
+    name: OPERATOR_NAME,
+    url: `${OPERATOR_URL}/`,
+    description:
+      'StabRise is a software company building open-source, AI-powered document processing, including PDF Redaction and Redaction Tools.',
+    email: 'info@stabrise.com',
+    sameAs: [
+      'https://www.linkedin.com/company/stabrise/',
+      'https://github.com/StabRise',
+      'https://www.biznes.gov.pl/pl/wyszukiwarka-firm/wpis/ceidg/FCED8FC2-27E0-4E7A-BD34-06B1DD15E73A',
+      'https://www.wikidata.org/wiki/Q141256801',
+    ],
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: 'Wilcza 19i, lok. 2',
+      addressLocality: 'Marki',
+      addressRegion: 'Mazowieckie',
+      postalCode: '05-270',
+      addressCountry: 'PL',
+    },
+    contactPoint: {
+      '@type': 'ContactPoint',
+      contactType: 'Customer Service',
+      telephone: '+48-790-844-156',
+      email: 'info@stabrise.com',
+      availableLanguage: ['English', 'Polish', 'Ukrainian', 'Russian', 'German', 'Spanish'],
+    },
+    subOrganization: [
+      { '@id': organizationId(site) },
+      { '@id': `${FIRST_PARTY_SITE_URL}/#organization` },
+    ],
   }
 }
 

@@ -3,7 +3,14 @@ import type { ReactNode } from 'react'
 
 import { Container } from '@/components/layout/container'
 import { Logo } from '@/components/layout/logo'
-import { LINKEDIN_URL, REDDIT_URL, SITE_DESCRIPTION, SITE_NAME } from '@/lib/seo/site'
+import {
+  LINKEDIN_URL,
+  OPERATOR_NAME,
+  OPERATOR_URL,
+  REDDIT_URL,
+  SITE_DESCRIPTION,
+  SITE_NAME,
+} from '@/lib/seo/site'
 
 // Brand marks, drawn inline: there is no icon package here (radix-ui is the
 // only UI dependency), same call as the header's GitHub glyph.
@@ -66,6 +73,9 @@ export function SiteFooter() {
             <Link href="/blog" className="hover:text-foreground">
               Blog
             </Link>
+            <Link href="/about" className="hover:text-foreground">
+              About
+            </Link>
             <Link href="/submit" className="hover:text-foreground">
               Submit a tool
             </Link>
@@ -85,7 +95,10 @@ export function SiteFooter() {
         </div>
         <div className="border-border text-muted-foreground flex flex-wrap items-center justify-between gap-4 border-t pt-6 text-sm">
           <p>
-            © {year} {SITE_NAME}
+            © {year} {SITE_NAME} · Operated by{' '}
+            <a href={OPERATOR_URL} className="hover:text-foreground underline underline-offset-4">
+              {OPERATOR_NAME}
+            </a>
           </p>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
             <SocialLink href={REDDIT_URL} mark={REDDIT_MARK}>

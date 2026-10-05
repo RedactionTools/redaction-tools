@@ -22,6 +22,16 @@ export const SITE_DESCRIPTION =
 export const REDDIT_URL = 'https://www.reddit.com/r/RedactionTools/'
 export const LINKEDIN_URL = 'https://www.linkedin.com/company/redaction-tools/'
 export const GITHUB_REPO_URL = 'https://github.com/RedactionTools/redaction-tools'
+/** pdfredeval, the benchmark scorer; vendored as `backend/vendor/pdf-redaction-benchmarks`. */
+export const BENCHMARKS_REPO_URL = 'https://github.com/RedactionTools/pdf-redaction-benchmarks'
 
 /** The profiles the Organization node claims as its own. */
 export const SITE_SOCIAL_URLS = [REDDIT_URL, LINKEDIN_URL, GITHUB_REPO_URL] as const
+
+/**
+ * Who runs the site. StabRise also makes PDF Redaction, which the catalog lists -
+ * the disclosure on `/about` and on that tool's page rests on these.
+ */
+export const OPERATOR_NAME = 'StabRise'
+export const OPERATOR_URL = 'https://stabrise.com'
+export const FIRST_PARTY_SITE_URL = 'https://pdf-redaction.com'

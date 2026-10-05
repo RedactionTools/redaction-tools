@@ -75,6 +75,7 @@ export function buildLlmsTxt(
       `- [Price calculator](${site}/price-calculator): Cost any tool’s plans against your own document volume.`,
       `- [Documentation](${site}/docs): How prices are verified, what a listing means, and how to read the catalog with a machine.`,
       `- [Submit a tool](${site}/submit): Tell us about a redaction tool we are missing.`,
+      `- [About](${site}/about): Run by StabRise, which also makes PDF Redaction, a tool listed here.`,
       `- [Full catalog facts](${site}/llms-full.txt): Every tool’s price, vendor and provenance as plain text.`,
     ].join('\n'),
   )
