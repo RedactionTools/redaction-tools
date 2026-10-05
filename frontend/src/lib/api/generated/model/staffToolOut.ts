@@ -30,6 +30,7 @@ export interface StaffToolOut {
   editor_notes: string;
   sort_order: number;
   last_verified_at: string | null;
+  editorial_reviewed_at: string | null;
   prices_changed_at: string | null;
   facets: StaffFacetOut[];
   plans: StaffPlanOut[];

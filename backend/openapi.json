@@ -754,6 +754,38 @@
         ]
       }
     },
+    "/api/v1/catalog/tools/{slug}/badges": {
+      "get": {
+        "operationId": "get_tool_badges",
+        "summary": "What a tool's embeddable badges may claim",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ToolBadgesOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
     "/api/v1/catalog/tools/{slug}": {
       "get": {
         "operationId": "get_tool",
@@ -1530,6 +1562,53 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/StaffChangesIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "StaffJWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/catalog/staff/tools/{slug}/review": {
+      "put": {
+        "operationId": "staff_set_tool_review",
+        "summary": "Sign a listing off as editorially reviewed, or take it back",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffToolReviewOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "catalog-staff"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StaffToolReviewIn"
               }
             }
           },
@@ -4447,23 +4526,36 @@
         "title": "VendorOut",
         "type": "object"
       },
-      "FaqItemOut": {
-        "description": "One question a listing answers.\n\nTyped rather than left as a bare dict so the generated client gets a real\nshape instead of `{[key: string]: unknown}` - which is what kept the field\nunrendered. The source is a JSONField typed by hand in the admin, so the\nview normalises before serialising: with this schema in place a mistyped\nkey would be a 500 on a public page rather than a missing answer.",
+      "ToolBadgesOut": {
+        "description": "What a tool's embeddable badges may claim. All false for anything unlisted.",
         "properties": {
-          "question": {
-            "title": "Question",
-            "type": "string"
+          "listed": {
+            "title": "Listed",
+            "type": "boolean"
           },
-          "answer": {
-            "title": "Answer",
-            "type": "string"
+          "reviewed": {
+            "title": "Reviewed",
+            "type": "boolean"
+          },
+          "benchmarked": {
+            "title": "Benchmarked",
+            "type": "boolean"
+          },
+          "benchmark_suites": {
+            "items": {
+              "$ref": "#/components/schemas/ToolBenchmarkOut"
+            },
+            "title": "Benchmark Suites",
+            "type": "array"
           }
         },
         "required": [
-          "question",
-          "answer"
+          "listed",
+          "reviewed",
+          "benchmarked",
+          "benchmark_suites"
         ],
-        "title": "FaqItemOut",
+        "title": "ToolBadgesOut",
         "type": "object"
       },
       "ToolBenchmarkOut": {
@@ -4483,6 +4575,25 @@
           "name"
         ],
         "title": "ToolBenchmarkOut",
+        "type": "object"
+      },
+      "FaqItemOut": {
+        "description": "One question a listing answers.\n\nTyped rather than left as a bare dict so the generated client gets a real\nshape instead of `{[key: string]: unknown}` - which is what kept the field\nunrendered. The source is a JSONField typed by hand in the admin, so the\nview normalises before serialising: with this schema in place a mistyped\nkey would be a 500 on a public page rather than a missing answer.",
+        "properties": {
+          "question": {
+            "title": "Question",
+            "type": "string"
+          },
+          "answer": {
+            "title": "Answer",
+            "type": "string"
+          }
+        },
+        "required": [
+          "question",
+          "answer"
+        ],
+        "title": "FaqItemOut",
         "type": "object"
       },
       "ToolDetailOut": {
@@ -5798,6 +5909,17 @@
             ],
             "title": "Last Verified At"
           },
+          "editorial_reviewed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Editorial Reviewed At"
+          },
           "prices_changed_at": {
             "anyOf": [
               {
@@ -5864,6 +5986,7 @@
           "editor_notes",
           "sort_order",
           "last_verified_at",
+          "editorial_reviewed_at",
           "prices_changed_at",
           "facets",
           "plans",
@@ -5921,6 +6044,57 @@
           "changes"
         ],
         "title": "StaffChangesIn",
+        "type": "object"
+      },
+      "StaffToolReviewOut": {
+        "properties": {
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "editorial_reviewed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Editorial Reviewed At"
+          },
+          "listable": {
+            "title": "Listable",
+            "type": "boolean"
+          },
+          "listability_reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Listability Reasons",
+            "type": "array"
+          }
+        },
+        "required": [
+          "slug",
+          "editorial_reviewed_at",
+          "listable",
+          "listability_reasons"
+        ],
+        "title": "StaffToolReviewOut",
+        "type": "object"
+      },
+      "StaffToolReviewIn": {
+        "properties": {
+          "reviewed": {
+            "title": "Reviewed",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "reviewed"
+        ],
+        "title": "StaffToolReviewIn",
         "type": "object"
       },
       "StaffPlanCreateOut": {

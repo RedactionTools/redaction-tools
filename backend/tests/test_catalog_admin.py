@@ -521,3 +521,17 @@ def test_the_tool_page_and_list_show_the_listing_blockers(admin_client):
 
     assert b"not published." in page.content
     assert b"not published." in listing.content
+
+
+def test_marking_a_tool_reviewed_from_the_list_goes_through_the_staff_trail(admin_client):
+    tool = Tool.objects.get(slug="pdf-redaction")
+
+    admin_client.post(
+        "/admin/catalog/tool/",
+        {"action": "mark_reviewed", "_selected_action": [str(tool.pk)]},
+        follow=True,
+    )
+
+    tool.refresh_from_db()
+    assert tool.editorial_reviewed_at is not None
+    assert tool.revisions.filter(changes__has_key="editorial_reviewed_at").exists()

@@ -137,6 +137,18 @@ The parts that bite if you miss them:
   Only its hash is stored, it never expires and it redeems once. The off switch is the admin's
   revoke action, not a TTL.
 
+## Owner badges
+
+`DEVELOPMENT.md` has the details. What bites:
+
+- **`apps/catalog/badges.py` decides what a badge claims**, and every badge needs a listable
+  tool. Reviewed is the `editorial_reviewed_at` stamp, written only by
+  `staff.set_editorial_review`. It is never set in `update_tool`, never by owners.
+- **A badge never 404s or breaks.** Anything not earned, or not reachable, draws grey: the image
+  sits on someone else's site.
+- **`/badge/` must stay outside the `src/proxy.ts` matcher**, like the other publicly cached
+  routes, and `color` stays strictly six hex digits - it lands inside the SVG.
+
 ## Comments live in `apps/comments/`
 
 `DEVELOPMENT.md` has the details. What bites:

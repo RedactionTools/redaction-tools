@@ -4,6 +4,7 @@ import type {
   PlanOut,
   PriceOut,
   StaffToolOut,
+  ToolBadgesOut,
   ToolDetailOut,
   ToolListItemOut,
   ToolPageOut,
@@ -236,6 +237,7 @@ export function makeStaffTool(overrides: Partial<StaffToolOut> = {}): StaffToolO
     sort_order: 0,
     last_verified_at: '2026-09-15T00:00:00Z',
     prices_changed_at: null,
+    editorial_reviewed_at: null,
     facets: [
       { dimension: 'media', value: 'pdf', slug: 'pdf', evidence_url: '', verified_at: null },
       { dimension: 'capability', value: 'ocr', slug: 'ocr', evidence_url: '', verified_at: null },
@@ -274,6 +276,16 @@ export function makeStaffTool(overrides: Partial<StaffToolOut> = {}): StaffToolO
     open_price_proposals: 0,
     listable: true,
     listability_reasons: [],
+    ...overrides,
+  }
+}
+
+export function makeBadges(overrides: Partial<ToolBadgesOut> = {}): ToolBadgesOut {
+  return {
+    listed: true,
+    reviewed: false,
+    benchmarked: false,
+    benchmark_suites: [],
     ...overrides,
   }
 }

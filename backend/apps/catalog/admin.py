@@ -15,7 +15,7 @@ from django.utils.text import slugify
 from unfold.admin import ModelAdmin, TabularInline
 from unfold.widgets import UnfoldAdminFileFieldWidget
 
-from apps.catalog import images, logos
+from apps.catalog import images, logos, staff
 from apps.catalog import screenshots as screenshot_service
 from apps.catalog.images import ImageRejected
 from apps.catalog.models import (
@@ -362,7 +362,22 @@ class ToolAdmin(LogoAdminMixin, ModelAdmin):
     prepopulated_fields = {"slug": ("name",)}
     autocomplete_fields = ("vendor",)
     inlines = (ToolFacetInline, ToolScreenshotInline, PlanInline)
-    readonly_fields = ("listing_blockers", "created_at", "updated_at")
+    readonly_fields = ("listing_blockers", "editorial_reviewed_at", "created_at", "updated_at")
+    actions = ("mark_reviewed", "clear_review")
+
+    @admin.action(description="Mark reviewed - earns the owner's Reviewed badge")
+    def mark_reviewed(self, request, queryset):
+        """Through `staff.py`, like the MCP and the tool page: the stamp is a
+        decision, and every surface records it the same way."""
+        for tool in queryset:
+            staff.set_editorial_review(user=request.user, slug=tool.slug, reviewed=True)
+        self.message_user(request, f"Marked {queryset.count()} tools reviewed.")
+
+    @admin.action(description="Clear review")
+    def clear_review(self, request, queryset):
+        for tool in queryset:
+            staff.set_editorial_review(user=request.user, slug=tool.slug, reviewed=False)
+        self.message_user(request, f"Cleared the review on {queryset.count()} tools.")
 
     def get_fields(self, request, obj=None):
         """Blockers first: they are the reason an editor opens a draft."""

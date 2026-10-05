@@ -42,6 +42,8 @@ import type {
   StaffToolFacetRemovedOut,
   StaffToolLogoOut,
   StaffToolOut,
+  StaffToolReviewIn,
+  StaffToolReviewOut,
   StaffToolUpdateOut,
   StaffUploadScreenshotBody,
   StaffUploadToolLogoBody
@@ -256,6 +258,94 @@ export const useStaffUpdateTool = <TError = unknown,
         TContext
       > => {
       return useMutation(getStaffUpdateToolMutationOptions(options), queryClient);
+    }
+    export const getStaffSetToolReviewUrl = (slug: string,) => {
+
+
+
+
+  return `/api/v1/catalog/staff/tools/${slug}/review`
+}
+
+/**
+ * @summary Sign a listing off as editorially reviewed, or take it back
+ */
+export const staffSetToolReview = async (slug: string,
+    staffToolReviewIn: StaffToolReviewIn, options?: Parameters<typeof customFetch>[1]): Promise<StaffToolReviewOut> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<StaffToolReviewOut>(getStaffSetToolReviewUrl(slug),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(staffToolReviewIn)
+  }
+);}
+
+
+
+
+
+export const getStaffSetToolReviewMutationKey = () => ['staffSetToolReview'] as const;
+
+export const getStaffSetToolReviewMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof staffSetToolReview>>, TError,StaffSetToolReviewMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof staffSetToolReview>>, TError,StaffSetToolReviewMutationVariables, TContext> => {
+
+const mutationKey = getStaffSetToolReviewMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof staffSetToolReview>>, StaffSetToolReviewMutationVariables> = (props) => {
+          const {slug,data} = props ?? {};
+
+          return  staffSetToolReview(slug,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type StaffSetToolReviewMutationResult = NonNullable<Awaited<ReturnType<typeof staffSetToolReview>>>
+    export type StaffSetToolReviewMutationBody = StaffToolReviewIn
+    export type StaffSetToolReviewMutationError = unknown
+    export type StaffSetToolReviewMutationVariables = {slug: string;data: StaffToolReviewIn}
+
+    /**
+ * @summary Sign a listing off as editorially reviewed, or take it back
+ */
+export const useStaffSetToolReview = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof staffSetToolReview>>, TError,StaffSetToolReviewMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof staffSetToolReview>>,
+        TError,
+        StaffSetToolReviewMutationVariables,
+        TContext
+      > => {
+      return useMutation(getStaffSetToolReviewMutationOptions(options), queryClient);
     }
     export const getStaffCreatePlanUrl = (slug: string,) => {
 

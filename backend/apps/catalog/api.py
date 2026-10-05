@@ -23,7 +23,7 @@ from ninja.files import UploadedFile
 
 from apps.accounts.api import JWTAuth
 from apps.benchmarks import leaderboard
-from apps.catalog import images
+from apps.catalog import badges, images
 from apps.catalog import screenshots as screenshot_service
 from apps.catalog.claims import (
     InviteUnavailable,
@@ -64,6 +64,7 @@ from apps.catalog.schemas import (
     PriceProposalIn,
     PriceProposalOut,
     ScreenshotUploadIn,
+    ToolBadgesOut,
     ToolClaimIn,
     ToolClaimOut,
     ToolClaimVerifyIn,
@@ -275,6 +276,20 @@ def list_tools(
         "count": len(rows),
         "items": [ToolListItemOut(**row).dict() for _, row in window],
     }
+
+
+@router.get(
+    "/tools/{slug}/badges",
+    response=ToolBadgesOut,
+    summary="What a tool's embeddable badges may claim",
+)
+def get_tool_badges(request: HttpRequest, slug: str):
+    # Never a 404: the badge is an image on someone else's site, and an unknown
+    # slug and a tool taken down both owe it the same grey "nothing to claim".
+    tool = Tool.objects.filter(slug=slug).first()
+    if tool is None:
+        return {"listed": False, "reviewed": False, "benchmarked": False, "benchmark_suites": []}
+    return badges.badge_states(tool)
 
 
 @router.get(

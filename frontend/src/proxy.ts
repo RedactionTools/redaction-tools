@@ -26,10 +26,13 @@ export { auth as proxy } from '@/auth'
  * The blog's RSS feeds (`/blog/rss.xml`, `/blog/tags/<tag>/rss.xml`) are polled
  * anonymously by feed readers, on a timer.
  *
+ * `/badge/<slug>/<kind>.svg` is an owner's embeddable badge: an image on someone
+ * else's site, publicly cached for an hour.
+ *
  * `src/proxy.matcher.test.ts` holds this to the paths it has to let through.
  */
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|api/search|favicon\\.ico|icon\\.png|apple-icon\\.png|robots\\.txt|sitemap\\.xml|llms\\.txt|llms-full\\.txt|.*opengraph-image|blog/(?:.*/)?rss\\.xml$).*)',
+    '/((?!_next/static|_next/image|api/search|favicon\\.ico|icon\\.png|apple-icon\\.png|robots\\.txt|sitemap\\.xml|llms\\.txt|llms-full\\.txt|.*opengraph-image|badge/|blog/(?:.*/)?rss\\.xml$).*)',
   ],
 }

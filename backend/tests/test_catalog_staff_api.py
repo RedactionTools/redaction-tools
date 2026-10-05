@@ -235,3 +235,16 @@ def test_a_staff_logo_upload_is_rehosted_and_recorded(client, staff_bearer):
 
 def test_an_anonymous_caller_is_unauthenticated(client):
     assert client.get(f"{TOOLS}/{SEEDED}").status_code == 401
+
+
+def test_staff_can_sign_a_listing_off_as_reviewed(client, staff_bearer):
+    response = client.put(
+        f"{TOOLS}/{SEEDED}/review",
+        {"reviewed": True},
+        content_type="application/json",
+        **staff_bearer,
+    )
+
+    assert response.status_code == 200
+    assert response.json()["editorial_reviewed_at"] is not None
+    assert Tool.objects.get(slug=SEEDED).editorial_reviewed_at is not None

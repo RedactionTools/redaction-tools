@@ -26,6 +26,7 @@ from apps.catalog.staff import (
     create_tool,
     list_facets,
     remove_tool_facet,
+    set_editorial_review,
     set_plan_limit,
     set_plan_price,
     update_plan,
@@ -668,3 +669,39 @@ def test_remove_tool_facet_lets_a_draft_lose_its_last_value(staff_user, tool):
     result = remove_tool_facet(user=staff_user, slug=SEEDED, dimension="media", value="pdf")
 
     assert "No facet on: media." in result["listability_reasons"]
+
+
+def test_set_editorial_review_stamps_the_tool_and_records_it(staff_user, tool):
+    result = set_editorial_review(user=staff_user, slug=SEEDED, reviewed=True)
+
+    tool.refresh_from_db()
+    assert tool.editorial_reviewed_at is not None
+    assert result["editorial_reviewed_at"] == tool.editorial_reviewed_at.isoformat()
+    revision = ToolRevision.objects.get(tool=tool)
+    assert revision.origin == ToolRevisionOrigin.STAFF
+    assert revision.changes == {"editorial_reviewed_at": tool.editorial_reviewed_at.isoformat()}
+    assert revision.base_snapshot == {"editorial_reviewed_at": None}
+
+
+def test_set_editorial_review_takes_a_review_back(staff_user, tool):
+    set_editorial_review(user=staff_user, slug=SEEDED, reviewed=True)
+
+    result = set_editorial_review(user=staff_user, slug=SEEDED, reviewed=False)
+
+    tool.refresh_from_db()
+    assert tool.editorial_reviewed_at is None
+    assert result["editorial_reviewed_at"] is None
+
+
+def test_set_editorial_review_again_keeps_the_first_stamp_and_trail(staff_user, tool):
+    first = set_editorial_review(user=staff_user, slug=SEEDED, reviewed=True)
+
+    again = set_editorial_review(user=staff_user, slug=SEEDED, reviewed=True)
+
+    assert again["editorial_reviewed_at"] == first["editorial_reviewed_at"]
+    assert ToolRevision.objects.filter(tool=tool).count() == 1
+
+
+def test_set_editorial_review_on_an_unknown_slug_is_refused(staff_user):
+    with pytest.raises(StaffError):
+        set_editorial_review(user=staff_user, slug="no-such-tool", reviewed=True)

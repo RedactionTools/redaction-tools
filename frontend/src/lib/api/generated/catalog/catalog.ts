@@ -35,6 +35,7 @@ import type {
   MyScreenshotOut,
   PriceProposalIn,
   PriceProposalOut,
+  ToolBadgesOut,
   ToolClaimIn,
   ToolClaimOut,
   ToolClaimVerifyIn,
@@ -165,6 +166,106 @@ export function useListTools<TData = Awaited<ReturnType<typeof listTools>>, TErr
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getListToolsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export const getGetToolBadgesUrl = (slug: string,) => {
+
+
+
+
+  return `/api/v1/catalog/tools/${slug}/badges`
+}
+
+/**
+ * @summary What a tool's embeddable badges may claim
+ */
+export const getToolBadges = async (slug: string, options?: Parameters<typeof customFetch>[1]): Promise<ToolBadgesOut> => {
+
+  return customFetch<ToolBadgesOut>(getGetToolBadgesUrl(slug),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetToolBadgesQueryKey = (slug: string,) => {
+    return [
+    `/api/v1/catalog/tools/${slug}/badges`
+    ] as const;
+    }
+
+
+export const getGetToolBadgesQueryOptions = <TData = Awaited<ReturnType<typeof getToolBadges>>, TError = unknown>(slug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getToolBadges>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetToolBadgesQueryKey(slug);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getToolBadges>>> = ({ signal }) => getToolBadges(slug, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: slug !== null && slug !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getToolBadges>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetToolBadgesQueryResult = NonNullable<Awaited<ReturnType<typeof getToolBadges>>>
+export type GetToolBadgesQueryError = unknown
+
+
+export function useGetToolBadges<TData = Awaited<ReturnType<typeof getToolBadges>>, TError = unknown>(
+ slug: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getToolBadges>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getToolBadges>>,
+          TError,
+          Awaited<ReturnType<typeof getToolBadges>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetToolBadges<TData = Awaited<ReturnType<typeof getToolBadges>>, TError = unknown>(
+ slug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getToolBadges>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getToolBadges>>,
+          TError,
+          Awaited<ReturnType<typeof getToolBadges>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetToolBadges<TData = Awaited<ReturnType<typeof getToolBadges>>, TError = unknown>(
+ slug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getToolBadges>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary What a tool's embeddable badges may claim
+ */
+
+export function useGetToolBadges<TData = Awaited<ReturnType<typeof getToolBadges>>, TError = unknown>(
+ slug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getToolBadges>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetToolBadgesQueryOptions(slug,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

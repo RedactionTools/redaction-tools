@@ -39,6 +39,8 @@ const SKIPPED = [
   '/blog/rss.xml',
   '/blog/tags/catalog/rss.xml',
   '/blog/hello/opengraph-image-a1b2c3',
+  // Owners' embeddable badges: an <img> on someone else's site, cached publicly.
+  '/badge/adobe-acrobat/listed.svg',
 ]
 
 // The docs stay guarded: their header renders a session-aware account menu,

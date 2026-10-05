@@ -7,6 +7,7 @@ import { Card, CardDescription, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useListMyListings } from '@/lib/api/generated/catalog/catalog'
 
+import { BadgeBuilder } from './badge-builder'
 import { ListingEditor } from './listing-editor'
 import { ScreenshotUploader } from './screenshot-uploader'
 
@@ -61,6 +62,15 @@ export function MyListingsPanel() {
               <div className="border-border mt-6 border-t pt-4">
                 <h3 className="mb-3 text-sm font-medium">Screenshots</h3>
                 <ScreenshotUploader slug={listing.slug} name={listing.name} />
+              </div>
+
+              <div className="border-border mt-6 border-t pt-4">
+                <h3 className="mb-1 text-sm font-medium">Badges</h3>
+                <p className="text-muted-foreground mb-3 text-sm">
+                  Show your listing on your own site. Each badge links back here and stays current:
+                  one the listing stops earning turns grey rather than going on claiming it.
+                </p>
+                <BadgeBuilder slug={listing.slug} name={listing.name} />
               </div>
             </Card>
           </li>

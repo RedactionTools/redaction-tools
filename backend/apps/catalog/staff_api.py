@@ -30,6 +30,8 @@ from apps.catalog.schemas import (
     StaffToolFacetRemovedOut,
     StaffToolLogoOut,
     StaffToolOut,
+    StaffToolReviewIn,
+    StaffToolReviewOut,
     StaffToolUpdateOut,
 )
 
@@ -44,6 +46,15 @@ def staff_get_tool(request: HttpRequest, slug: str):
 @router.patch("/tools/{slug}", response=StaffToolUpdateOut, summary="Edit a listing's fields")
 def staff_update_tool(request: HttpRequest, slug: str, payload: StaffChangesIn):
     return staff.update_tool(user=request.auth, slug=slug, changes=payload.changes)
+
+
+@router.put(
+    "/tools/{slug}/review",
+    response=StaffToolReviewOut,
+    summary="Sign a listing off as editorially reviewed, or take it back",
+)
+def staff_set_tool_review(request: HttpRequest, slug: str, payload: StaffToolReviewIn):
+    return staff.set_editorial_review(user=request.auth, slug=slug, reviewed=payload.reviewed)
 
 
 # --- Plans -------------------------------------------------------------------

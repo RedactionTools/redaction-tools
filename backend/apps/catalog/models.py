@@ -133,6 +133,11 @@ class Tool(TimeStampedModel):
 
     editor_verdict = models.TextField(blank=True, help_text="Staff only; never owner-editable.")
     editor_notes = models.TextField(blank=True)
+    editorial_reviewed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="When an editor signed off on the listing - earns the Reviewed badge.",
+    )
 
     first_seen_at = models.DateField(null=True, blank=True)
     last_verified_at = models.DateTimeField(

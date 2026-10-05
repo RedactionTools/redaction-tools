@@ -1,9 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
 
-import { Button } from '@/components/ui/button'
+import { CopyButton } from '@/components/ui/copy-button'
 import { Card, CardDescription, CardTitle } from '@/components/ui/card'
 
 const REPO = 'https://github.com/RedactionTools/pdf-redaction-benchmarks'
@@ -72,29 +71,12 @@ export function CliPublishCard() {
 }
 
 function Command({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false)
   return (
     <div className="bg-muted flex items-center gap-2 rounded-md py-1.5 pr-1.5 pl-3">
       <code className="min-w-0 flex-1 overflow-x-auto font-mono text-xs whitespace-nowrap">
         {text}
       </code>
-      <Button
-        type="button"
-        size="sm"
-        variant="ghost"
-        aria-label={`Copy: ${text}`}
-        onClick={async () => {
-          try {
-            await navigator.clipboard.writeText(text)
-            setCopied(true)
-            setTimeout(() => setCopied(false), 2000)
-          } catch {
-            // No clipboard (insecure context, denied permission): the text is selectable.
-          }
-        }}
-      >
-        {copied ? 'Copied' : 'Copy'}
-      </Button>
+      <CopyButton text={text} label={`Copy: ${text}`} />
     </div>
   )
 }
