@@ -172,3 +172,49 @@ def test_the_admin_says_why_a_screenshot_was_refused(admin_client, published_run
 
     assert published_run.screenshots.count() == 0
     assert "Screenshot 1" in response.content.decode()
+
+
+# --- rescore and drafts -------------------------------------------------------------
+
+
+def test_an_editor_rescores_a_submission_from_the_list(admin_client, pending):
+    from apps.benchmarks.models import RunStatus
+
+    # As a worker restart leaves it: sent, the run never scored.
+    Submission.objects.filter(pk=pending.pk).update(status=SubmissionStatus.SCORING)
+    pending.runs.update(status=RunStatus.QUEUED)
+
+    response = _act(admin_client, "rescore_submissions", pending)
+
+    pending.refresh_from_db()
+    assert pending.runs.get().status == RunStatus.SCORED
+    assert pending.status == SubmissionStatus.PENDING_REVIEW
+    assert "1 submission(s) queued for scoring" in response.content.decode()
+
+
+def test_the_admin_says_why_a_draft_is_not_rescored(admin_client, user, benchmark_case, run_files):
+    draft = services.open_submission(
+        user=user, suite="pdf", tool="pdf-redaction", surface="web", origin="upload"
+    )
+    services.add_output(
+        user=user, submission=draft, case_id=benchmark_case.case_id, pdf=run_files["pdf"]
+    )
+
+    response = _act(admin_client, "rescore_submissions", draft)
+
+    assert "never sent" in response.content.decode()
+
+
+def test_a_drafts_runs_read_not_sent_rather_than_queued(
+    admin_client, user, benchmark_case, run_files
+):
+    draft = services.open_submission(
+        user=user, suite="pdf", tool="pdf-redaction", surface="web", origin="upload"
+    )
+    services.add_output(
+        user=user, submission=draft, case_id=benchmark_case.case_id, pdf=run_files["pdf"]
+    )
+
+    body = admin_client.get(f"{CHANGELIST}{draft.pk}/change/").content.decode()
+
+    assert "Not sent" in body

@@ -109,6 +109,18 @@ describe('UserMenu when signed in', () => {
     expect(screen.getByText('ada@example.com')).toBeInTheDocument()
   })
 
+  it('links to everything the account has sent', async () => {
+    const user = userEvent.setup()
+    render(<UserMenu />)
+
+    await openMenu(user)
+
+    expect(await screen.findByRole('menuitem', { name: 'Your activity' })).toHaveAttribute(
+      'href',
+      '/activity',
+    )
+  })
+
   it('links to the listings the account manages', async () => {
     const user = userEvent.setup()
     render(<UserMenu />)
@@ -148,9 +160,10 @@ describe('UserMenu when signed in', () => {
     render(<UserMenu />)
 
     await openMenu(user)
-    // Opening focuses "Account"; arrow down past "My listings" to "Sign out".
+    // Opening focuses "Account"; arrow down past "Your activity" and "My listings" to
+    // "Sign out".
     await screen.findByRole('menuitem', { name: /sign out/i })
-    await user.keyboard('{ArrowDown}{ArrowDown}{Enter}')
+    await user.keyboard('{ArrowDown}{ArrowDown}{ArrowDown}{Enter}')
 
     expect(signOut).toHaveBeenCalled()
   })

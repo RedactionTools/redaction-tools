@@ -59,6 +59,7 @@ from apps.catalog.schemas import (
     ClaimInviteOut,
     ExchangeRatesOut,
     FacetDimensionOut,
+    MyClaimOut,
     MyListingOut,
     MyScreenshotOut,
     PriceProposalIn,
@@ -467,6 +468,16 @@ def _claim_out(claim):
         "email_verified_at": claim.email_verified_at,
         "created_at": claim.created_at,
     }
+
+
+@router.get(
+    "/claims/mine", response=list[MyClaimOut], auth=JWTAuth(), summary="Claims you have made"
+)
+def list_my_claims(request: HttpRequest):
+    """Every claim, pending or decided - the claimant's record of where each one stands.
+    The editor's comment is internal and stays out."""
+    claims = ToolClaim.objects.filter(user=request.auth).select_related("tool")
+    return [{**_claim_out(claim), "tool_name": claim.tool.name} for claim in claims]
 
 
 @router.post(

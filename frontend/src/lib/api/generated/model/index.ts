@@ -54,6 +54,7 @@ export * from './mcpAuthorizationDecisionInDecision';
 export * from './mcpAuthorizationDecisionOut';
 export * from './mcpAuthorizationOut';
 export * from './mcpAuthorizationParams';
+export * from './myClaimOut';
 export * from './myListingOut';
 export * from './myRunOut';
 export * from './myRunOutStatus';

@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { errorMessage } from '@/lib/api/error-message'
 import {
   getListMyBenchmarkSubmissionsQueryKey,
+  useFinalizeBenchmarkSubmission,
   useListMyBenchmarkSubmissions,
   useWithdrawBenchmarkSubmission,
 } from '@/lib/api/generated/benchmarks/benchmarks'
@@ -18,7 +19,8 @@ import { useQueryClient } from '@tanstack/react-query'
 
 import { AddRunScreenshots } from './add-run-screenshots'
 
-const STATUS: Record<string, { label: string; tone: Tone }> = {
+/** How a benchmark submission's status reads - here and on the activity page. */
+export const SUBMISSION_STATUS: Record<string, { label: string; tone: Tone }> = {
   draft: { label: 'Draft - not sent', tone: 'neutral' },
   scoring: { label: 'Scoring', tone: 'neutral' },
   scoring_failed: { label: 'Could not be scored', tone: 'warn' },
@@ -47,6 +49,9 @@ export function MySubmissions() {
   const refresh = () =>
     queryClient.invalidateQueries({ queryKey: getListMyBenchmarkSubmissionsQueryKey() })
   const withdraw = useWithdrawBenchmarkSubmission({ mutation: { onSuccess: refresh } })
+  // Uploading creates runs; only sending queues them. A draft left when the submit page
+  // was closed before "Send" would otherwise sit here with no way forward.
+  const send = useFinalizeBenchmarkSubmission({ mutation: { onSuccess: refresh } })
 
   if (isPending || !data) return <Skeleton className="h-40 w-full" />
 
@@ -69,8 +74,16 @@ export function MySubmissions() {
           {errorMessage(withdraw.error, 'That could not be withdrawn.')}
         </li>
       ) : null}
+      {send.isError ? (
+        <li className="text-warn text-sm" role="alert">
+          {errorMessage(send.error, 'That could not be sent. Try again in a moment.')}
+        </li>
+      ) : null}
       {data.map((submission) => {
-        const status = STATUS[submission.status] ?? { label: submission.status, tone: 'neutral' }
+        const status = SUBMISSION_STATUS[submission.status] ?? {
+          label: submission.status,
+          tone: 'neutral',
+        }
         return (
           <li key={submission.id} data-testid={`submission-${submission.id}`}>
             <Card className="space-y-3 p-4">
@@ -85,6 +98,15 @@ export function MySubmissions() {
                 </div>
                 <div className="flex items-center gap-3">
                   <Badge tone={status.tone}>{status.label}</Badge>
+                  {submission.status === 'draft' && submission.runs.length ? (
+                    <Button
+                      size="sm"
+                      disabled={send.isPending}
+                      onClick={() => send.mutate({ submissionId: submission.id })}
+                    >
+                      Send for scoring
+                    </Button>
+                  ) : null}
                   {WITHDRAWABLE.has(submission.status) ? (
                     <Button
                       size="sm"
@@ -106,9 +128,12 @@ export function MySubmissions() {
                     <li key={run.run_id} className="flex flex-wrap gap-x-4 gap-y-1 py-1.5">
                       <span className="font-mono text-xs">{run.case_id}</span>
                       <span className="text-muted-foreground text-xs">
-                        {run.status === 'scored'
-                          ? `Leak rate ${formatRate(run.leak_rate)}`
-                          : run.status}
+                        {submission.status === 'draft'
+                          ? // Created queued, but nothing is queued until it is sent.
+                            'Not sent'
+                          : run.status === 'scored'
+                            ? `Leak rate ${formatRate(run.leak_rate)}`
+                            : run.status}
                       </span>
                       {run.error ? (
                         <span className="text-warn w-full text-xs">{run.error}</span>

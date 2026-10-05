@@ -196,3 +196,44 @@ def test_the_submitter_withdraws_until_it_is_approved(user, staff_user, pending)
 def test_nobody_withdraws_someone_elses_submission(owner, pending):
     with pytest.raises(BenchmarkError, match="not yours"):
         services.withdraw(user=owner, submission=pending)
+
+
+# --- rescore -----------------------------------------------------------------------
+
+
+def test_an_editor_rescores_a_submission_whose_scoring_was_lost(
+    staff_user, user, benchmark_case, run_files
+):
+    # Sent, but the worker restarted and the task never ran: the run is still queued.
+    stuck = _uploaded(user, benchmark_case, run_files)
+    stuck.status = SubmissionStatus.SCORING
+    stuck.save()
+
+    services.rescore(user=staff_user, submission=stuck)
+
+    stuck.refresh_from_db()
+    run = stuck.runs.get()
+    assert run.status == RunStatus.SCORED
+    assert (run.tp, run.fn) == (42, 12)
+    assert stuck.status == SubmissionStatus.PENDING_REVIEW
+
+
+def test_a_draft_is_not_rescored_because_nobody_sent_it(
+    staff_user, user, benchmark_case, run_files
+):
+    draft = _uploaded(user, benchmark_case, run_files)
+
+    with pytest.raises(BenchmarkError, match="draft"):
+        services.rescore(user=staff_user, submission=draft)
+
+
+def test_a_decided_submission_is_not_rescored(staff_user, pending):
+    services.review(user=staff_user, submission=pending, status="approved")
+
+    with pytest.raises(BenchmarkError, match="already decided"):
+        services.rescore(user=staff_user, submission=pending)
+
+
+def test_only_staff_rescore(user, pending):
+    with pytest.raises(BenchmarkError, match="staff"):
+        services.rescore(user=user, submission=pending)

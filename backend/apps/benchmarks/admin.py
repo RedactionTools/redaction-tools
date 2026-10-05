@@ -82,7 +82,7 @@ class RunInline(TabularInline):
     fields = (
         "overlay_preview",
         "case",
-        "status",
+        "status_display",
         "headline",
         "verification_display",
         "screenshots_preview",
@@ -92,6 +92,14 @@ class RunInline(TabularInline):
 
     def has_add_permission(self, request, obj=None):
         return False
+
+    @admin.display(description="Status")
+    def status_display(self, obj):
+        # A run is created Queued, but nothing is queued until the submitter sends it:
+        # in a draft the word reads as a lost task when it is an unsent one.
+        if obj.submission.status == SubmissionStatus.DRAFT:
+            return "Not sent"
+        return obj.get_status_display()
 
     @admin.display(description="Overlay")
     def overlay_preview(self, obj):
@@ -172,7 +180,7 @@ class SubmissionAdmin(ModelAdmin):
         "reviewed_at",
     )
     fields = (*readonly_fields, "review_note")
-    actions = ("approve_submissions", "reject_submissions")
+    actions = ("approve_submissions", "reject_submissions", "rescore_submissions")
 
     def has_add_permission(self, request):
         return False
@@ -193,6 +201,21 @@ class SubmissionAdmin(ModelAdmin):
     @admin.action(description="Reject - the submitter sees the review note")
     def reject_submissions(self, request, queryset):
         self._review(request, queryset, SubmissionStatus.REJECTED)
+
+    @admin.action(description="Re-score - queue every run for scoring again")
+    def rescore_submissions(self, request, queryset):
+        """For a submission stuck in Scoring (a task lost to a worker restart) or one
+        whose scoring failed on our side. Decided submissions and drafts are refused."""
+        done = 0
+        for submission in queryset:
+            try:
+                services.rescore(user=request.user, submission=submission)
+            except BenchmarkError as exc:
+                self.message_user(request, f"{submission}: {exc}", level=messages.ERROR)
+            else:
+                done += 1
+        if done:
+            self.message_user(request, f"{done} submission(s) queued for scoring.")
 
     def _review(self, request, queryset, status):
         done = 0
