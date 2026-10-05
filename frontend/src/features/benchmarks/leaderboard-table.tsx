@@ -13,6 +13,7 @@ import {
 import { ToolLogo } from '@/features/catalog/tool-logo'
 import type { LeaderboardRowOut } from '@/lib/api/generated/model'
 import { formatPercent, roleLabel, surfaceLabel } from '@/lib/benchmarks/format'
+import { benchmarkHref } from '@/lib/benchmarks/params'
 
 import { ProvenanceBadge } from './provenance-badge'
 import { RateCell } from './rate-cell'
@@ -24,15 +25,18 @@ import { RateCell } from './rate-cell'
 export function LeaderboardTable({
   suite,
   revision,
+  isCurrent,
   rows,
   caseCount,
 }: {
   suite: string
   revision: string
+  isCurrent: boolean
   rows: LeaderboardRowOut[]
   caseCount: number
 }) {
-  const reportHref = (slug: string) => `/benchmarks/${suite}/tools/${slug}?revision=${revision}`
+  const reportHref = (slug: string) =>
+    benchmarkHref(`/benchmarks/${suite}/tools/${slug}`, { revision, isCurrent })
 
   if (rows.length === 0) {
     return (

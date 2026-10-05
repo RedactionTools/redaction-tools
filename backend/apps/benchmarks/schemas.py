@@ -168,10 +168,14 @@ class RunDetailOut(RunOut):
     tier: str
     notes: str
     revision: str
+    #: False for a superseded revision - the site links only those with `?revision=`.
+    revision_is_current: bool
 
 
 class CaseDetailOut(CaseOut):
     revision: str
+    #: False for a superseded revision - the site links only those with `?revision=`.
+    revision_is_current: bool
     runs: list[RunOut]
 
 
@@ -187,6 +191,8 @@ class ToolReportOut(Schema):
     tool: ToolRefOut
     suite: str
     revision: str
+    #: False for a superseded revision - the site links only those with `?revision=`.
+    revision_is_current: bool
     scope: Literal["all", "verified"]
     case_count: int
     surfaces: list[ToolSurfaceOut]

@@ -45,4 +45,5 @@ export interface RunDetailOut {
   tier: string;
   notes: string;
   revision: string;
+  revision_is_current: boolean;
 }

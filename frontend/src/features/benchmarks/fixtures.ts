@@ -152,6 +152,7 @@ export function makeToolReport(overrides: Partial<ToolReportOut> = {}): ToolRepo
     tool: row.tool,
     suite: 'pdf',
     revision: 'v0.1.1',
+    revision_is_current: true,
     scope: 'all',
     case_count: 4,
     surfaces: [
@@ -176,7 +177,13 @@ export function makeToolReport(overrides: Partial<ToolReportOut> = {}): ToolRepo
 }
 
 export function makeCaseDetail(overrides: Partial<CaseDetailOut> = {}): CaseDetailOut {
-  return { ...makeCase(), revision: 'v0.1.1', runs: [makeRun()], ...overrides }
+  return {
+    ...makeCase(),
+    revision: 'v0.1.1',
+    revision_is_current: true,
+    runs: [makeRun()],
+    ...overrides,
+  }
 }
 
 export function makeRunDetail(overrides: Partial<RunDetailOut> = {}): RunDetailOut {
@@ -201,6 +208,7 @@ export function makeRunDetail(overrides: Partial<RunDetailOut> = {}): RunDetailO
     tier: 'Free',
     notes: '',
     revision: 'v0.1.1',
+    revision_is_current: true,
     ...overrides,
   }
 }

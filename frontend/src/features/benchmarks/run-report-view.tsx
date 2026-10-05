@@ -11,6 +11,7 @@ import {
 } from '@/lib/api/generated/benchmarks/benchmarks'
 import type { PooledOut, RateOut } from '@/lib/api/generated/model'
 import { roleLabel, surfaceLabel } from '@/lib/benchmarks/format'
+import { benchmarkHref } from '@/lib/benchmarks/params'
 
 import { useQueryClient } from '@tanstack/react-query'
 
@@ -35,6 +36,7 @@ export function RunReportView({ suite, runId }: { suite: string; runId: string }
   if (!run) return <Skeleton className="h-64 w-full" />
 
   const report = run.report as Report
+  const at = { revision: run.revision, isCurrent: run.revision_is_current }
   const gates = report.survivability?.gates ?? []
   // One run's report reads like a pooled one of one: the same sections, n of one case.
   const summary: PooledOut = {
@@ -65,14 +67,14 @@ export function RunReportView({ suite, runId }: { suite: string; runId: string }
     <div className="space-y-10">
       <header className="space-y-3">
         <p className="text-muted-foreground text-sm">
-          <Link href={`/benchmarks/${suite}?revision=${run.revision}`} className="hover:underline">
+          <Link href={benchmarkHref(`/benchmarks/${suite}`, at)} className="hover:underline">
             {suite.toUpperCase()} benchmark {run.revision}
           </Link>
           {run.tool.listable ? (
             <>
               {' / '}
               <Link
-                href={`/benchmarks/${suite}/tools/${run.tool.slug}?revision=${run.revision}`}
+                href={benchmarkHref(`/benchmarks/${suite}/tools/${run.tool.slug}`, at)}
                 className="hover:underline"
               >
                 {run.tool.name}
@@ -132,7 +134,7 @@ export function RunReportView({ suite, runId }: { suite: string; runId: string }
               </a>
             ) : null}
             <Link
-              href={`/benchmarks/${suite}/cases/${run.case_id}?revision=${run.revision}`}
+              href={benchmarkHref(`/benchmarks/${suite}/cases/${run.case_id}`, at)}
               className="hover:underline"
             >
               The case, and every tool on it

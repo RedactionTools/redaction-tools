@@ -121,6 +121,29 @@ def test_a_run_page_carries_the_whole_report(client, published):
     assert body["scored_by"] == "submitter"
 
 
+def _detail_urls(run):
+    return [
+        f"{BASE}/suites/pdf/cases/extraction-conditions-1?revision=v0.1.1",
+        f"{BASE}/suites/pdf/tools/pdf-redaction?revision=v0.1.1",
+        f"{BASE}/runs/{run.run_id}",
+    ]
+
+
+def test_a_detail_page_says_its_revision_is_the_current_one(client, published):
+    """So the site can link the clean URL rather than a `?revision=` copy of it."""
+    for url in _detail_urls(published):
+        assert client.get(url).json()["revision_is_current"] is True, url
+
+
+def test_a_detail_page_says_when_its_revision_has_been_superseded(client, published):
+    revision = published.case.revision
+    revision.is_current = False
+    revision.save()
+
+    for url in _detail_urls(published):
+        assert client.get(url).json()["revision_is_current"] is False, url
+
+
 def test_a_run_not_yet_approved_is_not_public(client, published):
     published.submission.status = SubmissionStatus.PENDING_REVIEW
     published.submission.save()

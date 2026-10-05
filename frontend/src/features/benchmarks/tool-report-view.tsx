@@ -7,6 +7,7 @@ import { ToolLogo } from '@/features/catalog/tool-logo'
 import { useGetBenchmarkToolReport } from '@/lib/api/generated/benchmarks/benchmarks'
 import type { GetBenchmarkToolReportParams } from '@/lib/api/generated/model'
 import { surfaceLabel } from '@/lib/benchmarks/format'
+import { benchmarkHref } from '@/lib/benchmarks/params'
 
 import { type Breakdowns, ReportBreakdowns, ReportHero } from './report-sections'
 import { RunCards } from './run-cards'
@@ -28,7 +29,13 @@ export function ToolReportView({
     <div className="space-y-10">
       <header className="space-y-3">
         <p className="text-muted-foreground text-sm">
-          <Link href={`/benchmarks/${suite}?revision=${data.revision}`} className="hover:underline">
+          <Link
+            href={benchmarkHref(`/benchmarks/${suite}`, {
+              revision: data.revision,
+              isCurrent: data.revision_is_current,
+            })}
+            className="hover:underline"
+          >
             {suite.toUpperCase()} benchmark {data.revision}
           </Link>
         </p>

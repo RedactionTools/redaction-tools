@@ -6,9 +6,15 @@ import { renderWithProviders } from '@/test/render'
 import { makeRate, makeRow } from './fixtures'
 import { LeaderboardTable } from './leaderboard-table'
 
-function render(rows = [makeRow()], caseCount = 4) {
+function render(rows = [makeRow()], caseCount = 4, isCurrent = true) {
   return renderWithProviders(
-    <LeaderboardTable suite="pdf" rows={rows} caseCount={caseCount} revision="v0.1.1" />,
+    <LeaderboardTable
+      suite="pdf"
+      rows={rows}
+      caseCount={caseCount}
+      revision="v0.1.1"
+      isCurrent={isCurrent}
+    />,
   )
 }
 
@@ -46,9 +52,18 @@ describe('LeaderboardTable', () => {
 
     expect(screen.getByRole('link', { name: 'PDF Redaction' })).toHaveAttribute(
       'href',
-      '/benchmarks/pdf/tools/pdf-redaction?revision=v0.1.1',
+      '/benchmarks/pdf/tools/pdf-redaction',
     )
     expect(screen.getByText('Hidden Tool').closest('a')).toBeNull()
+  })
+
+  it('names a superseded revision in the report link, since that is another page', () => {
+    render([makeRow()], 4, false)
+
+    expect(screen.getByRole('link', { name: 'PDF Redaction' })).toHaveAttribute(
+      'href',
+      '/benchmarks/pdf/tools/pdf-redaction?revision=v0.1.1',
+    )
   })
 
   it('links the logo wherever the name links, and nowhere for a tool with no page', () => {
@@ -65,7 +80,7 @@ describe('LeaderboardTable', () => {
         .querySelector('img, [data-testid="tool-monogram"]')!
     expect(logo('pdf-redaction').closest('a')).toHaveAttribute(
       'href',
-      '/benchmarks/pdf/tools/pdf-redaction?revision=v0.1.1',
+      '/benchmarks/pdf/tools/pdf-redaction',
     )
     expect(logo('hidden-tool').closest('a')).toBeNull()
   })

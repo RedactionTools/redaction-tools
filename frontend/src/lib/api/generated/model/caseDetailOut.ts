@@ -18,5 +18,6 @@ export interface CaseDetailOut {
   pdf_url: string;
   preview: PreviewOut | null;
   revision: string;
+  revision_is_current: boolean;
   runs: RunOut[];
 }

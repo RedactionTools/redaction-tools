@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useGetBenchmarkCase } from '@/lib/api/generated/benchmarks/benchmarks'
 import type { GetBenchmarkCaseParams } from '@/lib/api/generated/model'
+import { benchmarkHref } from '@/lib/benchmarks/params'
 
 import { CasePreview } from './case-preview'
 import { RunCards } from './run-cards'
@@ -37,7 +38,13 @@ export function CaseView({
     <div className="space-y-10">
       <header className="space-y-3">
         <p className="text-muted-foreground text-sm">
-          <Link href={`/benchmarks/${suite}?revision=${data.revision}`} className="hover:underline">
+          <Link
+            href={benchmarkHref(`/benchmarks/${suite}`, {
+              revision: data.revision,
+              isCurrent: data.revision_is_current,
+            })}
+            className="hover:underline"
+          >
             {suite.toUpperCase()} benchmark {data.revision}
           </Link>
         </p>

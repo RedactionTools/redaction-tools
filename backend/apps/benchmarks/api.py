@@ -257,7 +257,12 @@ def get_benchmark_case(request: HttpRequest, suite: str, case_id: str, revision:
         raise HttpError(404, f"Revision {target.revision} has no public case {case_id!r}.")
     runs = leaderboard.latest_per_tool_and_case(leaderboard.approved_runs(target), case_id=case.pk)
     with_public_screenshots(runs)
-    return {**_case_out(case), "revision": target.revision, "runs": [_run_out(r) for r in runs]}
+    return {
+        **_case_out(case),
+        "revision": target.revision,
+        "revision_is_current": target.is_current,
+        "runs": [_run_out(r) for r in runs],
+    }
 
 
 @router.get(
@@ -298,6 +303,7 @@ def get_benchmark_tool_report(
         "tool": leaderboard.tool_ref(tool),
         "suite": suite,
         "revision": target.revision,
+        "revision_is_current": target.is_current,
         "scope": scope,
         "case_count": target.cases.count(),
         "surfaces": surfaces,
@@ -331,6 +337,7 @@ def get_benchmark_run(request: HttpRequest, run_id: str):
         "tier": submission.tier,
         "notes": submission.notes,
         "revision": run.case.revision.revision,
+        "revision_is_current": run.case.revision.is_current,
     }
 
 
