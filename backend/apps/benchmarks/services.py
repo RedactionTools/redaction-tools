@@ -359,6 +359,49 @@ def finalize(*, user, submission):
     return submission
 
 
+#: Sent but not yet decided. A draft was never sent - that is the submitter's call - and a
+#: decided submission is left alone: rescoring an approved one would change a published
+#: result without a review.
+RESCORABLE = (
+    SubmissionStatus.SCORING,
+    SubmissionStatus.SCORING_FAILED,
+    SubmissionStatus.PENDING_REVIEW,
+)
+
+
+def rescore(*, user, submission):
+    """Queue every run of a sent submission for scoring again.
+
+    The way out for a submission stuck in Scoring - a task lost when the worker
+    restarted - and for one that failed on our side. Scoring then settles it as it
+    would any other, emails included.
+    """
+    _require_staff(user, "rescore benchmark submissions")
+    if submission.status == SubmissionStatus.DRAFT:
+        raise BenchmarkError(
+            "That submission is a draft: it was never sent, and sending it is the submitter's call."
+        )
+    if submission.status not in RESCORABLE:
+        raise BenchmarkError(
+            f"That submission is {submission.get_status_display().lower()}, already decided. "
+            "Only one that is scoring, failed or awaiting review is rescored."
+        )
+    runs = list(submission.runs.all())
+    if not runs:
+        raise BenchmarkError("That submission has no runs to score.")
+
+    from apps.benchmarks import scoring
+
+    with transaction.atomic():
+        submission.status = SubmissionStatus.SCORING
+        submission.save(update_fields=["status", "updated_at"])
+        submission.runs.update(status=RunStatus.QUEUED, error="", updated_at=timezone.now())
+    for run in runs:
+        scoring.enqueue(run)
+    submission.refresh_from_db()
+    return submission
+
+
 REVIEWABLE = (SubmissionStatus.PENDING_REVIEW, SubmissionStatus.SCORING_FAILED)
 
 

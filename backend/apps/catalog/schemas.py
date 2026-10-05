@@ -266,6 +266,12 @@ class ToolClaimOut(Schema):
     created_at: datetime
 
 
+class MyClaimOut(ToolClaimOut):
+    """A claim as its claimant sees it, named so a list of them reads without a lookup."""
+
+    tool_name: str
+
+
 class MyListingOut(Schema):
     """An owner's own view of a listing.
 

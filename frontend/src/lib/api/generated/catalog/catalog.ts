@@ -31,6 +31,7 @@ import type {
   ExchangeRatesOut,
   FacetDimensionOut,
   ListToolsParams,
+  MyClaimOut,
   MyListingOut,
   MyScreenshotOut,
   PriceProposalIn,
@@ -853,6 +854,108 @@ export function useListMySubmissions<TData = Awaited<ReturnType<typeof listMySub
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getListMySubmissionsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export const getListMyClaimsUrl = () => {
+
+
+
+
+  return `/api/v1/catalog/claims/mine`
+}
+
+/**
+ * Every claim, pending or decided - the claimant's record of where each one stands.
+ * The editor's comment is internal and stays out.
+ * @summary Claims you have made
+ */
+export const listMyClaims = async ( options?: Parameters<typeof customFetch>[1]): Promise<MyClaimOut[]> => {
+
+  return customFetch<MyClaimOut[]>(getListMyClaimsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListMyClaimsQueryKey = () => {
+    return [
+    `/api/v1/catalog/claims/mine`
+    ] as const;
+    }
+
+
+export const getListMyClaimsQueryOptions = <TData = Awaited<ReturnType<typeof listMyClaims>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyClaims>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListMyClaimsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listMyClaims>>> = ({ signal }) => listMyClaims({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listMyClaims>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListMyClaimsQueryResult = NonNullable<Awaited<ReturnType<typeof listMyClaims>>>
+export type ListMyClaimsQueryError = unknown
+
+
+export function useListMyClaims<TData = Awaited<ReturnType<typeof listMyClaims>>, TError = unknown>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyClaims>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMyClaims>>,
+          TError,
+          Awaited<ReturnType<typeof listMyClaims>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListMyClaims<TData = Awaited<ReturnType<typeof listMyClaims>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyClaims>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMyClaims>>,
+          TError,
+          Awaited<ReturnType<typeof listMyClaims>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListMyClaims<TData = Awaited<ReturnType<typeof listMyClaims>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyClaims>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Claims you have made
+ */
+
+export function useListMyClaims<TData = Awaited<ReturnType<typeof listMyClaims>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyClaims>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListMyClaimsQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

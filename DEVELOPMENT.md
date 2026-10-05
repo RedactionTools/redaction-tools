@@ -301,6 +301,14 @@ production. Tests always use the in-memory backend.
 
 A staff member's own benchmark submission approves itself on scoring and mails nobody.
 
+A run is created **Queued** as soon as its PDF is uploaded, but nothing is queued until the
+submitter sends the submission (`finalize`). A draft's runs therefore read **Not sent** on
+the site and in the admin, and a draft left behind is sent from "Your submissions". A
+submission stuck in Scoring (its task lost to a worker restart) or failed on our side is
+re-queued with the admin's **Re-score** action, `services.rescore`. It runs only on a
+submission that is scoring, failed or awaiting review, and settles it - emails included -
+like any other.
+
 All but `claim_code` go through the django-q2 queue after the transaction commits, so a
 sign-in or a submission never waits on - or fails with - the mail provider, and a
 rolled-back request mails nobody. On the host that means they only leave while

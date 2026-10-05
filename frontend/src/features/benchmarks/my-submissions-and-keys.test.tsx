@@ -108,6 +108,33 @@ describe('MySubmissions', () => {
     expect(screen.queryByLabelText(/add screenshots/i)).toBeNull()
   })
 
+  // Uploading creates the runs; only sending queues them. A draft left behind - the
+  // submit page reloaded before "Send" - is sent from here.
+  it('sends a draft that was never sent', async () => {
+    fetchSpy.mockResolvedValue(respond(makeMySubmission({ status: 'scoring' })))
+    render([makeMySubmission({ status: 'draft', runs: [makeMyRun({ status: 'queued' })] })])
+
+    await userEvent.click(screen.getByRole('button', { name: /send for scoring/i }))
+
+    await waitFor(() => expect(fetchSpy).toHaveBeenCalled())
+    const [url, init] = fetchSpy.mock.calls[0]
+    expect(String(url)).toContain(`/benchmarks/submissions/${makeMySubmission().id}/finalize`)
+    expect(init?.method).toBe('POST')
+  })
+
+  it('says a draft’s runs are not sent, rather than queued', () => {
+    render([makeMySubmission({ status: 'draft', runs: [makeMyRun({ status: 'queued' })] })])
+
+    expect(screen.getByText('Not sent')).toBeInTheDocument()
+    expect(screen.queryByText('queued')).toBeNull()
+  })
+
+  it('offers nothing to send for a draft with no runs yet', () => {
+    render([makeMySubmission({ status: 'draft', runs: [] })])
+
+    expect(screen.queryByRole('button', { name: /send for scoring/i })).toBeNull()
+  })
+
   it('withdraws a submission that is not yet published', async () => {
     render([makeMySubmission({ status: 'pending_review' })])
 

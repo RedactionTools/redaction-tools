@@ -74,6 +74,9 @@ export function UserMenu() {
           <Link href="/account">Account</Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
+          <Link href="/activity">Your activity</Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
           <Link href="/my-listings">My listings</Link>
         </DropdownMenuItem>
         <ModerationItem />

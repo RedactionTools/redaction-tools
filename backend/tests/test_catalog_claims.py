@@ -262,3 +262,28 @@ def issue(claim):
     from apps.catalog.claims import issue_claim_code
 
     return issue_claim_code(claim)
+
+
+def test_a_claimant_lists_their_own_claims_and_nobody_elses(
+    client, bearer, claim, django_user_model
+):
+    other = django_user_model.objects.create_user(email="other@example.com")
+    ToolClaim.objects.create(
+        tool=Tool.objects.get(slug="nitro-pdf"),
+        user=other,
+        work_email="x@nitro.com",
+        email_domain="nitro.com",
+    )
+
+    response = client.get(f"{URL}/mine", **bearer)
+
+    assert response.status_code == 200
+    [mine] = response.json()
+    assert mine["id"] == claim.pk
+    assert mine["tool"] == "adobe-acrobat"
+    assert mine["tool_name"] == "Adobe Acrobat"
+    assert mine["status"] == claim.status
+
+
+def test_listing_claims_requires_an_account(db, client):
+    assert client.get(f"{URL}/mine").status_code == 401

@@ -964,6 +964,38 @@
         ]
       }
     },
+    "/api/v1/catalog/claims/mine": {
+      "get": {
+        "operationId": "list_my_claims",
+        "summary": "Claims you have made",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MyClaimOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            }
+          }
+        },
+        "description": "Every claim, pending or decided - the claimant's record of where each one stands.\nThe editor's comment is internal and stays out.",
+        "tags": [
+          "catalog"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
     "/api/v1/catalog/claims": {
       "post": {
         "operationId": "claim_tool",
@@ -5115,6 +5147,64 @@
           "description"
         ],
         "title": "ToolSubmissionIn",
+        "type": "object"
+      },
+      "MyClaimOut": {
+        "description": "A claim as its claimant sees it, named so a list of them reads without a lookup.",
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "tool": {
+            "title": "Tool",
+            "type": "string"
+          },
+          "work_email": {
+            "title": "Work Email",
+            "type": "string"
+          },
+          "domain_matched": {
+            "title": "Domain Matched",
+            "type": "boolean"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "email_verified_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email Verified At"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "tool_name": {
+            "title": "Tool Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "tool",
+          "work_email",
+          "domain_matched",
+          "status",
+          "email_verified_at",
+          "created_at",
+          "tool_name"
+        ],
+        "title": "MyClaimOut",
         "type": "object"
       },
       "ToolClaimOut": {
