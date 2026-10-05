@@ -1,0 +1,65 @@
+name: Benchmarks
+
+# The benchmark tests CI skips (`-m benchmark`, see backend/conftest.py): each renders or
+# scores a real PDF, so they run only when something they cover changes. Its own workflow
+# rather than a job in ci.yml, because `paths` filters a whole workflow - and deploy.yml
+# waits on "CI", which this must not hold up.
+on:
+  pull_request:
+    paths: &benchmark-paths
+      - backend/apps/benchmarks/**
+      # The vendored scorer: a submodule bump can change every score.
+      - backend/vendor/pdf-redaction-benchmarks
+      - backend/tests/test_benchmark*.py
+      - backend/tests/test_mcp_benchmarks.py
+      - backend/tests/fixtures/benchmarks/**
+      - backend/conftest.py
+      - .github/workflows/benchmarks.yml
+  push:
+    branches: [main]
+    paths: *benchmark-paths
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  UV_FROZEN: "1"
+
+jobs:
+  benchmark-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: redaction
+          POSTGRES_USER: redaction
+          POSTGRES_PASSWORD: redaction
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://redaction:redaction@localhost:5432/redaction
+      SECRET_KEY: github-actions-insecure-key-for-tests-only
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # pdfredeval, the benchmark scorer, is a submodule under backend/vendor.
+          submodules: recursive
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+      # The scorer's OCR layer; without it the parity test against the CLI's report fails.
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends tesseract-ocr
+      - run: uv sync --all-groups
+      - run: uv run pytest -m benchmark

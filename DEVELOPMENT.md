@@ -558,6 +558,19 @@ docker compose start backend
 ## Tests
 
 `make test` runs pytest against Postgres (`config.settings.test`) and vitest for the frontend.
+
+Benchmark tests are slow - each renders or scores a real PDF, and the scorer parity test runs
+OCR (tesseract) - so they carry a `benchmark` marker and **CI skips them**, running only the one
+marked `benchmark_smoke` (a case published, an output uploaded, scored, waiting for review).
+`conftest.py` applies the marker to every test in a `test_benchmark*` / `test_mcp_benchmarks`
+file and to any test using `benchmark_case`, `case_files` or `run_files`, so a new one is
+covered without remembering to. `make backend-test-fast` runs what CI runs.
+
+The full set runs in a separate workflow, `.github/workflows/benchmarks.yml`, only when a PR or
+a push to `main` touches what it covers: `apps/benchmarks/`, the vendored scorer submodule, the
+benchmark tests and fixtures, or `conftest.py`. A change elsewhere that breaks a benchmark test
+(a catalog model, a shared helper) is **not** caught there - run `make backend-test` for that,
+or start the workflow by hand from the Actions tab.
 `make lint`, `make fmt` and `make check` likewise run across both components; the `backend-*` and
 `frontend-*` targets do one at a time. CI additionally checks formatting, lints, verifies there are
 no missing migrations, checks both generated artifacts are current, and builds both Docker images.

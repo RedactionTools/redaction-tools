@@ -191,6 +191,10 @@ details. What bites:
   has the symptom and the check.
 - Backend: ruff, line length 100, tests in `backend/tests/`, pytest fixtures in
   `backend/conftest.py`.
+- **CI skips the benchmark tests** (marker `benchmark`, applied in `conftest.py`) except the
+  one marked `benchmark_smoke`. `benchmarks.yml` runs them all, but only when a change
+  touches `apps/benchmarks/`, the scorer submodule or the benchmark tests - a change
+  elsewhere that breaks one goes unnoticed, so run `make backend-test` when in doubt.
 - Frontend: see `frontend/CLAUDE.md`.
 - `.env` files are gitignored; `.env.example` files are the documented contract
   and must stay in sync when a variable is added.
