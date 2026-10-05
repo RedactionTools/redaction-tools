@@ -2,19 +2,19 @@
 
 import { useState } from 'react'
 
+import { Carousel } from '@/components/ui/carousel'
 import { Dialog, DialogClose, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import type { ToolScreenshotOut } from '@/lib/api/generated/model'
 
 /**
- * What the reader is deciding between: one figure per capture.
+ * What the reader is deciding between: one capture at a time, in a carousel.
  *
  * `sizes` is not decoration. The API ships the same picture at four widths, and
  * without telling the browser how wide the figure will actually be it assumes
  * the full viewport and downloads the largest of them - which is the opposite of
- * the point. Two columns from `sm` up, one below, inside a page column that
- * tops out around 768px.
+ * the point. One slide fills a page column that tops out around 768px.
  */
-const SIZES = '(min-width: 640px) min(50vw, 384px), 100vw'
+const SIZES = '(min-width: 768px) 768px, 100vw'
 
 /** "1 September 2026" - the same wording as the price dates elsewhere. */
 function capturedOn(date: string): string {
@@ -41,45 +41,45 @@ export function ToolScreenshots({
   return (
     <section className="space-y-3">
       <h2 className="text-xl font-semibold">Screenshots</h2>
-      <ul className="grid gap-4 sm:grid-cols-2" data-testid="screenshots">
+      <Carousel label={`${name} screenshots`} className="w-full" data-testid="screenshots">
         {screenshots.map((shot) => (
-          <li key={shot.url}>
-            <figure className="space-y-2">
-              <button
-                type="button"
-                onClick={() => setEnlarged(shot)}
-                aria-label={`Enlarge: ${shot.alt}`}
-                className="border-border block w-full cursor-zoom-in overflow-hidden rounded-md border"
-              >
-                {/* Not next/image: these are already rendered at four widths by
+          <figure key={shot.url} className="w-full space-y-2">
+            {/* One frame height for every slide, so a portrait capture does not
+                  make the controls jump when the reader steps past it. */}
+            <button
+              type="button"
+              onClick={() => setEnlarged(shot)}
+              aria-label={`Enlarge: ${shot.alt}`}
+              className="border-border bg-muted flex aspect-[4/3] w-full cursor-zoom-in items-center justify-center overflow-hidden rounded-md border sm:aspect-auto sm:h-[min(60vh,28rem)]"
+            >
+              {/* Not next/image: these are already rendered at four widths by
                     the backend that stores them, so a second optimizer in front
                     would re-encode WebP into WebP for nothing. */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={shot.url}
-                  srcSet={shot.srcset}
-                  sizes={SIZES}
-                  width={shot.width}
-                  height={shot.height}
-                  alt={shot.alt}
-                  loading="lazy"
-                  decoding="async"
-                  className="h-auto w-full"
-                />
-              </button>
-              {shot.caption || shot.captured_at ? (
-                <figcaption className="text-muted-foreground text-sm">
-                  {shot.caption}
-                  {shot.caption && shot.captured_at ? ' · ' : null}
-                  {/* Dated on purpose: an interface changes under a screenshot
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={shot.url}
+                srcSet={shot.srcset}
+                sizes={SIZES}
+                width={shot.width}
+                height={shot.height}
+                alt={shot.alt}
+                loading="lazy"
+                decoding="async"
+                className="h-auto max-h-full w-auto max-w-full object-contain"
+              />
+            </button>
+            {shot.caption || shot.captured_at ? (
+              <figcaption className="text-muted-foreground text-sm">
+                {shot.caption}
+                {shot.caption && shot.captured_at ? ' · ' : null}
+                {/* Dated on purpose: an interface changes under a screenshot
                       without anything telling the reader it has. */}
-                  {shot.captured_at ? `Captured ${capturedOn(shot.captured_at)}` : null}
-                </figcaption>
-              ) : null}
-            </figure>
-          </li>
+                {shot.captured_at ? `Captured ${capturedOn(shot.captured_at)}` : null}
+              </figcaption>
+            ) : null}
+          </figure>
         ))}
-      </ul>
+      </Carousel>
 
       <Dialog open={enlarged !== null} onOpenChange={(open) => !open && setEnlarged(null)}>
         {enlarged ? (
