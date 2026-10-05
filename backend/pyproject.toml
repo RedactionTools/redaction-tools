@@ -76,6 +76,10 @@ known-first-party = ["apps", "config"]
 DJANGO_SETTINGS_MODULE = "config.settings.test"
 python_files = ["test_*.py"]
 addopts = "--strict-markers --strict-config --reuse-db"
+markers = [
+    "benchmark: renders or scores benchmark PDFs - seconds per test. Applied by conftest.py.",
+    "benchmark_smoke: the one benchmark test CI runs, end to end through the scorer.",
+]
 testpaths = ["tests"]
 
 [tool.coverage.run]

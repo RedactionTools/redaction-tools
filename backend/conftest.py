@@ -32,6 +32,25 @@ def pytest_configure(config):
     config.inicfg["tdd_guard_project_root"] = str(PROJECT_ROOT)
 
 
+# Fixtures that render or score a real benchmark PDF. A test that asks for one costs
+# seconds, wherever it lives - an API-key test that calls a benchmark route included.
+BENCHMARK_FIXTURES_USED = {"benchmark_case", "case_files", "run_files"}
+
+
+def pytest_collection_modifyitems(config, items):
+    """Mark every benchmark test `benchmark`, so CI can leave them out.
+
+    By file and by fixture rather than by hand, so a new benchmark test is marked
+    without anyone remembering to. CI runs `-m "not benchmark or benchmark_smoke"`:
+    everything else, plus one test that goes through the whole pipeline.
+    """
+    for item in items:
+        if item.path.name.startswith(("test_benchmark", "test_mcp_benchmarks")) or (
+            BENCHMARK_FIXTURES_USED & set(getattr(item, "fixturenames", ()))
+        ):
+            item.add_marker(pytest.mark.benchmark)
+
+
 @pytest.fixture
 def user(db):
     return get_user_model().objects.create_user(email="user@example.com", name="Test User")

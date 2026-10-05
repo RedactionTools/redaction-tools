@@ -50,6 +50,10 @@ backend-mcp-token:  ## Mint a staff MCP bearer token (EMAIL=you@example.com)
 backend-test:  ## Run the backend test suite
 	cd $(BACKEND) && uv run pytest
 
+.PHONY: backend-test-fast
+backend-test-fast:  ## Run the backend suite as CI does: one benchmark test, not all of them
+	cd $(BACKEND) && uv run pytest -m "not benchmark or benchmark_smoke"
+
 .PHONY: backend-coverage
 backend-coverage:  ## Run backend tests with a coverage report
 	cd $(BACKEND) && uv run pytest --cov --cov-report=term-missing

@@ -62,9 +62,6 @@ jobs:
         with:
           enable-cache: true
           cache-dependency-glob: backend/uv.lock
-      # The scorer's OCR layer; without it every benchmark test scores with one layer
-      # reported unavailable, and the parity test against the CLI's report fails.
-      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends tesseract-ocr
       - run: uv sync --all-groups
       - name: Check for missing migrations
         run: uv run manage.py makemigrations --check --dry-run
@@ -72,7 +69,11 @@ jobs:
         run: |
           uv run manage.py export_openapi_schema --api config.api.api --output openapi.json --indent 2
           git diff --exit-code openapi.json
-      - run: uv run pytest --cov --cov-report=term-missing
+      # Benchmark tests render and score real PDFs, seconds apiece - most of the suite's
+      # time. CI runs one of them end to end (`benchmark_smoke`); benchmarks.yml runs the
+      # rest when a change touches what they cover. Without them this job also needs no
+      # tesseract: only the scorer parity test runs OCR.
+      - run: uv run pytest -m "not benchmark or benchmark_smoke" --cov --cov-report=term-missing
 
   frontend-lint:
     runs-on: ubuntu-latest

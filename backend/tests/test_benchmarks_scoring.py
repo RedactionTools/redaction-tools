@@ -49,6 +49,9 @@ def _published(user, run_files, report=None):
 # --- scoring ---------------------------------------------------------------------
 
 
+# The benchmark test CI runs: case published, output uploaded, scored by the real
+# scorer, waiting for review. Every other benchmark test runs locally only.
+@pytest.mark.benchmark_smoke
 def test_an_uploaded_submission_is_scored_and_waits_for_review(user, benchmark_case, run_files):
     submission = _uploaded(user, benchmark_case, run_files)
 
