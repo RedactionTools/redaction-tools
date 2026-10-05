@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { IBM_Plex_Sans } from 'next/font/google'
+import localFont from 'next/font/local'
 
 import { GoogleAnalytics } from '@/components/analytics/google-analytics'
 import { Providers } from '@/components/providers/providers'
@@ -15,11 +15,20 @@ import './globals.css'
 /**
  * IBM Plex Sans: engineered rather than friendly, with the document heritage of
  * the people who buy redaction tools, and true tabular figures for a price
- * table. Self-hosted by next/font, so no request leaves for Google at runtime.
+ * table.
+ *
+ * Local files, not `next/font/google`: that one downloads the font during
+ * `next build`, and the image build in CI failed on it whenever Google did not
+ * answer. The latin woff2 files come from @fontsource/ibm-plex-sans 5.3.0 and
+ * are licensed under the OFL (`fonts/OFL.txt`).
  */
-const plexSans = IBM_Plex_Sans({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
+const plexSans = localFont({
+  src: [
+    { path: './fonts/ibm-plex-sans-latin-400-normal.woff2', weight: '400', style: 'normal' },
+    { path: './fonts/ibm-plex-sans-latin-500-normal.woff2', weight: '500', style: 'normal' },
+    { path: './fonts/ibm-plex-sans-latin-600-normal.woff2', weight: '600', style: 'normal' },
+    { path: './fonts/ibm-plex-sans-latin-700-normal.woff2', weight: '700', style: 'normal' },
+  ],
   variable: '--font-plex-sans',
   display: 'swap',
 })
