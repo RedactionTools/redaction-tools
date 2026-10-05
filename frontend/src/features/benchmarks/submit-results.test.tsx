@@ -126,6 +126,53 @@ describe('SubmitResults', () => {
     )
   })
 
+  it('sends the screenshots chosen for a file to the run its PDF became', async () => {
+    render()
+    await start()
+    await userEvent.upload(await screen.findByLabelText(/redacted pdfs/i), [
+      pdf('pii-detection-1.pdf'),
+    ])
+    const shot = new File(['png'], 'settings.png', { type: 'image/png' })
+    await userEvent.upload(screen.getByLabelText('Screenshots for pii-detection-1.pdf'), shot)
+    expect(screen.getByText('settings.png')).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: /upload 1 file/i }))
+
+    await waitFor(() =>
+      expect(fetchSpy.mock.calls.some(([url]) => String(url).endsWith('/r/screenshots'))).toBe(
+        true,
+      ),
+    )
+    const sent = fetchSpy.mock.calls.find(([url]) => String(url).endsWith('/r/screenshots'))!
+    expect((sent[1]?.body as FormData).getAll('screenshots')).toEqual([shot])
+    expect(await screen.findByText('Uploaded')).toBeInTheDocument()
+  })
+
+  it('says when a file uploaded but its screenshots did not', async () => {
+    fetchSpy.mockImplementation(async (input) => {
+      const url = String(input)
+      if (url.endsWith('/submissions')) return respond(draft, 201)
+      if (url.endsWith('/outputs')) return respond({ run_id: 'r', status: 'queued' }, 201)
+      return respond({ detail: 'Screenshot 1: that file is not an image.' }, 422)
+    })
+    render()
+    await start()
+    await userEvent.upload(await screen.findByLabelText(/redacted pdfs/i), [
+      pdf('pii-detection-1.pdf'),
+    ])
+    await userEvent.upload(
+      screen.getByLabelText('Screenshots for pii-detection-1.pdf'),
+      new File(['png'], 'settings.png', { type: 'image/png' }),
+    )
+
+    await userEvent.click(screen.getByRole('button', { name: /upload 1 file/i }))
+
+    expect(await screen.findByText(/not an image/)).toBeInTheDocument()
+    // The PDF is stored either way, so the submission can still be sent.
+    expect(screen.getByText('Uploaded')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /send for scoring/i })).toBeInTheDocument()
+  })
+
   it('shows why the site refused a file', async () => {
     fetchSpy.mockImplementation(async (input) => {
       const url = String(input)

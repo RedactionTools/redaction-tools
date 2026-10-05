@@ -3,6 +3,7 @@ import type {
   CaseDetailOut,
   CaseOut,
   LeaderboardRowOut,
+  MyRunOut,
   MySubmissionOut,
   RateOut,
   RevisionOut,
@@ -219,6 +220,21 @@ export function makeMySubmission(overrides: Partial<MySubmissionOut> = {}): MySu
     submitted_at: null,
     reviewed_at: null,
     runs: [],
+    ...overrides,
+  }
+}
+
+export function makeMyRun(overrides: Partial<MyRunOut> = {}): MyRunOut {
+  return {
+    run_id: 'r1',
+    case_id: 'pii-detection-1',
+    status: 'scored',
+    error: '',
+    verification: 'not_needed',
+    counts: { TP: 3, FN: 1, FP: 0, TN: 2, unsupported: 0, undecided: 0 },
+    leak_rate: makeRate(1, 4),
+    overlay: null,
+    screenshots: [],
     ...overrides,
   }
 }

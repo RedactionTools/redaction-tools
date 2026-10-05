@@ -130,3 +130,45 @@ def test_an_editor_publishes_a_screenshot_from_the_list(admin_client, pending_sc
 
     pending_screenshot.refresh_from_db()
     assert pending_screenshot.status == "published"
+
+
+@pytest.fixture
+def published_run(staff_user, pending):
+    from apps.benchmarks.models import RunStatus
+
+    run = pending.runs.get()
+    run.status = RunStatus.SCORED
+    run.save(update_fields=["status"])
+    services.review(user=staff_user, submission=pending, status=SubmissionStatus.APPROVED)
+    return run
+
+
+def _upload(name, data):
+    from django.core.files.uploadedfile import SimpleUploadedFile
+
+    return SimpleUploadedFile(name, data, content_type="image/png")
+
+
+def test_an_editor_adds_screenshots_to_a_published_run(admin_client, published_run):
+    response = admin_client.post(
+        f"{SCREENSHOTS}add/",
+        {"run": published_run.pk, "images": [_upload("a.png", _png()), _upload("b.png", _png())]},
+        follow=True,
+    )
+
+    assert response.status_code == 200
+    shots = list(published_run.screenshots.all())
+    # Same bytes twice is one screenshot: the service skips what the run already holds.
+    assert len(shots) == 1
+    assert shots[0].status == "published"
+
+
+def test_the_admin_says_why_a_screenshot_was_refused(admin_client, published_run):
+    response = admin_client.post(
+        f"{SCREENSHOTS}add/",
+        {"run": published_run.pk, "images": [_upload("a.png", b"not an image")]},
+        follow=True,
+    )
+
+    assert published_run.screenshots.count() == 0
+    assert "Screenshot 1" in response.content.decode()

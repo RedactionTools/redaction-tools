@@ -1,6 +1,8 @@
-import { screen, within } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+
+import { getGetMeQueryKey } from '@/lib/api/generated/auth/auth'
 
 import {
   getGetBenchmarkCaseQueryKey,
@@ -12,11 +14,34 @@ import { CaseView } from './case-view'
 import { makeCaseDetail, makeRun, makeRunDetail, makeRunScreenshot } from './fixtures'
 import { RunReportView } from './run-report-view'
 
+const session = vi.hoisted(() => ({ current: null as unknown }))
+
+vi.mock('next-auth/react', () => ({
+  useSession: () =>
+    session.current
+      ? { data: session.current, status: 'authenticated' }
+      : { data: null, status: 'unauthenticated' },
+}))
+
+afterEach(() => {
+  session.current = null
+  vi.restoreAllMocks()
+})
+
 const RUN_ID = makeRun().run_id
 
-function renderRun(run = makeRunDetail()) {
+function renderRun(run = makeRunDetail(), { staff = false } = {}) {
   const queryClient = makeTestQueryClient()
   queryClient.setQueryData(getGetBenchmarkRunQueryKey(RUN_ID), run)
+  if (staff) {
+    session.current = { accessToken: 'token' }
+    queryClient.setQueryData(getGetMeQueryKey(), {
+      id: 's',
+      email: 'ed@example.com',
+      name: 'Ed',
+      is_staff: true,
+    })
+  }
   return renderWithProviders(<RunReportView suite="pdf" runId={RUN_ID} />, { queryClient })
 }
 
@@ -72,6 +97,28 @@ describe('RunReportView', () => {
       within(section).getByRole('button', { name: /enlarge screenshot 2 of 2/i }),
     )
     expect(screen.getByRole('dialog')).toHaveTextContent(/screenshot 2 of 2/i)
+  })
+
+  it('lets staff add screenshots to the run', async () => {
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response(JSON.stringify({}), { status: 201 }))
+    renderRun(makeRunDetail(), { staff: true })
+
+    const shot = new File(['png'], 'settings.png', { type: 'image/png' })
+    await userEvent.upload(screen.getByLabelText(/add screenshots to this run/i), shot)
+
+    await waitFor(() =>
+      expect(fetchSpy.mock.calls.some(([url]) => String(url).includes('/screenshots'))).toBe(true),
+    )
+    const [url] = fetchSpy.mock.calls.find(([u]) => String(u).includes('/screenshots'))!
+    expect(String(url)).toContain(`/benchmarks/runs/${RUN_ID}/screenshots`)
+  })
+
+  it('offers no screenshot upload to anyone but staff', () => {
+    renderRun()
+
+    expect(screen.queryByLabelText(/add screenshots/i)).toBeNull()
   })
 
   it('has no screenshots section when the run has none', () => {

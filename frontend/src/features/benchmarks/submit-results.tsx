@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { errorMessage } from '@/lib/api/error-message'
 import {
+  useAddBenchmarkRunScreenshots,
   useCreateBenchmarkSubmission,
   useFinalizeBenchmarkSubmission,
   useGetBenchmarkSuite,
@@ -33,6 +34,10 @@ type Pending = {
   caseId: string
   state: UploadState
   error?: string
+  /** Taken while this file was made; sent to its run once the PDF is stored. */
+  screenshots: File[]
+  /** The PDF went through but its screenshots did not - not a reason to undo the PDF. */
+  warning?: string
 }
 
 const FALLBACK = 'That did not go through. Try again in a moment.'
@@ -47,6 +52,7 @@ export function SubmitResults({ suite }: { suite: string }) {
   const { data: tools } = useListTools(SUBMIT_TOOL_PARAMS)
   const create = useCreateBenchmarkSubmission()
   const upload = useUploadBenchmarkOutput()
+  const addShots = useAddBenchmarkRunScreenshots()
   const finalize = useFinalizeBenchmarkSubmission()
 
   const [tool, setTool] = useState('')
@@ -164,15 +170,30 @@ export function SubmitResults({ suite }: { suite: string }) {
     for (const item of files) {
       if (item.state !== 'ready' || !item.caseId) continue
       update(item.id, { state: 'uploading' })
+      let run
       try {
-        await upload.mutateAsync({
+        run = await upload.mutateAsync({
           submissionId: submission!.id,
           data: { case_id: item.caseId, pdf: item.file },
         })
-        update(item.id, { state: 'done' })
       } catch (error) {
         update(item.id, { state: 'failed', error: errorMessage(error, FALLBACK) })
+        continue
       }
+      // The run exists now, so its screenshots go to it - a refusal here leaves the
+      // PDF stored, and they can be added again from the submissions page.
+      let warning: string | undefined
+      if (item.screenshots.length) {
+        try {
+          await addShots.mutateAsync({
+            runId: run.run_id,
+            data: { screenshots: item.screenshots },
+          })
+        } catch (error) {
+          warning = `The PDF is uploaded, but its screenshots were not: ${errorMessage(error, FALLBACK)} Add them from your submissions page.`
+        }
+      }
+      update(item.id, { state: 'done', warning })
     }
   }
 
@@ -204,6 +225,7 @@ export function SubmitResults({ suite }: { suite: string }) {
                 file,
                 caseId: caseIdFromFilename(file.name, caseIds) ?? '',
                 state: 'ready',
+                screenshots: [],
               }))
               setFiles((current) => [...current, ...picked])
               event.target.value = ''
@@ -224,6 +246,9 @@ export function SubmitResults({ suite }: { suite: string }) {
                 cases={suiteData?.cases ?? []}
                 state={item.state}
                 error={item.error}
+                warning={item.warning}
+                screenshots={item.screenshots}
+                onScreenshotsChange={(screenshots) => update(item.id, { screenshots })}
                 onCaseChange={(caseId) => update(item.id, { caseId })}
                 onRemove={() => setFiles((current) => current.filter((f) => f.id !== item.id))}
               />

@@ -4,10 +4,17 @@ import Link from 'next/link'
 
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useGetBenchmarkRun } from '@/lib/api/generated/benchmarks/benchmarks'
+import { useIsStaff } from '@/features/catalog/staff/use-is-staff'
+import {
+  getGetBenchmarkRunQueryKey,
+  useGetBenchmarkRun,
+} from '@/lib/api/generated/benchmarks/benchmarks'
 import type { PooledOut, RateOut } from '@/lib/api/generated/model'
 import { roleLabel, surfaceLabel } from '@/lib/benchmarks/format'
 
+import { useQueryClient } from '@tanstack/react-query'
+
+import { AddRunScreenshots } from './add-run-screenshots'
 import { OverlayFigure } from './overlay-figure'
 import { type Breakdowns, ReportBreakdowns, ReportHero } from './report-sections'
 import { RunScreenshots } from './run-screenshots'
@@ -23,6 +30,8 @@ type Report = Breakdowns & {
 /** One run, whole: pdfredeval's report.json rendered by us, never its HTML. */
 export function RunReportView({ suite, runId }: { suite: string; runId: string }) {
   const { data: run } = useGetBenchmarkRun(runId)
+  const isStaff = useIsStaff()
+  const queryClient = useQueryClient()
   if (!run) return <Skeleton className="h-64 w-full" />
 
   const report = run.report as Report
@@ -133,6 +142,17 @@ export function RunReportView({ suite, runId }: { suite: string; runId: string }
       </div>
 
       <RunScreenshots screenshots={run.screenshots} label={run.tool.name} />
+      {/* Cosmetic: the API is what refuses a non-staff upload to someone else's run.
+          An editor's screenshots publish at once, so a refetch shows them. */}
+      {isStaff ? (
+        <AddRunScreenshots
+          runId={runId}
+          label="this run"
+          onAdded={() =>
+            queryClient.invalidateQueries({ queryKey: getGetBenchmarkRunQueryKey(runId) })
+          }
+        />
+      ) : null}
 
       <section className="space-y-2" data-testid="run-provenance">
         <h2 className="text-xl font-semibold">Provenance</h2>

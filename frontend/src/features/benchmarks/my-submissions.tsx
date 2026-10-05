@@ -12,8 +12,11 @@ import {
   useListMyBenchmarkSubmissions,
   useWithdrawBenchmarkSubmission,
 } from '@/lib/api/generated/benchmarks/benchmarks'
+import type { MyRunOut } from '@/lib/api/generated/model'
 import { formatRate, surfaceLabel, type Tone } from '@/lib/benchmarks/format'
 import { useQueryClient } from '@tanstack/react-query'
+
+import { AddRunScreenshots } from './add-run-screenshots'
 
 const STATUS: Record<string, { label: string; tone: Tone }> = {
   draft: { label: 'Draft - not sent', tone: 'neutral' },
@@ -27,6 +30,10 @@ const STATUS: Record<string, { label: string; tone: Tone }> = {
 
 const WITHDRAWABLE = new Set(['draft', 'scoring', 'scoring_failed', 'pending_review'])
 
+/** Screenshots are evidence, not score: they can be added at any point short of the
+ * submission being taken back or turned down. */
+const CLOSED = new Set(['withdrawn', 'rejected'])
+
 /** Everything the signed-in account has sent, and what became of it. Polls while
  * anything is still scoring, so the page settles without a reload. */
 export function MySubmissions() {
@@ -37,12 +44,9 @@ export function MySubmissions() {
         query.state.data?.some((s) => s.status === 'scoring') ? 5000 : false,
     },
   })
-  const withdraw = useWithdrawBenchmarkSubmission({
-    mutation: {
-      onSuccess: () =>
-        queryClient.invalidateQueries({ queryKey: getListMyBenchmarkSubmissionsQueryKey() }),
-    },
-  })
+  const refresh = () =>
+    queryClient.invalidateQueries({ queryKey: getListMyBenchmarkSubmissionsQueryKey() })
+  const withdraw = useWithdrawBenchmarkSubmission({ mutation: { onSuccess: refresh } })
 
   if (isPending || !data) return <Skeleton className="h-40 w-full" />
 
@@ -109,6 +113,14 @@ export function MySubmissions() {
                       {run.error ? (
                         <span className="text-warn w-full text-xs">{run.error}</span>
                       ) : null}
+                      <RunShots run={run} />
+                      {CLOSED.has(submission.status) ? null : (
+                        <AddRunScreenshots
+                          runId={run.run_id}
+                          label={run.case_id}
+                          onAdded={refresh}
+                        />
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -117,6 +129,36 @@ export function MySubmissions() {
           </li>
         )
       })}
+    </ul>
+  )
+}
+
+/** The run's screenshots as small thumbnails, each one marked while it waits for an editor. */
+function RunShots({ run }: { run: MyRunOut }) {
+  if (!run.screenshots.length) return null
+  return (
+    <ul className="flex w-full flex-wrap gap-2" aria-label={`Screenshots of ${run.case_id}`}>
+      {run.screenshots.map((shot, index) => (
+        <li key={shot.url} className="space-y-1">
+          <a href={shot.url} target="_blank" rel="noreferrer" className="block">
+            {/* Not next/image: the backend already rendered the widths it serves. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={shot.url}
+              srcSet={shot.srcset || undefined}
+              sizes="6rem"
+              width={shot.width}
+              height={shot.height}
+              alt={`Screenshot ${index + 1} of ${run.case_id}`}
+              loading="lazy"
+              className="border-border h-16 w-24 rounded border object-cover object-top"
+            />
+          </a>
+          {shot.status === 'pending' ? (
+            <span className="text-muted-foreground block text-[11px]">Awaiting review</span>
+          ) : null}
+        </li>
+      ))}
     </ul>
   )
 }
