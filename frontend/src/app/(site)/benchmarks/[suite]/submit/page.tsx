@@ -22,10 +22,18 @@ export const metadata = {
 
 export default async function SubmitBenchmarkPage({
   params,
+  searchParams,
 }: PageProps<'/benchmarks/[suite]/submit'>) {
   const { suite } = await params
+  // Set by the tool page's "Submit results": the form opens with that tool chosen.
+  const { tool } = await searchParams
+  const initialTool = typeof tool === 'string' ? tool : undefined
   const session = await auth()
-  if (!session || session.error) redirect(`/auth/signin?callbackUrl=/benchmarks/${suite}/submit`)
+  if (!session || session.error) {
+    // The tool survives sign-in, so the reader lands back on the form they asked for.
+    const back = `/benchmarks/${suite}/submit${initialTool ? `?tool=${encodeURIComponent(initialTool)}` : ''}`
+    redirect(`/auth/signin?callbackUrl=${encodeURIComponent(back)}`)
+  }
 
   const data = await fetchBenchmarkSuite(suite, SUBMIT_SUITE_PARAMS)
   if (!data) notFound()
@@ -45,7 +53,7 @@ export default async function SubmitBenchmarkPage({
             credited to you.
           </p>
         </header>
-        <SubmitResults suite={suite} />
+        <SubmitResults suite={suite} initialTool={initialTool} />
         <CliPublishCard />
       </div>
     </HydrationBoundary>

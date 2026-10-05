@@ -19,7 +19,7 @@ const renderMock = vi.mocked(renderFirstPage)
 
 const cases = [makeCase(), makeCase({ case_id: 'pii-detection-1', family: 'pii-detection' })]
 
-function render() {
+function render(props: { initialTool?: string } = {}) {
   const queryClient = makeTestQueryClient()
   queryClient.setQueryData(
     getGetBenchmarkSuiteQueryKey('pdf', { scope: 'all' }),
@@ -29,7 +29,7 @@ function render() {
     getListToolsQueryKey(SUBMIT_TOOL_PARAMS),
     makePage([makeTool({ slug: 'pdf-redaction', name: 'PDF Redaction' }), makeTool()]),
   )
-  return renderWithProviders(<SubmitResults suite="pdf" />, { queryClient })
+  return renderWithProviders(<SubmitResults suite="pdf" {...props} />, { queryClient })
 }
 
 function respond(body: unknown, status = 200) {
@@ -69,6 +69,12 @@ function pdf(name: string) {
 }
 
 describe('SubmitResults', () => {
+  it('starts with the tool chosen when it was opened from that tool’s page', () => {
+    render({ initialTool: 'pdf-redaction' })
+
+    expect(screen.getByLabelText(/^tool$/i)).toHaveValue('pdf-redaction')
+  })
+
   it('opens a submission for the chosen tool and surface', async () => {
     render()
 
