@@ -44,6 +44,13 @@ describe('buildLlmsTxt', () => {
     expect(text()).toContain(`${SITE}/llms-full.txt`)
   })
 
+  // A model citing the catalog should be able to say who runs it, and that the
+  // operator has a product in it.
+  it('points at the about page and its disclosure', () => {
+    expect(text()).toContain(`${SITE}/about`)
+    expect(text()).toMatch(/StabRise/)
+  })
+
   it('lists every documentation page it is handed, with its description', () => {
     expect(text()).toContain('## Documentation')
     expect(text()).toContain(`- [Methodology](${SITE}/docs/methodology): Where prices come from.`)

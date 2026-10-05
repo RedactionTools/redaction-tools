@@ -27,20 +27,21 @@ export const dynamic = 'force-dynamic'
  *
  * The heading is what a reader sees and what the `CollectionPage` is named
  * after, so it describes the axes the catalog actually compares on. The meta
- * title and description are written for the query space - "pdf redaction
- * software" and the capability words around it - and have to survive being cut
+ * title and description are written for the query space - "redaction
+ * software" across every media the catalog covers, not only PDF, plus the
+ * capability words around it - and have to survive being cut
  * at roughly 60 and 158 characters. The share card gets its own shorter pair,
  * because a title tuned for a search result reads badly on a card.
  */
 const HUB_HEADING =
   'Compare redaction software by price, detection methods, deployment, privacy features, and capabilities.'
 
-const HUB_META_TITLE = 'PDF Redaction Tools & Software Comparison | Redaction Tools'
+const HUB_META_TITLE = 'Redaction Software & Tools Comparison | Redaction Tools'
 
 const HUB_META_DESCRIPTION =
-  'Find and compare PDF redaction software for PII detection, OCR, local and cloud processing, metadata removal, privacy, and secure document redaction.'
+  'Find and compare redaction software for documents, images, video and audio: PII detection, OCR, local and cloud processing, metadata removal and privacy.'
 
-const HUB_OG_TITLE = 'Redaction Tools — Compare PDF Redaction Software'
+const HUB_OG_TITLE = 'Redaction Tools — Compare Redaction Software'
 
 const HUB_OG_DESCRIPTION =
   'Discover and compare redaction software by capabilities, pricing, OCR, PII detection, deployment, and privacy features.'

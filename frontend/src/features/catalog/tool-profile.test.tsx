@@ -217,6 +217,15 @@ describe('ToolProfile', () => {
     expect(screen.getByText(/our own product/i)).toBeInTheDocument()
   })
 
+  it('links a first-party listing to the full disclosure', () => {
+    render(makeToolDetail({ slug: 'pdf-redaction', name: 'PDF Redaction', is_first_party: true }))
+
+    expect(screen.getByRole('link', { name: /disclosure/i })).toHaveAttribute(
+      'href',
+      '/about#disclosure',
+    )
+  })
+
   it('shows the logo in the profile header', () => {
     render()
 

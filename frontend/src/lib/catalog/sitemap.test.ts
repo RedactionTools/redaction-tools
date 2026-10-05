@@ -83,6 +83,12 @@ describe('buildSitemapEntries', () => {
 
     expect(entries.map((entry) => entry.url)).toContain('https://example.com/price-calculator')
   })
+
+  it('lists the about page among the static routes', () => {
+    const entries = buildSitemapEntries('https://example.com', [])
+
+    expect(entries.map((entry) => entry.url)).toContain('https://example.com/about')
+  })
 })
 
 describe('the hub entry', () => {

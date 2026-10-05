@@ -85,6 +85,20 @@ describe('SiteFooter', () => {
     )
   })
 
+  it('links to the about page', () => {
+    render(<SiteFooter />)
+
+    expect(screen.getByRole('link', { name: 'About' })).toHaveAttribute('href', '/about')
+  })
+
+  it('names the company that operates the site', () => {
+    render(<SiteFooter />)
+
+    const link = screen.getByRole('link', { name: 'StabRise' })
+    expect(link).toHaveAttribute('href', 'https://stabrise.com')
+    expect(link.closest('p')).toHaveTextContent(/operated by StabRise/i)
+  })
+
   // Feed readers discover a feed from a link as often as from the <head>.
   it('links to the blog feed', () => {
     render(<SiteFooter />)

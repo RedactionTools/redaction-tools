@@ -3,10 +3,12 @@ import { describe, expect, it } from 'vitest'
 import { makeScreenshot, makeToolDetail } from '@/features/catalog/fixtures'
 
 import {
+  aboutPageJsonLd,
   breadcrumbJsonLd,
   collectionPageJsonLd,
   faqPageJsonLd,
   itemListJsonLd,
+  operatorJsonLd,
   organizationJsonLd,
   softwareApplicationJsonLd,
   toolId,
@@ -101,6 +103,54 @@ describe('itemListJsonLd', () => {
   })
 })
 
+describe('operatorJsonLd', () => {
+  // StabRise's own @id, the one pdf-redaction.com already declares - so the two
+  // sites resolve to one company rather than two that share a name.
+  it('claims the @id StabRise is already known by', () => {
+    const node = operatorJsonLd(SITE)
+
+    expect(node['@type']).toBe('Organization')
+    expect(node['@id']).toBe('https://stabrise.com/#organization')
+  })
+
+  it('counts this site and pdf-redaction.com as its sub-organizations', () => {
+    expect(operatorJsonLd(SITE).subOrganization).toEqual([
+      { '@id': `${SITE}/#organization` },
+      { '@id': 'https://pdf-redaction.com/#organization' },
+    ])
+  })
+
+  // Copied from pdf-redaction.com's node: two sites describing one company
+  // differently is a contradiction a crawler has to resolve.
+  it('carries the same identity facts pdf-redaction.com publishes', () => {
+    const node = operatorJsonLd(SITE)
+
+    expect(node.sameAs).toEqual([
+      'https://www.linkedin.com/company/stabrise/',
+      'https://github.com/StabRise',
+      'https://www.biznes.gov.pl/pl/wyszukiwarka-firm/wpis/ceidg/FCED8FC2-27E0-4E7A-BD34-06B1DD15E73A',
+      'https://www.wikidata.org/wiki/Q141256801',
+    ])
+    expect(node.email).toBe('info@stabrise.com')
+    expect(node.address).toMatchObject({
+      '@type': 'PostalAddress',
+      postalCode: '05-270',
+      addressCountry: 'PL',
+    })
+  })
+})
+
+describe('aboutPageJsonLd', () => {
+  it('is about this site, whose parent the page also defines', () => {
+    const node = aboutPageJsonLd(SITE, { name: 'About', description: 'Who runs it.' })
+
+    expect(node['@type']).toBe('AboutPage')
+    expect(node.url).toBe(`${SITE}/about`)
+    expect(node.about).toEqual({ '@id': `${SITE}/#organization` })
+    expect(node.isPartOf).toEqual({ '@id': `${SITE}/#website` })
+  })
+})
+
 describe('collectionPageJsonLd', () => {
   it('describes the hub without duplicating any tool entity', () => {
     const node = collectionPageJsonLd(SITE, { name: 'Redaction tools', numberOfItems: 7 })
@@ -164,6 +214,12 @@ describe('organizationJsonLd', () => {
 
   it('lists the profiles that speak for us', () => {
     expect(node().sameAs).toEqual(['https://www.reddit.com/r/RedactionTools/'])
+  })
+
+  // The same shape pdf-redaction.com uses: each site is a sub-organization of the
+  // company, pointed at by @id rather than restated.
+  it('names StabRise as its parent organization', () => {
+    expect(node().parentOrganization).toEqual({ '@id': 'https://stabrise.com/#organization' })
   })
 })
 
