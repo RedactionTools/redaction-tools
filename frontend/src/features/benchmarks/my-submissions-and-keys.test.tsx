@@ -8,7 +8,7 @@ import type { MySubmissionOut } from '@/lib/api/generated/model'
 import { makeTestQueryClient, renderWithProviders } from '@/test/render'
 
 import { ApiKeysPanel } from './api-keys-panel'
-import { makeApiKey, makeMySubmission, makeRate } from './fixtures'
+import { makeApiKey, makeMyRun, makeMySubmission, makeRate, makeRunScreenshot } from './fixtures'
 import { MySubmissions } from './my-submissions'
 
 let fetchSpy: MockInstance<typeof fetch>
@@ -71,6 +71,41 @@ describe('MySubmissions', () => {
 
     expect(screen.getByText('pii-detection-1')).toBeInTheDocument()
     expect(screen.getByText(/the file is encrypted/)).toBeInTheDocument()
+  })
+
+  it('adds screenshots to a run already sent', async () => {
+    fetchSpy.mockResolvedValue(respond(makeMyRun(), 201))
+    render([makeMySubmission({ status: 'approved', runs: [makeMyRun()] })])
+
+    const shot = new File(['png'], 'settings.png', { type: 'image/png' })
+    await userEvent.upload(screen.getByLabelText(/add screenshots to pii-detection-1/i), shot)
+
+    await waitFor(() => expect(fetchSpy).toHaveBeenCalled())
+    const [url, init] = fetchSpy.mock.calls[0]
+    expect(String(url)).toContain('/benchmarks/runs/r1/screenshots')
+    expect(init?.method).toBe('POST')
+    expect((init?.body as FormData).getAll('screenshots')).toEqual([shot])
+  })
+
+  it('marks a screenshot that waits for an editor', () => {
+    const run = makeMyRun({
+      screenshots: [
+        { ...makeRunScreenshot(), status: 'published' },
+        { ...makeRunScreenshot({ url: 'http://x/new.png' }), status: 'pending' },
+      ],
+    })
+    render([makeMySubmission({ status: 'approved', runs: [run] })])
+
+    expect(screen.getAllByRole('img', { name: /screenshot \d of pii-detection-1/i })).toHaveLength(
+      2,
+    )
+    expect(screen.getAllByText('Awaiting review')).toHaveLength(1)
+  })
+
+  it('offers no screenshots for a submission taken back or turned down', () => {
+    render([makeMySubmission({ status: 'rejected', review_note: 'No.', runs: [makeMyRun()] })])
+
+    expect(screen.queryByLabelText(/add screenshots/i)).toBeNull()
   })
 
   it('withdraws a submission that is not yet published', async () => {

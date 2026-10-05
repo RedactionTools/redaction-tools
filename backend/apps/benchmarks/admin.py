@@ -7,7 +7,10 @@ a run scored with the CLI, exactly where our rescore disagrees.
 
 import json
 
+from django import forms
 from django.contrib import admin, messages
+from django.contrib.admin.widgets import ForeignKeyRawIdWidget
+from django.core.exceptions import ValidationError
 from django.utils.html import format_html, format_html_join
 from unfold.admin import ModelAdmin, TabularInline
 
@@ -209,10 +212,66 @@ class SubmissionAdmin(ModelAdmin):
             self.message_user(request, f"{done} submission(s) {status}.")
 
 
+class MultipleImageInput(forms.ClearableFileInput):
+    allow_multiple_selected = True
+
+
+class MultipleImageField(forms.FileField):
+    widget = MultipleImageInput
+
+    def clean(self, data, initial=None):
+        return [super(MultipleImageField, self).clean(item, initial) for item in data or []]
+
+
+class RunScreenshotAddForm(forms.ModelForm):
+    """Add screenshots to any run, through `services.add_screenshots` like the API and
+    the CLI: re-encoded, deduplicated, all or nothing. An editor's go live at once.
+
+    The write happens in `clean`, because the service is also the validator - a refusal
+    has to come back as a form error, not a 500 from `save_model`.
+    """
+
+    images = MultipleImageField(
+        help_text="PNG, JPEG or WebP. An image the run already holds is skipped."
+    )
+
+    class Meta:
+        model = RunScreenshot
+        fields = ("run",)
+
+    user = None  # set by RunScreenshotAdmin.get_form
+
+    def clean(self):
+        cleaned = super().clean()
+        run, uploads = cleaned.get("run"), cleaned.get("images")
+        if run is None or not uploads:
+            return cleaned
+        try:
+            self.added = services.add_screenshots(
+                user=self.user, run=run, images=[upload.read() for upload in uploads]
+            )
+        except BenchmarkError as exc:
+            raise ValidationError(str(exc)) from exc
+        return cleaned
+
+    def save(self, commit=True):
+        # Already written by the service. The admin needs one row to log and link to;
+        # when every image was a duplicate, that is the run's latest screenshot.
+        shot = self.added[0] if self.added else self.cleaned_data["run"].screenshots.last()
+        shot.added_count = len(self.added)
+        return shot
+
+    def save_m2m(self):
+        pass
+
+
 @admin.register(RunScreenshot)
 class RunScreenshotAdmin(ModelAdmin):
     """Where screenshots added after their run was published wait for an editor. Those
-    sent with a submission are reviewed on the submission's page, with the run."""
+    sent with a submission are reviewed on the submission's page, with the run.
+
+    "Add" attaches screenshots to any run, published or not - the admin's
+    `pdfredeval publish-screenshots`."""
 
     list_display = ("thumbnail", "run", "position", "status", "created_at")
     list_filter = ("status",)
@@ -222,8 +281,31 @@ class RunScreenshotAdmin(ModelAdmin):
     readonly_fields = ("thumbnail", "run", "position", "width", "height", "source_sha256")
     actions = ("publish_screenshots",)
 
-    def has_add_permission(self, request):
-        return False
+    def get_fields(self, request, obj=None):
+        return ("run", "images") if obj is None else self.fields
+
+    def get_readonly_fields(self, request, obj=None):
+        return () if obj is None else self.readonly_fields
+
+    def get_form(self, request, obj=None, change=False, **kwargs):
+        if obj is not None:
+            return super().get_form(request, obj, change=change, **kwargs)
+        form = type("RunScreenshotAddForm", (RunScreenshotAddForm,), {"user": request.user})
+        # A run id is typed or picked from the lookup popup: a <select> of every run
+        # ever published would not stay usable for long.
+        form.base_fields["run"].widget = ForeignKeyRawIdWidget(
+            RunScreenshot._meta.get_field("run").remote_field, self.admin_site
+        )
+        return form
+
+    def save_model(self, request, obj, form, change):
+        if change:
+            super().save_model(request, obj, form, change)
+        # On add, the form's clean already stored everything through the service.
+
+    def response_add(self, request, obj, post_url_continue=None):
+        self.message_user(request, f"{obj.added_count} screenshot(s) added to {obj.run.run_id}.")
+        return self.response_post_save_add(request, obj)
 
     @admin.display(description="Screenshot")
     def thumbnail(self, obj):

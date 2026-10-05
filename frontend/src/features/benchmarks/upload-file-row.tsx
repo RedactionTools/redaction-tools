@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import {
   Dialog,
@@ -16,6 +16,7 @@ import type { CaseOut } from '@/lib/api/generated/model'
 import { renderFirstPage, type RenderedPage } from '@/lib/benchmarks/pdf-preview'
 import { cn } from '@/lib/utils'
 
+import { SCREENSHOT_ACCEPT } from './add-run-screenshots'
 import { previewAlt } from './case-preview'
 
 /** Wide enough to read a planted value when the comparison is opened, small enough to
@@ -69,7 +70,10 @@ export function UploadFileRow({
   cases,
   state,
   error,
+  warning,
+  screenshots,
   onCaseChange,
+  onScreenshotsChange,
   onRemove,
 }: {
   file: File
@@ -77,7 +81,10 @@ export function UploadFileRow({
   cases: CaseOut[]
   state: UploadState
   error?: string
+  warning?: string
+  screenshots: File[]
   onCaseChange: (caseId: string) => void
+  onScreenshotsChange: (screenshots: File[]) => void
   onRemove: () => void
 }) {
   const preview = useFirstPage(file)
@@ -137,6 +144,17 @@ export function UploadFileRow({
             {error}
           </p>
         ) : null}
+        <ScreenshotPicker
+          file={file}
+          screenshots={screenshots}
+          locked={state !== 'ready' && state !== 'failed'}
+          onChange={onScreenshotsChange}
+        />
+        {warning ? (
+          <p className="text-warn text-xs" role="alert">
+            {warning}
+          </p>
+        ) : null}
         {preview.status === 'ready' ? (
           <p className="text-muted-foreground text-xs">
             Select the page to compare it with the case.
@@ -144,6 +162,73 @@ export function UploadFileRow({
         ) : null}
       </div>
     </li>
+  )
+}
+
+/**
+ * The screenshots taken while this file was made - the tool's settings, a warning it
+ * showed. Optional, and kept here until the PDF is stored, because they attach to the
+ * run the upload creates.
+ */
+function ScreenshotPicker({
+  file,
+  screenshots,
+  locked,
+  onChange,
+}: {
+  file: File
+  screenshots: File[]
+  locked: boolean
+  onChange: (screenshots: File[]) => void
+}) {
+  const input = useRef<HTMLInputElement>(null)
+  const id = `shots-${file.name}-${file.lastModified}`
+  return (
+    <div className="space-y-1">
+      <label htmlFor={id} className="sr-only">
+        Screenshots for {file.name}
+      </label>
+      <input
+        ref={input}
+        id={id}
+        type="file"
+        accept={SCREENSHOT_ACCEPT}
+        multiple
+        className="sr-only"
+        disabled={locked}
+        onChange={(event) => {
+          onChange([...screenshots, ...Array.from(event.target.files ?? [])])
+          event.target.value = ''
+        }}
+      />
+      {screenshots.length ? (
+        <ul className="flex flex-wrap gap-2 text-xs">
+          {screenshots.map((shot, index) => (
+            <li
+              key={`${shot.name}-${index}`}
+              className="bg-muted flex items-center gap-1 rounded px-2 py-0.5"
+            >
+              <span className="font-mono">{shot.name}</span>
+              {locked ? null : (
+                <button
+                  type="button"
+                  aria-label={`Remove screenshot ${shot.name}`}
+                  className="text-muted-foreground hover:text-foreground"
+                  onClick={() => onChange(screenshots.filter((_, i) => i !== index))}
+                >
+                  ×
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {locked ? null : (
+        <Button type="button" size="sm" variant="ghost" onClick={() => input.current?.click()}>
+          {screenshots.length ? 'Add more screenshots' : 'Add screenshots (optional)'}
+        </Button>
+      )}
+    </div>
   )
 }
 

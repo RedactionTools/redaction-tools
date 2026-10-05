@@ -11,12 +11,28 @@ Anyone with an account can add a tool to the leaderboard. You do not need to own
 3. Go to **Submit results**, choose the tool and how you ran it (web app, desktop app or API),
    and upload the files the tool returned, **unchanged**. Files named after their case are
    matched automatically.
-4. Select **Send for scoring**.
+4. Optionally, add screenshots to each file with **Add screenshots**: the tool's settings,
+   any warning it raised, its result screen. They upload with the file.
+5. Select **Send for scoring**.
 
 We score every file ourselves with the same scorer the CLI uses. Scoring takes a minute or
 two per case. After scoring, an editor reviews the submission, and it joins the leaderboard
 once approved. You can follow its progress, and read any review note, on
 [your submissions](/benchmarks/submissions).
+
+## Screenshots
+
+Screenshots show how the tool was driven, and appear on the run's page next to the score.
+Each run can have up to 10 PNG, JPEG or WebP images. We re-encode every image, which
+strips the metadata your capture tool embedded. A screenshot still shows whatever was on
+your screen, so check it before you upload.
+
+To add screenshots to a run you already sent, open
+[your submissions](/benchmarks/submissions) and select **Add screenshots** beside the
+case. This does not resubmit the run or change its score, and an image the run already
+has is skipped. Before the run is approved, new screenshots are reviewed with it. After
+approval, an editor checks each new one before it appears; until then it is marked
+**Awaiting review**. A withdrawn or rejected submission takes no more screenshots.
 
 ## What gets refused
 
