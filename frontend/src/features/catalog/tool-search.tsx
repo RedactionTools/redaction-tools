@@ -31,15 +31,32 @@ export function ToolSearch({ filters }: { filters: CatalogFilters }) {
         router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false })
       }}
     >
-      <Input
-        type="search"
-        name="q"
-        aria-label="Search redaction tools"
-        placeholder="Search tools, vendors or capabilities"
-        value={value}
-        onChange={(event) => setValue(event.target.value)}
-      />
-      <Button type="submit">Search</Button>
+      <div className="relative flex-1">
+        <svg
+          viewBox="0 0 20 20"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={1.75}
+          strokeLinecap="round"
+          aria-hidden="true"
+          className="text-muted-foreground pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2"
+        >
+          <circle cx="8.5" cy="8.5" r="5.5" />
+          <path d="m13 13 4 4" />
+        </svg>
+        <Input
+          className="shadow-surface h-11 rounded-lg pl-10"
+          type="search"
+          name="q"
+          aria-label="Search redaction tools"
+          placeholder="Search tools, vendors or capabilities"
+          value={value}
+          onChange={(event) => setValue(event.target.value)}
+        />
+      </div>
+      <Button type="submit" className="h-11 rounded-lg px-5">
+        Search
+      </Button>
     </form>
   )
 }

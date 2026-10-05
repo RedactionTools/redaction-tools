@@ -77,10 +77,33 @@ export function formatUnit(unit: string): string {
   return UNIT_LABELS[unit] ?? `per ${unit.replace(/_/g, ' ')}`
 }
 
-function entryPrice(summary: PriceSummaryOut): string | null {
+function entryParts(summary: PriceSummaryOut): { amount: string; unit: string } | null {
   if (!summary.from_amount || !summary.currency || !summary.unit) return null
   if (Number(summary.from_amount) === 0) return null
-  return `${formatAmount(summary.from_amount, summary.currency)} ${formatUnit(summary.unit)}`
+  return {
+    amount: formatAmount(summary.from_amount, summary.currency),
+    unit: formatUnit(summary.unit),
+  }
+}
+
+function entryPrice(summary: PriceSummaryOut): string | null {
+  const entry = entryParts(summary)
+  return entry ? `${entry.amount} ${entry.unit}` : null
+}
+
+/**
+ * The headline in three parts, so a table can set the amount as the figure and
+ * the words around it smaller. Joined with spaces they are `priceHeadline`, word
+ * for word - the cell must not say anything the sentence does not.
+ */
+export function priceParts(summary: PriceSummaryOut): {
+  lead: string | null
+  amount: string
+  unit: string | null
+} {
+  const entry = entryParts(summary)
+  if (entry) return { lead: summary.has_free_tier ? 'Free, or from' : 'From', ...entry }
+  return { lead: null, amount: priceHeadline(summary), unit: null }
 }
 
 /**

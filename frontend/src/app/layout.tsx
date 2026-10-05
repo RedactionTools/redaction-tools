@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { IBM_Plex_Sans } from 'next/font/google'
 
 import { GoogleAnalytics } from '@/components/analytics/google-analytics'
 import { Providers } from '@/components/providers/providers'
@@ -10,6 +11,18 @@ import { SITE_DESCRIPTION, SITE_NAME } from '@/lib/seo/site'
 import '@/lib/api/token-source.server'
 
 import './globals.css'
+
+/**
+ * IBM Plex Sans: engineered rather than friendly, with the document heritage of
+ * the people who buy redaction tools, and true tabular figures for a price
+ * table. Self-hosted by next/font, so no request leaves for Google at runtime.
+ */
+const plexSans = IBM_Plex_Sans({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-plex-sans',
+  display: 'swap',
+})
 
 /**
  * The only `openGraph` and `twitter` in the app, and it has to stay that way.
@@ -36,8 +49,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className="bg-background text-foreground min-h-dvh antialiased">
+    <html lang="en" suppressHydrationWarning className={plexSans.variable}>
+      <body className="bg-background text-foreground min-h-dvh font-sans antialiased">
         <Providers>{children}</Providers>
         <GoogleAnalytics measurementId={gaMeasurementId} />
       </body>

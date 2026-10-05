@@ -40,12 +40,8 @@ describe('ToolProfile', () => {
   it('shows the benchmark link as the primary button', () => {
     render(makeToolDetail({ benchmarks: [{ suite: 'pdf', name: 'PDF redaction' }] }))
 
-    expect(screen.getByRole('link', { name: /pdf redaction benchmark/i })).toHaveClass(
-      'bg-foreground',
-    )
-    expect(screen.getByRole('link', { name: /visit adobe acrobat/i })).not.toHaveClass(
-      'bg-foreground',
-    )
+    expect(screen.getByRole('link', { name: /pdf redaction benchmark/i })).toHaveClass('bg-primary')
+    expect(screen.getByRole('link', { name: /visit adobe acrobat/i })).not.toHaveClass('bg-primary')
   })
 
   it('offers no benchmark link before the tool has results', () => {

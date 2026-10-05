@@ -6,10 +6,16 @@
    next-themes puts `.dark` on <html>. */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Design is deliberately deferred: these are neutral placeholders. The @theme
-   block only generates the utility names - the :root / .dark blocks below are
-   what actually carry the values, so a later redesign edits one place. */
+/* "Trust & precision": the navy of the shield as ink and as the one action
+   colour, over cool slate neutrals. Green and amber only ever mean something
+   (verified, caution) - there is no decorative accent. The @theme block only
+   generates the utility names; the :root / .dark blocks below carry the values,
+   so a redesign still edits one place. */
 @theme {
+  --font-sans: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-surface: var(--surface);
@@ -24,36 +30,46 @@
   --color-overlay: var(--overlay);
 
   --radius-card: 0.75rem;
+
+  /* One shadow, for the surfaces a reader works in - the table and the search -
+     not for every card on the page. */
+  --shadow-surface: 0 1px 2px rgb(16 24 40 / 0.04), 0 4px 12px -2px rgb(16 24 40 / 0.06);
 }
 
 :root {
-  --background: oklch(0.99 0 0);
-  --foreground: oklch(0.21 0 0);
-  --surface: oklch(1 0 0);
-  --muted: oklch(0.95 0 0);
-  --muted-foreground: oklch(0.52 0 0);
-  --border: oklch(0.91 0 0);
-  --ring: oklch(0.55 0 0);
-  --ok: oklch(0.52 0.13 155);
-  --ok-subtle: oklch(0.95 0.03 155);
-  --warn: oklch(0.55 0.15 55);
-  --warn-subtle: oklch(0.96 0.04 75);
-  --overlay: oklch(0 0 0 / 0.45);
+  --primary: #192536;
+  --primary-foreground: #ffffff;
+  --background: #f6f7f9;
+  --foreground: #142030;
+  --surface: #ffffff;
+  --muted: #eef1f5;
+  --muted-foreground: #5a6576;
+  --border: #e2e6ec;
+  --ring: #3d5a80;
+  --ok: #157a55;
+  --ok-subtle: #e6f4ee;
+  --warn: #a6620a;
+  --warn-subtle: #fbf1e3;
+  --overlay: rgb(14 21 32 / 0.45);
 }
 
+/* The same navy, as the night: surfaces step up in lightness the way paper
+   stacks, and the action colour inverts to a pale slate so it still leads. */
 .dark {
-  --background: oklch(0.16 0 0);
-  --foreground: oklch(0.97 0 0);
-  --surface: oklch(0.2 0 0);
-  --muted: oklch(0.26 0 0);
-  --muted-foreground: oklch(0.71 0 0);
-  --border: oklch(0.31 0 0);
-  --ring: oklch(0.7 0 0);
-  --ok: oklch(0.76 0.14 155);
-  --ok-subtle: oklch(0.28 0.05 155);
-  --warn: oklch(0.79 0.14 70);
-  --warn-subtle: oklch(0.3 0.06 70);
-  --overlay: oklch(0 0 0 / 0.6);
+  --primary: #dce4ef;
+  --primary-foreground: #192536;
+  --background: #0e1520;
+  --foreground: #e8ecf2;
+  --surface: #141d2b;
+  --muted: #1c2738;
+  --muted-foreground: #93a0b3;
+  --border: #253247;
+  --ring: #8fa6c4;
+  --ok: #4cc493;
+  --ok-subtle: #12301f;
+  --warn: #e8a64a;
+  --warn-subtle: #33240f;
+  --overlay: rgb(0 0 0 / 0.6);
 }
 
 /**
@@ -81,8 +97,8 @@
   --color-fd-card-foreground: var(--foreground);
   --color-fd-popover: var(--surface);
   --color-fd-popover-foreground: var(--foreground);
-  --color-fd-primary: var(--foreground);
-  --color-fd-primary-foreground: var(--background);
+  --color-fd-primary: var(--primary);
+  --color-fd-primary-foreground: var(--primary-foreground);
   --color-fd-secondary: var(--muted);
   --color-fd-secondary-foreground: var(--foreground);
   --color-fd-accent: var(--muted);
@@ -96,4 +112,27 @@
   --color-fd-muted: var(--muted);
   --color-fd-secondary: var(--muted);
   --color-fd-muted-foreground: var(--muted-foreground);
+}
+
+/* The hub's specimen: each bar sweeps across its word once, in reading order.
+   `both` holds the bar at zero width until its delay has passed. */
+@keyframes redact {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.redaction-bar {
+  transform-origin: left center;
+  animation: redact 420ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation-delay: var(--redact-delay, 0ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .redaction-bar {
+    animation: none;
+  }
 }
