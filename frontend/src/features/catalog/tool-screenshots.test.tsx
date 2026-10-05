@@ -33,6 +33,25 @@ describe('ToolScreenshots', () => {
     expect(screen.getByText(/1 September 2026/)).toBeInTheDocument()
   })
 
+  it('shows several captures one at a time, in a carousel', async () => {
+    renderWithProviders(
+      <ToolScreenshots
+        name="Adobe Acrobat"
+        screenshots={[
+          makeScreenshot(),
+          makeScreenshot({ url: 'http://x/second.png', alt: 'The export dialog' }),
+        ]}
+      />,
+    )
+
+    const carousel = screen.getByRole('region', { name: 'Adobe Acrobat screenshots' })
+    expect(within(carousel).getAllByRole('group')).toHaveLength(2)
+
+    await userEvent.click(within(carousel).getByRole('button', { name: /next/i }))
+
+    expect(within(carousel).getByText('2 / 2')).toBeInTheDocument()
+  })
+
   it('renders nothing at all when a listing has no screenshots', () => {
     renderWithProviders(<ToolScreenshots name="Adobe Acrobat" screenshots={[]} />)
 

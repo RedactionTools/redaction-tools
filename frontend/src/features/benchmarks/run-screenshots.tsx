@@ -1,5 +1,6 @@
 'use client'
 
+import { Carousel } from '@/components/ui/carousel'
 import {
   Dialog,
   DialogClose,
@@ -9,7 +10,8 @@ import {
 } from '@/components/ui/dialog'
 import type { RunScreenshotOut } from '@/lib/api/generated/model'
 
-const THUMB_SIZES = '(min-width: 1024px) 20rem, (min-width: 640px) 50vw, 100vw'
+/** One slide spans the page column, which tops out around 1024px. */
+const SLIDE_SIZES = '(min-width: 1024px) 1024px, 100vw'
 
 /**
  * What the operator saw while making the run: the tool's settings, a warning it raised,
@@ -29,46 +31,46 @@ export function RunScreenshots({
       <p className="text-muted-foreground text-sm">
         Taken while {label} was run: the settings it was given and what it showed.
       </p>
-      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <Carousel label={`Screenshots of ${label}`} className="w-full">
         {screenshots.map((shot, index) => {
           const name = `Screenshot ${index + 1} of ${screenshots.length}`
           const alt = `${name}, taken while ${label} was run`
           return (
-            <li key={shot.url}>
-              <Dialog>
-                <DialogTrigger
-                  aria-label={`Enlarge ${name.toLowerCase()}`}
-                  className="border-border block w-full cursor-zoom-in overflow-hidden rounded-md border"
-                >
-                  {/* Not next/image: the backend already rendered the widths it serves. */}
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={shot.url}
-                    srcSet={shot.srcset ? `${shot.srcset}, ${shot.url} ${shot.width}w` : undefined}
-                    sizes={THUMB_SIZES}
-                    width={shot.width}
-                    height={shot.height}
-                    alt={alt}
-                    loading="lazy"
-                    decoding="async"
-                    className="h-auto w-full"
-                  />
-                </DialogTrigger>
-                <DialogContent className="border-border fixed inset-4 z-50 flex flex-col gap-3 overflow-auto rounded-lg border p-4 sm:inset-8">
-                  <div className="flex items-start justify-between gap-4">
-                    <DialogTitle>{alt}</DialogTitle>
-                    <DialogClose className="text-muted-foreground hover:text-foreground text-sm">
-                      Close
-                    </DialogClose>
-                  </div>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={shot.url} alt={alt} className="mx-auto h-auto max-w-full rounded" />
-                </DialogContent>
-              </Dialog>
-            </li>
+            <Dialog key={shot.url}>
+              {/* One frame height for every slide, so a tall capture does not make
+                    the controls jump when the reader steps past it. */}
+              <DialogTrigger
+                aria-label={`Enlarge ${name.toLowerCase()}`}
+                className="border-border bg-muted flex aspect-[4/3] w-full cursor-zoom-in items-center justify-center overflow-hidden rounded-md border sm:aspect-auto sm:h-[min(60vh,32rem)]"
+              >
+                {/* Not next/image: the backend already rendered the widths it serves. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={shot.url}
+                  srcSet={shot.srcset ? `${shot.srcset}, ${shot.url} ${shot.width}w` : undefined}
+                  sizes={SLIDE_SIZES}
+                  width={shot.width}
+                  height={shot.height}
+                  alt={alt}
+                  loading="lazy"
+                  decoding="async"
+                  className="h-auto max-h-full w-auto max-w-full object-contain"
+                />
+              </DialogTrigger>
+              <DialogContent className="border-border fixed inset-4 z-50 flex flex-col gap-3 overflow-auto rounded-lg border p-4 sm:inset-8">
+                <div className="flex items-start justify-between gap-4">
+                  <DialogTitle>{alt}</DialogTitle>
+                  <DialogClose className="text-muted-foreground hover:text-foreground text-sm">
+                    Close
+                  </DialogClose>
+                </div>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={shot.url} alt={alt} className="mx-auto h-auto max-w-full rounded" />
+              </DialogContent>
+            </Dialog>
           )
         })}
-      </ul>
+      </Carousel>
     </section>
   )
 }

@@ -93,6 +93,9 @@ describe('RunReportView', () => {
 
     const section = screen.getByTestId('run-screenshots')
     expect(within(section).getByRole('heading', { name: 'Screenshots' })).toBeInTheDocument()
+    const carousel = within(section).getByRole('region', { name: /screenshots of pdf redaction/i })
+    await userEvent.click(within(carousel).getByRole('button', { name: /next/i }))
+    expect(within(carousel).getByText('2 / 2')).toBeInTheDocument()
     await userEvent.click(
       within(section).getByRole('button', { name: /enlarge screenshot 2 of 2/i }),
     )
