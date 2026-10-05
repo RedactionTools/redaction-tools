@@ -10,6 +10,8 @@ import { cn } from '@/lib/utils'
 const SIZES = {
   sm: { image: 'h-7 max-w-28', monogram: 'size-8 text-xs' },
   lg: { image: 'h-10 max-w-44', monogram: 'size-14 text-lg' },
+  /** Inside the catalog table's fixed tile, which sets the box for every row. */
+  tile: { image: 'h-6 max-w-[5.5rem]', monogram: 'size-8 text-xs' },
 } as const
 
 /** First letters of the first two words: "CaseGuard Studio" becomes "CS". */

@@ -86,7 +86,7 @@ export function MethodIcons({ slug, facetSlugs }: { slug: string; facetSlugs: st
   const methods = METHODS.filter((method) => facetSlugs.includes(method.slug))
 
   return (
-    <span className="flex items-center gap-1.5" data-testid={`methods-${slug}`}>
+    <span className="flex items-center gap-1" data-testid={`methods-${slug}`}>
       {methods.length ? (
         methods.map((method) => (
           <Tooltip
@@ -101,7 +101,7 @@ export function MethodIcons({ slug, facetSlugs }: { slug: string; facetSlugs: st
               role="img"
               aria-label={method.label}
               tabIndex={0}
-              className="bg-muted text-foreground focus-visible:ring-ring inline-flex size-7 items-center justify-center rounded-md focus-visible:ring-2 focus-visible:outline-none"
+              className="text-muted-foreground hover:text-foreground focus-visible:ring-ring inline-flex size-6 items-center justify-center rounded-md transition-colors focus-visible:ring-2 focus-visible:outline-none"
             >
               <MethodIcon icon={method.icon} />
             </span>

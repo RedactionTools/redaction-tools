@@ -13,13 +13,20 @@
  */
 export const PROVENANCE: Record<
   string,
-  { glyph: string; label: string; tone: 'ok' | 'neutral' | 'warn' }
+  { glyph: string; label: string; short: string; tone: 'ok' | 'neutral' | 'warn' }
 > = {
-  crawler: { glyph: '⟳', label: 'Read automatically from the vendor', tone: 'ok' },
-  manual: { glyph: '✎', label: 'Entered by our editors', tone: 'neutral' },
+  crawler: {
+    glyph: '⟳',
+    label: 'Read automatically from the vendor',
+    short: 'Auto-checked',
+    tone: 'ok',
+  },
+  manual: { glyph: '✎', label: 'Entered by our editors', short: 'Editor-checked', tone: 'neutral' },
   vendor: {
     glyph: '🏷',
     label: 'Supplied by the vendor, not independently verified',
+    // "Supplied", never "checked": the disclosure above in two words.
+    short: 'Vendor-supplied',
     tone: 'warn',
   },
 }

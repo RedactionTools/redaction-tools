@@ -79,7 +79,7 @@ export function FilterBar({ filters }: { filters: CatalogFilters }) {
           const applied = selected(code)
           return (
             <fieldset key={code} className="space-y-2">
-              <legend className="mb-2 text-sm font-medium">{dimension.label}</legend>
+              <legend className="mb-1.5 text-[13px] font-semibold">{dimension.label}</legend>
               {values.map((value) => (
                 <label key={value.code} className="flex items-center gap-2 py-1 text-sm">
                   <Checkbox
@@ -87,7 +87,9 @@ export function FilterBar({ filters }: { filters: CatalogFilters }) {
                     onChange={() => go(toggleFacet(filters, code, value.code))}
                   />
                   <span className="flex-1">{value.label}</span>
-                  <span className="text-muted-foreground tabular-nums">{value.tool_count}</span>
+                  <span className="text-muted-foreground text-xs tabular-nums">
+                    {value.tool_count}
+                  </span>
                 </label>
               ))}
             </fieldset>
@@ -95,7 +97,7 @@ export function FilterBar({ filters }: { filters: CatalogFilters }) {
         })}
 
         <fieldset className="space-y-2">
-          <legend className="mb-2 text-sm font-medium">Pricing</legend>
+          <legend className="mb-1.5 text-[13px] font-semibold">Pricing</legend>
           <label className="flex items-center gap-2 py-1 text-sm">
             <Checkbox
               checked={Boolean(filters.has_free_tier)}

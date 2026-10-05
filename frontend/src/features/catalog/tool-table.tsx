@@ -15,12 +15,14 @@ import {
 } from '@/components/ui/table'
 import { Tooltip } from '@/components/ui/tooltip'
 import { useListTools } from '@/lib/api/generated/catalog/catalog'
+import type { PriceSummaryOut } from '@/lib/api/generated/model'
 import { cheapestCost, type DocumentInput } from '@/lib/catalog/document-cost'
 import type { CatalogFilters } from '@/lib/catalog/filters'
-import { formatCost, priceHeadline } from '@/lib/catalog/format'
+import { formatCost, priceParts } from '@/lib/catalog/format'
+import { PROVENANCE } from '@/lib/catalog/provenance'
+import { cn } from '@/lib/utils'
 
 import { MethodIcons, MethodLegend } from './method-icons'
-import { PriceProvenanceBadge } from './price-provenance-badge'
 import { ToolLogo } from './tool-logo'
 import { VendorMaintainedBadge } from './vendor-maintained-badge'
 
@@ -58,79 +60,184 @@ export function ToolTable({ filters }: { filters: CatalogFilters }) {
   }
 
   return (
-    <div className="space-y-3">
-      <Table>
-        <TableCaption>{data.count} redaction tools, with prices as last verified.</TableCaption>
-        <TableHead>
-          <TableRow>
-            <TableHeader>Tool</TableHeader>
-            <TableHeader>Media</TableHeader>
-            <TableHeader>Method</TableHeader>
-            <TableHeader>From</TableHeader>
-            <TableHeader aria-describedby={NOTE_ID}>
-              {/* A button so the hint reaches the keyboard too; the dotted
+    <div className="space-y-4">
+      {/* One working surface at desktop widths. Below `md` every row is
+          already its own card, and a card inside a card is just a border. */}
+      <div className="md:bg-surface md:border-border md:shadow-surface md:rounded-xl md:border md:px-3 md:pt-4 md:pb-1">
+        <Table>
+          <TableCaption className="md:px-3">
+            {data.count} redaction tools, with prices as last verified.
+          </TableCaption>
+          <TableHead>
+            <TableRow>
+              <TableHeader className={HEADER}>Tool</TableHeader>
+              <TableHeader className={cn(HEADER, 'w-32')}>Covers</TableHeader>
+              <TableHeader className={cn(HEADER, 'w-44')}>From</TableHeader>
+              <TableHeader className={cn(HEADER, 'w-36 text-right')} aria-describedby={NOTE_ID}>
+                {/* A button so the hint reaches the keyboard too; the dotted
                   underline is the usual "there is more here" cue. */}
-              <Tooltip content="100 documents × 10 pages, every month">
-                <button
-                  type="button"
-                  className="cursor-help underline decoration-dotted underline-offset-4"
-                >
-                  1,000 pages<span aria-hidden="true">*</span>
-                </button>
-              </Tooltip>
-            </TableHeader>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {data.items.map((tool) => (
-            <TableRow key={tool.slug} data-testid={`tool-row-${tool.slug}`}>
-              <TableCell>
-                <div className="flex items-center gap-3">
-                  {/* The same page as the name, for the pointer only: a second
+                <Tooltip content="100 documents × 10 pages, every month">
+                  <button
+                    type="button"
+                    className="cursor-help whitespace-nowrap underline decoration-dotted underline-offset-4"
+                  >
+                    1,000 pages<span aria-hidden="true">*</span>
+                  </button>
+                </Tooltip>
+              </TableHeader>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {data.items.map((tool) => (
+              <TableRow
+                key={tool.slug}
+                data-testid={`tool-row-${tool.slug}`}
+                className="md:hover:bg-muted/40 transition-colors"
+              >
+                <TableCell className="md:py-4">
+                  <div className="flex items-center gap-4">
+                    {/* The same page as the name, for the pointer only: a second
                       link per row would make a keyboard tab through every tool twice. */}
-                  <Link href={`/tool/${tool.slug}`} tabIndex={-1} aria-hidden="true">
-                    <ToolLogo name={tool.name} logoUrl={tool.logo_url} />
-                  </Link>
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Link href={`/tool/${tool.slug}`} className="font-medium hover:underline">
+                    <Link
+                      href={`/tool/${tool.slug}`}
+                      tabIndex={-1}
+                      aria-hidden="true"
+                      // One tile for every logo, so the names line up down the
+                      // column however wide a vendor's wordmark runs.
+                      className="ring-border flex h-11 w-24 shrink-0 items-center justify-center rounded-lg bg-white ring-1"
+                    >
+                      <ToolLogo
+                        name={tool.name}
+                        logoUrl={tool.logo_url}
+                        size="tile"
+                        className="p-0"
+                      />
+                    </Link>
+                    <div className="min-w-0">
+                      <Link
+                        href={`/tool/${tool.slug}`}
+                        className="text-[15px] font-semibold tracking-tight hover:underline"
+                      >
                         {tool.name}
                       </Link>
-                      {tool.is_vendor_maintained ? (
-                        <VendorMaintainedBadge vendor={tool.vendor.name} />
-                      ) : null}
+                      <p className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-x-2 text-xs">
+                        <span>{tool.vendor.name}</span>
+                        {tool.is_vendor_maintained ? (
+                          <VendorMaintainedBadge vendor={tool.vendor.name} compact />
+                        ) : null}
+                      </p>
                     </div>
-                    <p className="text-muted-foreground text-xs">{tool.vendor.name}</p>
                   </div>
-                </div>
-              </TableCell>
-              <TableCell className="text-muted-foreground" label="Media">
-                {tool.facet_slugs.filter((slug) => MEDIA.has(slug)).join(', ') || '—'}
-              </TableCell>
-              <TableCell label="Method">
-                <MethodIcons slug={tool.slug} facetSlugs={tool.facet_slugs} />
-              </TableCell>
-              <TableCell label="From">
-                <span className="flex flex-wrap items-center gap-2">
-                  {priceHeadline(tool.price_summary)}
-                  <PriceProvenanceBadge summary={tool.price_summary} slug={tool.slug} />
-                </span>
-                {tool.price_summary.is_trial && tool.price_summary.trial_days ? (
-                  <Badge className="mt-1" tone="neutral">
-                    {tool.price_summary.trial_days}-day trial
-                  </Badge>
-                ) : null}
-              </TableCell>
-              <TableCell label="1,000 pages">
-                <VolumeCost slug={tool.slug} cost={cheapestCost(tool.plans, HUB_VOLUME)} />
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+                </TableCell>
+                <TableCell label="Covers" className="md:py-4">
+                  <div
+                    className="space-y-2 max-md:flex max-md:items-center max-md:gap-3 max-md:space-y-0"
+                    data-testid={`covers-${tool.slug}`}
+                  >
+                    <MediaChips facetSlugs={tool.facet_slugs} />
+                    <MethodIcons slug={tool.slug} facetSlugs={tool.facet_slugs} />
+                  </div>
+                </TableCell>
+                <TableCell label="From" className="md:py-4">
+                  <div className="max-md:text-right">
+                    <EntryPrice slug={tool.slug} summary={tool.price_summary} />
+                    <div className="mt-1.5 flex flex-wrap items-center gap-2 max-md:justify-end">
+                      {tool.price_summary.is_trial && tool.price_summary.trial_days ? (
+                        <Badge tone="neutral">{tool.price_summary.trial_days}-day trial</Badge>
+                      ) : null}
+                      <PriceProvenanceNote summary={tool.price_summary} slug={tool.slug} />
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell label="1,000 pages" className="md:py-4 md:text-right">
+                  <VolumeCost slug={tool.slug} cost={cheapestCost(tool.plans, HUB_VOLUME)} />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
       <MethodLegend />
       <VolumeCostNote />
     </div>
+  )
+}
+
+const HEADER = 'text-xs font-medium'
+
+/** Media as chips, in the taxonomy's order rather than whatever order the row carries. */
+function MediaChips({ facetSlugs }: { facetSlugs: string[] }) {
+  const media = MEDIA.filter((medium) => facetSlugs.includes(medium.slug))
+  if (!media.length) return <span className="text-muted-foreground">—</span>
+  return (
+    <ul className="flex flex-wrap gap-1" aria-label="Media">
+      {media.map((medium) => (
+        <li
+          key={medium.slug}
+          className="border-border text-muted-foreground rounded-full border px-2 py-0.5 text-[11px] font-medium"
+        >
+          {medium.label}
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+/**
+ * The entry price set as a figure: the amount large, the words around it small.
+ * The parts are spaced so the cell still reads, and copies, as the headline.
+ */
+function EntryPrice({ slug, summary }: { slug: string; summary: PriceSummaryOut }) {
+  const { lead, amount, unit } = priceParts(summary)
+  return (
+    <div data-testid={`price-${slug}`}>
+      {lead ? <span className="text-muted-foreground block text-xs">{lead}</span> : null}{' '}
+      <span
+        className={cn(
+          'tabular-nums',
+          unit ? 'text-base font-semibold tracking-tight' : 'text-sm font-medium',
+        )}
+      >
+        {amount}
+      </span>
+      {unit ? (
+        <>
+          {' '}
+          <span className="text-muted-foreground text-xs whitespace-nowrap">{unit}</span>
+        </>
+      ) : null}
+    </div>
+  )
+}
+
+/**
+ * Where the price came from, as a quiet line rather than a pill: the short word
+ * and the date in view, the full disclosure as its name and on hover.
+ */
+function PriceProvenanceNote({ summary, slug }: { summary: PriceSummaryOut; slug: string }) {
+  const treatment = summary.source ? PROVENANCE[summary.source] : undefined
+  if (!treatment) return null
+  const date = summary.last_verified_at
+    ? new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium', timeZone: 'UTC' }).format(
+        new Date(summary.last_verified_at),
+      )
+    : null
+  const full = date ? `${treatment.label} on ${date}` : treatment.label
+  return (
+    <Tooltip content={full}>
+      <span
+        tabIndex={0}
+        aria-label={full}
+        data-testid={`provenance-${slug}`}
+        className={cn(
+          'cursor-help text-[11px] whitespace-nowrap',
+          treatment.tone === 'warn' ? 'text-warn' : 'text-muted-foreground',
+        )}
+      >
+        {treatment.short}
+        {date ? ` · ${date}` : null}
+      </span>
+    </Tooltip>
   )
 }
 
@@ -145,10 +252,17 @@ function VolumeCost({ slug, cost }: { slug: string; cost: ReturnType<typeof chea
 
   return (
     <span className="block" data-testid={`volume-cost-${slug}`}>
-      <span className="font-medium">{formatCost(cost.total, cost.currency)}</span>
-      <span className="text-muted-foreground text-xs"> / month</span>
-      <span className="text-muted-foreground block text-xs">
-        {cost.plan} · {formatCost(cost.perPage, cost.currency)} per page
+      <span className="whitespace-nowrap">
+        <span className="text-base font-semibold tracking-tight tabular-nums">
+          {formatCost(cost.total, cost.currency)}
+        </span>
+        <span className="text-muted-foreground text-xs"> / month</span>
+      </span>
+      <span className="text-muted-foreground mt-0.5 block text-xs">
+        {cost.plan} ·{' '}
+        <span className="whitespace-nowrap tabular-nums">
+          {formatCost(cost.perPage, cost.currency)} per page
+        </span>
       </span>
     </span>
   )
@@ -190,4 +304,10 @@ function VolumeCostNote() {
   )
 }
 
-const MEDIA = new Set(['pdf', 'image', 'video', 'audio', 'text'])
+const MEDIA = [
+  { slug: 'pdf', label: 'PDF' },
+  { slug: 'image', label: 'Image' },
+  { slug: 'video', label: 'Video' },
+  { slug: 'audio', label: 'Audio' },
+  { slug: 'text', label: 'Text' },
+]

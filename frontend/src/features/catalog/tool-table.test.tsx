@@ -58,7 +58,28 @@ describe('ToolTable', () => {
 
     const row = screen.getByTestId('tool-row-adobe-acrobat')
     expect(within(row).getByText('Adobe')).toBeInTheDocument()
-    expect(within(row).getByText('From $22.99 per month')).toBeInTheDocument()
+    expect(within(row).getByTestId('price-adobe-acrobat')).toHaveTextContent(
+      'From $22.99 per month',
+    )
+  })
+
+  it('sets the entry amount apart from the words around it', () => {
+    render()
+
+    expect(
+      within(screen.getByTestId('price-adobe-acrobat')).getByText('$22.99'),
+    ).toBeInTheDocument()
+  })
+
+  it('lists the media a tool covers as named chips', () => {
+    render([makeTool({ facet_slugs: ['pdf', 'image', 'manual-redaction'] })])
+
+    const covers = screen.getByTestId('covers-adobe-acrobat')
+    expect(
+      within(covers)
+        .getAllByRole('listitem')
+        .map((chip) => chip.textContent),
+    ).toEqual(['PDF', 'Image'])
   })
 
   // A "from" price answers what the cheapest plan costs, not what the reader's
@@ -150,9 +171,9 @@ describe('ToolTable', () => {
     render()
 
     const row = screen.getByTestId('tool-row-adobe-acrobat')
-    expect(within(row).getByTestId('provenance-adobe-acrobat')).toHaveAccessibleName(
-      /entered by our editors/i,
-    )
+    const provenance = within(row).getByTestId('provenance-adobe-acrobat')
+    expect(provenance).toHaveAccessibleName(/entered by our editors/i)
+    expect(provenance).toHaveTextContent(/^Editor-checked/)
   })
 
   it('marks a tool its vendor maintains here', () => {
@@ -208,10 +229,10 @@ describe('ToolTable', () => {
     render()
 
     const cells = within(screen.getByTestId('tool-row-adobe-acrobat')).getAllByRole('cell')
-    expect(cells[1]).toHaveAttribute('data-label', 'Media')
-    expect(cells[2]).toHaveAttribute('data-label', 'Method')
-    expect(cells[3]).toHaveAttribute('data-label', 'From')
-    expect(cells[4]).toHaveAttribute('data-label', '1,000 pages')
+    expect(cells).toHaveLength(4)
+    expect(cells[1]).toHaveAttribute('data-label', 'Covers')
+    expect(cells[2]).toHaveAttribute('data-label', 'From')
+    expect(cells[3]).toHaveAttribute('data-label', '1,000 pages')
   })
 
   /**

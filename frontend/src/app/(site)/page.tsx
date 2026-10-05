@@ -2,6 +2,7 @@ import { HydrationBoundary, dehydrate } from '@tanstack/react-query'
 import type { Metadata } from 'next'
 
 import { CatalogLede } from '@/features/catalog/catalog-lede'
+import { RedactionSpecimen } from '@/features/catalog/redaction-specimen'
 import { ToolExplorer } from '@/features/catalog/tool-explorer'
 import {
   getGetCatalogStatsQueryOptions,
@@ -103,11 +104,16 @@ export default async function HubPage({ searchParams }: PageProps<'/'>) {
       {jsonLd ? (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd }} />
       ) : null}
-      <header className="mb-8 space-y-4 md:mb-10">
-        <h1 className="text-2xl font-semibold tracking-tight text-balance sm:text-3xl">
-          {HUB_HEADING}
-        </h1>
-        <CatalogLede />
+      <header className="mb-10 grid items-center gap-10 md:mb-14 lg:grid-cols-[minmax(0,1fr)_24rem] lg:gap-14">
+        <div className="space-y-5">
+          <h1 className="text-[1.75rem] leading-[1.15] font-semibold tracking-[-0.02em] text-balance sm:text-[2.25rem]">
+            {HUB_HEADING}
+          </h1>
+          <CatalogLede />
+        </div>
+        <div className="hidden justify-end lg:flex">
+          <RedactionSpecimen />
+        </div>
       </header>
       <ToolExplorer filters={filters} />
     </HydrationBoundary>

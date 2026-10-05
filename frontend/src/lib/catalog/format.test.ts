@@ -7,6 +7,7 @@ import {
   formatCost,
   formatUnit,
   priceHeadline,
+  priceParts,
   priceSentence,
   verifiedOn,
 } from './format'
@@ -57,6 +58,31 @@ describe('formatUnit', () => {
     expect(formatUnit('seat_month')).toBe('per seat per month')
     expect(formatUnit('page')).toBe('per page')
     expect(formatUnit('minute')).toBe('per minute')
+  })
+})
+
+describe('priceParts', () => {
+  it('splits the headline so the amount can be set as the figure', () => {
+    expect(priceParts(summary({ has_free_tier: true }))).toEqual({
+      lead: 'Free, or from',
+      amount: '$15',
+      unit: 'per month',
+    })
+  })
+
+  it.each([
+    ['a paid tool', {}],
+    ['a free tier alone', { has_free_tier: true, from_amount: null }],
+    ['a free tier with a paid plan', { has_free_tier: true }],
+    ['a trial', { is_trial: true, trial_days: 7 }],
+    ['custom pricing', { is_quote_only: true, from_amount: null }],
+    ['no published price', { from_amount: null }],
+  ])('says exactly what the headline says, for %s', (_, overrides) => {
+    const parts = priceParts(summary(overrides))
+
+    expect([parts.lead, parts.amount, parts.unit].filter(Boolean).join(' ')).toBe(
+      priceHeadline(summary(overrides)),
+    )
   })
 })
 
