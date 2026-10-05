@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation'
 
 import { BenchmarkSuiteView } from '@/features/benchmarks/benchmark-suite-view'
 import { getGetBenchmarkSuiteQueryKey } from '@/lib/api/generated/benchmarks/benchmarks'
-import { parseBenchmarkParams } from '@/lib/benchmarks/params'
+import { isAlternateView, parseBenchmarkParams } from '@/lib/benchmarks/params'
 import { fetchBenchmarkSuite } from '@/lib/benchmarks/server'
 import { clientEnv } from '@/lib/env'
 import { getQueryClient } from '@/lib/query/client'
@@ -25,8 +25,10 @@ export async function generateMetadata({
     title: `${data.name} benchmark ${data.revision.revision} — leak rates by tool`,
     description: `${data.leaderboard.length} redaction tools scored on ${data.cases.length} synthetic cases: how many sensitive values each leaves recoverable, with 95% intervals.`,
     ...canonicalMetadata(`/benchmarks/${suite}`),
-    // Another revision or the verified-only view is the same page sliced differently.
-    robots: query.revision || query.scope !== 'all' ? { index: false, follow: true } : undefined,
+    // An older revision or the verified-only view is the same page sliced differently.
+    robots: isAlternateView(query, data.revision.is_current)
+      ? { index: false, follow: true }
+      : undefined,
   }
 }
 

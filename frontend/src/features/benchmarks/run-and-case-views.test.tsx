@@ -46,6 +46,32 @@ function renderRun(run = makeRunDetail(), { staff = false } = {}) {
 }
 
 describe('RunReportView', () => {
+  it('links the leaderboard, the tool report and the case by their plain URLs', () => {
+    renderRun()
+
+    expect(screen.getByRole('link', { name: /pdf benchmark v0\.1\.1/i })).toHaveAttribute(
+      'href',
+      '/benchmarks/pdf',
+    )
+    expect(screen.getByRole('link', { name: 'PDF Redaction' })).toHaveAttribute(
+      'href',
+      '/benchmarks/pdf/tools/pdf-redaction',
+    )
+    expect(screen.getByRole('link', { name: /the case, and every tool/i })).toHaveAttribute(
+      'href',
+      '/benchmarks/pdf/cases/extraction-conditions-1',
+    )
+  })
+
+  it('names a superseded revision in every link it makes', () => {
+    renderRun(makeRunDetail({ revision_is_current: false }))
+
+    expect(screen.getByRole('link', { name: /the case, and every tool/i })).toHaveAttribute(
+      'href',
+      '/benchmarks/pdf/cases/extraction-conditions-1?revision=v0.1.1',
+    )
+  })
+
   it('leads with the run and who published it', () => {
     renderRun()
 
@@ -145,6 +171,15 @@ describe('CaseView', () => {
       { queryClient },
     )
   }
+
+  it('links back to the leaderboard by its plain URL when the revision is current', () => {
+    renderCase()
+
+    expect(screen.getByRole('link', { name: /pdf benchmark v0\.1\.1/i })).toHaveAttribute(
+      'href',
+      '/benchmarks/pdf',
+    )
+  })
 
   it('offers the case PDF and says what is in it, without the values', () => {
     renderCase()

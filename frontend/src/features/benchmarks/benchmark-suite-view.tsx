@@ -8,6 +8,7 @@ import { Card, CardDescription, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useGetBenchmarkSuite } from '@/lib/api/generated/benchmarks/benchmarks'
 import type { GetBenchmarkSuiteParams } from '@/lib/api/generated/model'
+import { benchmarkHref } from '@/lib/benchmarks/params'
 import { cn } from '@/lib/utils'
 
 import { previewAlt } from './case-preview'
@@ -30,7 +31,8 @@ export function BenchmarkSuiteView({
   if (!data) return <Skeleton className="h-64 w-full" />
 
   const revision = data.revision.revision
-  const base = `/benchmarks/${suite}?revision=${revision}`
+  const at = { revision, isCurrent: data.revision.is_current }
+  const caseHref = (caseId: string) => benchmarkHref(`/benchmarks/${suite}/cases/${caseId}`, at)
 
   return (
     <div className="space-y-10">
@@ -67,7 +69,10 @@ export function BenchmarkSuiteView({
                 ) : (
                   <Link
                     key={r.revision}
-                    href={`/benchmarks/${suite}?revision=${r.revision}`}
+                    href={benchmarkHref(`/benchmarks/${suite}`, {
+                      revision: r.revision,
+                      isCurrent: r.is_current,
+                    })}
                     className="text-muted-foreground hover:underline"
                   >
                     {r.revision}
@@ -77,10 +82,16 @@ export function BenchmarkSuiteView({
             </nav>
           </div>
           <nav aria-label="Which results" className="flex gap-1 text-sm">
-            <ScopeLink href={base} active={data.scope === 'all'}>
+            <ScopeLink
+              href={benchmarkHref(`/benchmarks/${suite}`, at)}
+              active={data.scope === 'all'}
+            >
               All results
             </ScopeLink>
-            <ScopeLink href={`${base}&scope=verified`} active={data.scope === 'verified'}>
+            <ScopeLink
+              href={benchmarkHref(`/benchmarks/${suite}`, { ...at, scope: 'verified' })}
+              active={data.scope === 'verified'}
+            >
               Verified only
             </ScopeLink>
           </nav>
@@ -88,6 +99,7 @@ export function BenchmarkSuiteView({
         <LeaderboardTable
           suite={suite}
           revision={revision}
+          isCurrent={data.revision.is_current}
           rows={data.leaderboard}
           caseCount={data.cases.length + data.holdout_case_count}
         />
@@ -117,7 +129,7 @@ export function BenchmarkSuiteView({
               <Card className="space-y-3 p-4">
                 {item.preview ? (
                   <Link
-                    href={`/benchmarks/${suite}/cases/${item.case_id}?revision=${revision}`}
+                    href={caseHref(item.case_id)}
                     className="border-border block overflow-hidden rounded-md border"
                   >
                     {/* The page itself: which case is which is easier to see than to read. */}
@@ -136,10 +148,7 @@ export function BenchmarkSuiteView({
                   </Link>
                 ) : null}
                 <CardTitle className="font-mono text-sm">
-                  <Link
-                    href={`/benchmarks/${suite}/cases/${item.case_id}?revision=${revision}`}
-                    className="hover:underline"
-                  >
+                  <Link href={caseHref(item.case_id)} className="hover:underline">
                     {item.case_id}
                   </Link>
                 </CardTitle>

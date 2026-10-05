@@ -23,6 +23,24 @@ function render(report: ToolReportOut = makeToolReport()) {
 }
 
 describe('ToolReportView', () => {
+  it('links back to the leaderboard by its plain URL when the revision is current', () => {
+    render()
+
+    expect(screen.getByRole('link', { name: /pdf benchmark v0\.1\.1/i })).toHaveAttribute(
+      'href',
+      '/benchmarks/pdf',
+    )
+  })
+
+  it('names a superseded revision in the way back', () => {
+    render(makeToolReport({ revision_is_current: false }))
+
+    expect(screen.getByRole('link', { name: /pdf benchmark v0\.1\.1/i })).toHaveAttribute(
+      'href',
+      '/benchmarks/pdf?revision=v0.1.1',
+    )
+  })
+
   it('leads with the pooled verdict, its interval and its sample size', () => {
     render()
 

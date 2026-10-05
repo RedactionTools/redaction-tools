@@ -13,6 +13,7 @@ export interface ToolReportOut {
   tool: ToolRefOut;
   suite: string;
   revision: string;
+  revision_is_current: boolean;
   scope: ToolReportOutScope;
   case_count: number;
   surfaces: ToolSurfaceOut[];

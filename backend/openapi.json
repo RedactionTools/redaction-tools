@@ -7198,6 +7198,10 @@
             "title": "Revision",
             "type": "string"
           },
+          "revision_is_current": {
+            "title": "Revision Is Current",
+            "type": "boolean"
+          },
           "runs": {
             "items": {
               "$ref": "#/components/schemas/RunOut"
@@ -7215,6 +7219,7 @@
           "pdf_url",
           "preview",
           "revision",
+          "revision_is_current",
           "runs"
         ],
         "title": "CaseDetailOut",
@@ -7482,6 +7487,10 @@
             "title": "Revision",
             "type": "string"
           },
+          "revision_is_current": {
+            "title": "Revision Is Current",
+            "type": "boolean"
+          },
           "scope": {
             "enum": [
               "all",
@@ -7506,6 +7515,7 @@
           "tool",
           "suite",
           "revision",
+          "revision_is_current",
           "scope",
           "case_count",
           "surfaces"
@@ -7712,6 +7722,10 @@
           "revision": {
             "title": "Revision",
             "type": "string"
+          },
+          "revision_is_current": {
+            "title": "Revision Is Current",
+            "type": "boolean"
           }
         },
         "required": [
@@ -7741,7 +7755,8 @@
           "tool_version",
           "tier",
           "notes",
-          "revision"
+          "revision",
+          "revision_is_current"
         ],
         "title": "RunDetailOut",
         "type": "object"

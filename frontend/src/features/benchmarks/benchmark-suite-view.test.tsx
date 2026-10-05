@@ -35,6 +35,15 @@ describe('BenchmarkSuiteView', () => {
     })
     expect(thumbnail.closest('a')).toHaveAttribute(
       'href',
+      '/benchmarks/pdf/cases/extraction-conditions-1',
+    )
+  })
+
+  it('names a superseded revision in its case links', () => {
+    render(makeSuite({ revision: makeRevision({ is_current: false }) }))
+
+    expect(screen.getByRole('link', { name: 'extraction-conditions-1' })).toHaveAttribute(
+      'href',
       '/benchmarks/pdf/cases/extraction-conditions-1?revision=v0.1.1',
     )
   })
@@ -65,12 +74,24 @@ describe('BenchmarkSuiteView', () => {
     expect(screen.getByText('v0.1.1')).toHaveAttribute('aria-current', 'page')
   })
 
+  // Viewing an old revision, the way back is the plain page, not a named copy of it.
+  it('links the current revision by its plain URL', () => {
+    render(
+      makeSuite({
+        revision: makeRevision({ revision: 'v0.1.0', is_current: false }),
+        revisions: [makeRevision(), makeRevision({ revision: 'v0.1.0', is_current: false })],
+      }),
+    )
+
+    expect(screen.getByRole('link', { name: 'v0.1.1' })).toHaveAttribute('href', '/benchmarks/pdf')
+  })
+
   it('switches between every result and the ones we scored or verified', () => {
     render()
 
     expect(screen.getByRole('link', { name: /verified only/i })).toHaveAttribute(
       'href',
-      '/benchmarks/pdf?revision=v0.1.1&scope=verified',
+      '/benchmarks/pdf?scope=verified',
     )
   })
 

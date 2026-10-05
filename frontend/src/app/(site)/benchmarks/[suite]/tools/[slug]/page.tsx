@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation'
 import { ToolReportView } from '@/features/benchmarks/tool-report-view'
 import { getGetBenchmarkToolReportQueryKey } from '@/lib/api/generated/benchmarks/benchmarks'
 import { formatRate } from '@/lib/benchmarks/format'
-import { parseBenchmarkParams } from '@/lib/benchmarks/params'
+import { isAlternateView, parseBenchmarkParams } from '@/lib/benchmarks/params'
 import { fetchBenchmarkToolReport } from '@/lib/benchmarks/server'
 import { getQueryClient } from '@/lib/query/client'
 import { canonicalMetadata } from '@/lib/seo/canonical'
@@ -25,7 +25,9 @@ export async function generateMetadata({
     title: `${report.tool.name} redaction benchmark — ${headline ? formatRate(headline.leak_rate) : ''} leak rate`,
     description: `How many sensitive values ${report.tool.name} leaves recoverable in our ${suite.toUpperCase()} benchmark ${report.revision}, by layer, category and case, with overlays.`,
     ...canonicalMetadata(`/benchmarks/${suite}/tools/${slug}`),
-    robots: query.revision || query.scope !== 'all' ? { index: false, follow: true } : undefined,
+    robots: isAlternateView(query, report.revision_is_current)
+      ? { index: false, follow: true }
+      : undefined,
   }
 }
 
