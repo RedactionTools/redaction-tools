@@ -156,6 +156,15 @@ class ToolBenchmarkOut(Schema):
     name: str
 
 
+class ToolBadgesOut(Schema):
+    """What a tool's embeddable badges may claim. All false for anything unlisted."""
+
+    listed: bool
+    reviewed: bool
+    benchmarked: bool
+    benchmark_suites: list[ToolBenchmarkOut]
+
+
 class ToolDetailOut(ToolListItemOut):
     website_url: str
     pricing_url: str
@@ -368,6 +377,17 @@ class StaffToolUpdateOut(Schema):
     listability_reasons: list[str]
 
 
+class StaffToolReviewIn(Schema):
+    reviewed: bool
+
+
+class StaffToolReviewOut(Schema):
+    slug: str
+    editorial_reviewed_at: str | None
+    listable: bool
+    listability_reasons: list[str]
+
+
 class StaffPriceOut(Schema):
     amount: str
     currency: str
@@ -429,6 +449,7 @@ class StaffToolOut(Schema):
     editor_notes: str
     sort_order: int
     last_verified_at: str | None
+    editorial_reviewed_at: str | None
     prices_changed_at: str | None
     facets: list[StaffFacetOut]
     plans: list[StaffPlanOut]

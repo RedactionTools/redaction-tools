@@ -23,6 +23,7 @@ TOOLS = {
     "catalog_get_tool",
     "catalog_list_plans",
     "catalog_update_tool",
+    "catalog_set_tool_review",
     "catalog_create_tool",
     "catalog_create_plan",
     "catalog_update_plan",
@@ -500,3 +501,12 @@ def test_removing_a_facet_that_would_unlist_the_page_is_correctable(call_tool):
 
     assert result["isError"] is True
     assert "catalog_add_tool_facet" in result["content"][0]["text"]
+
+
+def test_set_tool_review_signs_the_listing_off(call_tool):
+    body = payload(call_tool("catalog_set_tool_review", {"slug": SEEDED, "reviewed": True}))
+
+    assert body["editorial_reviewed_at"] is not None
+    assert Tool.objects.get(slug=SEEDED).editorial_reviewed_at is not None
+    detail = payload(call_tool("catalog_get_tool", {"slug": SEEDED}))
+    assert detail["editorial_reviewed_at"] == body["editorial_reviewed_at"]

@@ -455,6 +455,39 @@ from settings rather than from the request, since a server-rendered page reaches
 In production the uploads live in the `media_data` volume, mounted into `backend` and `qcluster`.
 It is the one piece of state outside Postgres, so it belongs in whatever backs the database up.
 
+## Owner badges
+
+Owners copy embeddable badges - **Listed**, **Reviewed**, **Benchmarked** - from the Badges
+section of each listing at `/my-listings` (`features/catalog/badge-builder.tsx`). They choose
+the badge, a theme (light, dark, or auto, which follows the reader's colour scheme), an optional
+custom colour and a format (HTML or Markdown, both linking back to the tool page). Then they
+preview it and copy it.
+
+- **What a badge may claim is decided in `apps/catalog/badges.py`**, served publicly at
+  `GET /api/v1/catalog/tools/{slug}/badges`. Each badge needs `Tool.is_listable()`:
+  - Listed: just that.
+  - Reviewed: also `Tool.editorial_reviewed_at`.
+  - Benchmarked: also `leaderboard.suites_for_tool()`.
+
+  The endpoint never returns a 404.
+- **Reviewed is an explicit editorial stamp.** Staff set or clear it through
+  `staff.set_editorial_review`. It is reachable from:
+  - the admin's "Mark reviewed" / "Clear review" actions
+  - the MCP's `catalog_set_tool_review`
+  - `PUT /catalog/staff/tools/{slug}/review`
+- **The SVG is drawn by the frontend** at `/badge/<slug>/<kind>.svg?theme=&color=`
+  (`src/app/badge/`, built by the pure `src/lib/badges/svg.ts`):
+  - It is cached publicly for an hour, or a minute when the backend did not answer.
+  - A badge the tool no longer earns, or a tool we cannot reach, draws the grey "Redaction
+    Tools" badge. It is never a broken image.
+  - `color` must be exactly six hex digits, because it is written into the SVG.
+  - The badge is a Product Hunt-style card in the shield's navy (`#192536`) by default, or the
+    owner's colour. The shield is the white mark used as a luminance mask, so it takes the same
+    colour as the text. It is inlined as a ~2KB PNG data URI (`src/lib/badges/logo.ts`),
+    because an SVG shown through `<img>` cannot fetch a linked image. Regenerate it if the mark
+    changes.
+  - `/badge/` is outside the auth proxy's matcher, so no session cookie lands on a cached image.
+
 ## Blog
 
 Posts are MDX in `frontend/content/blog/<slug>.mdx`, compiled by the same fumadocs macro as the

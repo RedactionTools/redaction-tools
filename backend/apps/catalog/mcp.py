@@ -141,6 +141,10 @@ class ToolDetail(Struct):
     sort_order: int
     last_verified_at: str | None
     prices_changed_at: str | None
+    editorial_reviewed_at: Annotated[
+        str | None,
+        Meta(description="When an editor signed the listing off; earns the Reviewed badge."),
+    ]
     facets: list[FacetOut]
     plans: list[PlanOut]
     open_revisions: int
@@ -242,6 +246,20 @@ class UpdateToolResult(Struct):
     changed: Annotated[
         list[str], Meta(description="Fields that actually moved; empty if nothing did.")
     ]
+    listable: bool
+    listability_reasons: list[str]
+
+
+class SetToolReviewParams(Struct):
+    slug: SLUG
+    reviewed: Annotated[
+        bool, Meta(description="True to sign the listing off as reviewed, false to take it back.")
+    ]
+
+
+class SetToolReviewResult(Struct):
+    slug: str
+    editorial_reviewed_at: str | None
     listable: bool
     listability_reasons: list[str]
 
@@ -637,6 +655,28 @@ def register(server):
                     user=request.user, slug=params.slug, changes=_changes(params, "slug")
                 ),
                 UpdateToolResult,
+            )
+
+    @server.tool(
+        description=(
+            "Mark a listing as editorially reviewed, or take the review back. "
+            "Only do this once an editor has actually read the listing through: "
+            "it is what the owner's Reviewed badge claims, on their own site. "
+            "The badge also needs the tool to be listable."
+        ),
+        read_only=False,
+        destructive=False,
+        idempotent=True,
+        open_world=False,
+        permission=is_staff,
+    )
+    def catalog_set_tool_review(request, params: SetToolReviewParams) -> SetToolReviewResult:
+        with _as_tool_error():
+            return msgspec.convert(
+                staff.set_editorial_review(
+                    user=request.user, slug=params.slug, reviewed=params.reviewed
+                ),
+                SetToolReviewResult,
             )
 
     @server.tool(

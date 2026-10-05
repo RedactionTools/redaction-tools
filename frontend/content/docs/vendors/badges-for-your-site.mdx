@@ -1,0 +1,69 @@
+---
+title: Badges for your site
+description: The badges a verified owner can embed on their own site - Listed, Reviewed and Benchmarked - what each one claims, how to style it, and why it stays honest.
+---
+
+A verified owner can put a badge on their own site, docs or README that links back to the
+listing. There are three, and a tool shows only the ones it has actually earned.
+
+| Badge           | Says               | Earned when                                                                                       |
+| --------------- | ------------------ | ------------------------------------------------------------------------------------------------- |
+| **Listed**      | _Listed Tool_      | The listing is published - it is a public page, not a draft                                       |
+| **Reviewed**    | _Editor Reviewed_  | One of our editors has read the listing through and signed it off                                 |
+| **Benchmarked** | _Benchmarked Tool_ | The tool has at least one approved, scored result on a public [benchmark suite](/docs/benchmarks) |
+
+Every badge needs the listing to be published first. A tool that is taken down earns none of
+them, however it was reviewed or scored before.
+
+Not to be confused with the trust badges beside every benchmark number, which are covered in
+[Review and badges](/docs/benchmarks/review-and-badges).
+
+## Getting one
+
+Open [your listings](/my-listings). Each listing has a **Badges** section:
+
+1. **Pick a badge.** One the listing has not earned is greyed out, with what it still needs.
+2. **Pick a theme.** _Light_ for a light page, _Dark_ for a dark one, or _Match the reader's
+   system_ to follow each visitor's light or dark setting.
+3. **Optionally pick your own colour.** It paints the outline, the text and our shield in one
+   colour, so the badge can sit in your brand. Without one, badges wear the navy of our
+   shield.
+4. **Pick a format**, HTML or Markdown, check the preview on both a light and a dark
+   background, and copy.
+
+The snippet is a linked image. In HTML it looks like this:
+
+```html
+<a href="https://redaction-tools.com/tool/your-tool?utm_source=badge">
+  <img
+    src="https://redaction-tools.com/badge/your-tool/listed.svg?theme=dark"
+    alt="Listed on Redaction Tools"
+    height="54"
+  />
+</a>
+```
+
+The image URL takes two optional parameters: `theme` (`light`, `dark` or `auto`) and `color`
+(six hex digits, without the `#`). Anything else is ignored rather than drawn.
+
+### Choosing a colour
+
+The builder warns you when a colour is hard to read on a light background - yellow on white,
+for example. It is a warning, not a refusal: if your site is dark, use the dark theme and the
+colour becomes the outline of a dark card with white text.
+
+## A badge stays honest
+
+A badge is not a picture you download once. It is drawn by us, each time it is loaded, from
+the listing as it is now.
+
+- **A badge the tool stops earning turns grey.** It then says only _Redaction Tools_ and
+  claims nothing - it does not break, and it does not go on claiming something that is no
+  longer true. If the listing earns it again, it comes back on its own.
+- **Changes show within the hour.** Badges are cached for up to an hour, so a newly earned
+  badge, or one that lapsed, may take that long to update on your site.
+- **There is nothing to keep in sync.** The snippet never changes; what it shows does.
+
+As with everything else in this catalog, a badge cannot be bought. Reviewed and Benchmarked
+are decided by our editors and our scorer, and the only way to a better badge is a better
+listing - or a [benchmark submission](/docs/benchmarks/submitting-results) that holds up.

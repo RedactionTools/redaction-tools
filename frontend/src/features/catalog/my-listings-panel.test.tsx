@@ -35,6 +35,12 @@ describe('MyListingsPanel', () => {
     ).toBeInTheDocument()
   })
 
+  it("offers badges for the owner's own site beside each listing", () => {
+    render()
+
+    expect(screen.getByRole('heading', { name: 'Badges' })).toBeInTheDocument()
+  })
+
   it('says plainly that edits are proposals, not changes', () => {
     render()
 

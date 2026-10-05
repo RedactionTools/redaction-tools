@@ -145,6 +145,7 @@ def tool_detail(slug):
         "sort_order": tool.sort_order,
         "last_verified_at": _stamp(tool.last_verified_at),
         "prices_changed_at": _stamp(tool.prices_changed_at),
+        "editorial_reviewed_at": _stamp(tool.editorial_reviewed_at),
         "facets": [_facet(facet) for facet in tool.facets.all()],
         "plans": [_plan(plan) for plan in tool.plans.all()],
         "open_revisions": tool.revisions.filter(status=ToolRevisionStatus.SUBMITTED).count(),
@@ -311,6 +312,34 @@ def _record_revision(*, tool, user, changes, before):
         reviewed_at=now,
         applied_at=now,
     )
+
+
+def set_editorial_review(*, user, slug, reviewed):
+    """Sign an editorial review of a listing off, or take it back.
+
+    Its own function rather than a field on `update_tool`: the stamp is a
+    decision with a time, not a value anyone types, and it is what lets a
+    vendor's site say "Reviewed".
+    """
+    with transaction.atomic():
+        tool = Tool.objects.select_for_update().filter(slug=slug).first()
+        if tool is None:
+            raise StaffError(f"No tool with slug {slug!r}.")
+        if reviewed != (tool.editorial_reviewed_at is not None):
+            before = {"editorial_reviewed_at": _stamp(tool.editorial_reviewed_at)}
+            tool.editorial_reviewed_at = timezone.now() if reviewed else None
+            tool.save(update_fields=["editorial_reviewed_at", "updated_at"])
+            _record_revision(
+                tool=tool,
+                user=user,
+                changes={"editorial_reviewed_at": _stamp(tool.editorial_reviewed_at)},
+                before=before,
+            )
+    return {
+        "slug": tool.slug,
+        "editorial_reviewed_at": _stamp(tool.editorial_reviewed_at),
+        **_summary(tool),
+    }
 
 
 def update_plan(*, user, slug, code, changes):
