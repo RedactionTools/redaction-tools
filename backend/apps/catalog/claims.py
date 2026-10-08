@@ -128,6 +128,24 @@ def issue_claim_invite(*, tool, email, user):
     return invite, f"{settings.FRONTEND_URL}/claim/{raw}"
 
 
+def email_claim_invite(invite, url) -> bool:
+    """Send the link to its recipient. Returns whether the mail went out.
+
+    Sent in the request, never through the queue: a task's arguments are kept in
+    the database, and the link is a credential that never expires. A failure is
+    reported rather than raised, because the caller still holds the link and can
+    send it by hand.
+    """
+    try:
+        send_templated_email(
+            "claim_invite", {"tool_name": invite.tool.name, "url": url}, to=[invite.email]
+        )
+    except Exception:
+        logger.exception("Could not email claim invite %s", invite.pk)
+        return False
+    return True
+
+
 def find_claim_invite(raw):
     """The live invite behind a link, or None. A revoked one is as good as unknown."""
     return (

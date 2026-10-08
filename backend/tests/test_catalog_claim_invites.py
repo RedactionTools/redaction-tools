@@ -1,6 +1,6 @@
 """Staff-issued claim links.
 
-Staff mint a link for a tool's owner and email it themselves. It never expires
+Staff mint a link for a tool's owner, and the server emails it to them. It never expires
 but works once, and redeeming it grants the listing outright: the vetting a
 claim normally waits on is the staff member choosing whom to send it to.
 """
@@ -65,6 +65,32 @@ def test_staff_mint_a_link_to_the_frontend_claim_page(staff_user):
     assert row.redeemed_at is None
 
 
+def test_minting_emails_the_link_to_the_owner(staff_user, mailoutbox):
+    result = staff.create_claim_invite(user=staff_user, slug=SEEDED, email="ceo@vendor.example")
+
+    assert result["emailed"] is True
+    [message] = mailoutbox
+    assert message.to == ["ceo@vendor.example"]
+    assert "PDF Redaction" in message.subject
+    assert result["url"] in message.body
+    assert result["url"] in message.alternatives[0][0]
+
+
+def test_a_mail_failure_still_hands_staff_the_link(staff_user, monkeypatch):
+    """The link is the only copy, so staff must get it even when the mail fails."""
+
+    def refuse(*args, **kwargs):
+        raise OSError("SMTP relay down")
+
+    monkeypatch.setattr("apps.catalog.claims.send_templated_email", refuse)
+
+    result = staff.create_claim_invite(user=staff_user, slug=SEEDED, email="ceo@vendor.example")
+
+    assert result["emailed"] is False
+    assert result["url"]
+    assert ToolClaimInvite.objects.count() == 1
+
+
 def test_only_the_tokens_hash_is_stored(invite):
     """A database read must not be enough to take over a listing."""
     token = _token(invite)
@@ -102,6 +128,8 @@ def test_the_staff_route_mints_a_link(client, staff_bearer):
 
     assert response.status_code == 201
     assert "/claim/" in response.json()["url"]
+    # So the panel can say whether staff still have to send it themselves.
+    assert response.json()["emailed"] is True
 
 
 def test_a_non_staff_account_cannot_mint_one(client, bearer):
@@ -122,7 +150,39 @@ def test_the_mcp_tool_mints_a_link(call_tool):
     )
 
     assert result["isError"] is False, result
-    assert "/claim/" in json.loads(result["content"][0]["text"])["url"]
+    payload = json.loads(result["content"][0]["text"])
+    assert "/claim/" in payload["url"]
+    assert payload["emailed"] is True
+
+
+# --- Choosing the recipient ---------------------------------------------------
+
+USERS = "/api/v1/catalog/staff/users"
+
+
+def test_staff_can_find_an_account_by_email_or_name(client, staff_bearer, django_user_model):
+    django_user_model.objects.create_user(email="jeff@blinded.example", name="Jeff Nixon")
+    django_user_model.objects.create_user(email="someone@else.example", name="Someone")
+
+    by_email = client.get(USERS, {"q": "blinded"}, **staff_bearer).json()
+    by_name = client.get(USERS, {"q": "nixon"}, **staff_bearer).json()
+
+    assert [found["email"] for found in by_email] == ["jeff@blinded.example"]
+    assert by_name == by_email
+    assert by_email[0]["name"] == "Jeff Nixon"
+
+
+def test_only_staff_can_search_accounts(client, bearer):
+    """The list is every account's email: an owner must not be able to read it."""
+    response = client.get(USERS, {"q": "example"}, **bearer)
+
+    assert response.status_code == 403
+
+
+def test_the_search_skips_deactivated_accounts(client, staff_bearer, django_user_model):
+    django_user_model.objects.create_user(email="gone@vendor.example", is_active=False)
+
+    assert client.get(USERS, {"q": "gone"}, **staff_bearer).json() == []
 
 
 # --- Previewing --------------------------------------------------------------

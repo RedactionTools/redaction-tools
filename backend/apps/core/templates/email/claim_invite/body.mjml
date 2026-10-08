@@ -1,0 +1,19 @@
+<mjml lang="en">
+  <mj-head>
+    <mj-title>Maintain the {{ tool_name }} listing on Redaction Tools</mj-title>
+    <mj-preview>You have been invited to maintain the {{ tool_name }} listing</mj-preview>
+    <mj-include path="../_partials/head.mjml" />
+  </mj-head>
+  <mj-body background-color="#f4f4f5" width="624px">
+    <mj-include path="../_partials/header.mjml" />
+    <mj-section padding="0 32px" background-color="#f4f4f5">
+      <mj-column background-color="#ffffff" padding="32px 32px 16px">
+        <mj-text>Our team has invited you to maintain the <strong>{{ tool_name }}</strong> listing on Redaction Tools.</mj-text>
+        <mj-button href="{{ url }}" background-color="#18181b" color="#ffffff" font-size="15px" border-radius="6px" align="left" padding="8px 0 16px">Accept the invitation</mj-button>
+        <mj-text>Sign in with Google, then accept. As a maintainer you can propose corrections to the listing's pricing and details, and the listing shows that its vendor maintains it.</mj-text>
+        <mj-text>The link works once, for whoever accepts it first, so please do not forward it. If you were not expecting this, you can ignore it.</mj-text>
+      </mj-column>
+    </mj-section>
+    <mj-include path="../_partials/footer.mjml" />
+  </mj-body>
+</mjml>

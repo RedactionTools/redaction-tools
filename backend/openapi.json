@@ -2203,6 +2203,48 @@
         ]
       }
     },
+    "/api/v1/catalog/staff/users": {
+      "get": {
+        "operationId": "staff_find_users",
+        "summary": "Find accounts by email or name, to choose a claim link's recipient",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "default": "",
+              "title": "Q",
+              "type": "string"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StaffUserOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "catalog-staff"
+        ],
+        "security": [
+          {
+            "StaffJWTAuth": []
+          }
+        ]
+      }
+    },
     "/api/v1/catalog/staff/tools/{slug}/claim-invites": {
       "post": {
         "operationId": "staff_create_claim_invite",
@@ -6644,6 +6686,30 @@
         "title": "StaffToolLogoOut",
         "type": "object"
       },
+      "StaffUserOut": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "name"
+        ],
+        "title": "StaffUserOut",
+        "type": "object"
+      },
       "StaffClaimInviteOut": {
         "description": "Carries the only copy of the link: the server keeps its hash.",
         "properties": {
@@ -6663,6 +6729,11 @@
             "title": "Url",
             "type": "string"
           },
+          "emailed": {
+            "description": "False when the mail failed: staff send the link by hand.",
+            "title": "Emailed",
+            "type": "boolean"
+          },
           "created_at": {
             "format": "date-time",
             "title": "Created At",
@@ -6674,6 +6745,7 @@
           "tool",
           "email",
           "url",
+          "emailed",
           "created_at"
         ],
         "title": "StaffClaimInviteOut",

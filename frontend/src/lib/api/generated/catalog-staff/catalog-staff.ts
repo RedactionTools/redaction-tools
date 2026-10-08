@@ -28,6 +28,7 @@ import type {
   StaffChangesIn,
   StaffClaimInviteIn,
   StaffClaimInviteOut,
+  StaffFindUsersParams,
   StaffPlanCreateIn,
   StaffPlanCreateOut,
   StaffPlanLimitIn,
@@ -46,7 +47,8 @@ import type {
   StaffToolReviewOut,
   StaffToolUpdateOut,
   StaffUploadScreenshotBody,
-  StaffUploadToolLogoBody
+  StaffUploadToolLogoBody,
+  StaffUserOut
 } from '../model';
 
 import { customFetch } from '../../fetcher';
@@ -1219,7 +1221,114 @@ export const useStaffUploadToolLogo = <TError = unknown,
       > => {
       return useMutation(getStaffUploadToolLogoMutationOptions(options), queryClient);
     }
-    export const getStaffCreateClaimInviteUrl = (slug: string,) => {
+    export const getStaffFindUsersUrl = (params?: StaffFindUsersParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/catalog/staff/users?${stringifiedParams}` : `/api/v1/catalog/staff/users`
+}
+
+/**
+ * @summary Find accounts by email or name, to choose a claim link's recipient
+ */
+export const staffFindUsers = async (params?: StaffFindUsersParams, options?: Parameters<typeof customFetch>[1]): Promise<StaffUserOut[]> => {
+
+  return customFetch<StaffUserOut[]>(getStaffFindUsersUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getStaffFindUsersQueryKey = (params?: StaffFindUsersParams,) => {
+    return [
+    `/api/v1/catalog/staff/users`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getStaffFindUsersQueryOptions = <TData = Awaited<ReturnType<typeof staffFindUsers>>, TError = unknown>(params?: StaffFindUsersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof staffFindUsers>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getStaffFindUsersQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof staffFindUsers>>> = ({ signal }) => staffFindUsers(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof staffFindUsers>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type StaffFindUsersQueryResult = NonNullable<Awaited<ReturnType<typeof staffFindUsers>>>
+export type StaffFindUsersQueryError = unknown
+
+
+export function useStaffFindUsers<TData = Awaited<ReturnType<typeof staffFindUsers>>, TError = unknown>(
+ params: undefined |  StaffFindUsersParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof staffFindUsers>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof staffFindUsers>>,
+          TError,
+          Awaited<ReturnType<typeof staffFindUsers>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useStaffFindUsers<TData = Awaited<ReturnType<typeof staffFindUsers>>, TError = unknown>(
+ params?: StaffFindUsersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof staffFindUsers>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof staffFindUsers>>,
+          TError,
+          Awaited<ReturnType<typeof staffFindUsers>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useStaffFindUsers<TData = Awaited<ReturnType<typeof staffFindUsers>>, TError = unknown>(
+ params?: StaffFindUsersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof staffFindUsers>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Find accounts by email or name, to choose a claim link's recipient
+ */
+
+export function useStaffFindUsers<TData = Awaited<ReturnType<typeof staffFindUsers>>, TError = unknown>(
+ params?: StaffFindUsersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof staffFindUsers>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getStaffFindUsersQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export const getStaffCreateClaimInviteUrl = (slug: string,) => {
 
 
 

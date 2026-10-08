@@ -7,8 +7,9 @@ generates an untyped one.
 
 from datetime import date, datetime
 from decimal import Decimal
+from uuid import UUID
 
-from ninja import Schema
+from ninja import Field, Schema
 
 
 class VendorOut(Schema):
@@ -567,6 +568,12 @@ class StaffClaimInviteIn(Schema):
     email: str
 
 
+class StaffUserOut(Schema):
+    id: UUID
+    email: str
+    name: str
+
+
 class StaffClaimInviteOut(Schema):
     """Carries the only copy of the link: the server keeps its hash."""
 
@@ -574,6 +581,9 @@ class StaffClaimInviteOut(Schema):
     tool: str
     email: str
     url: str
+    emailed: bool = Field(
+        ..., description="False when the mail failed: staff send the link by hand."
+    )
     created_at: datetime
 
 
