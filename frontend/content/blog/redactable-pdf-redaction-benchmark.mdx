@@ -1,0 +1,161 @@
+---
+title: 'Redactable on the 54-name page: the best result yet, and too much removed'
+description: Redactable removed 53 of 54 copies of a planted name, including every rotated and stacked copy. Its wizard also blacked out the byline, URLs and dates, so it fails our usability bar.
+date: '2026-10-08'
+tags: ['Benchmarks', 'PDF redaction', 'Reviews']
+authors: ['mykola-melnyk']
+image: '/images/blog/redactable-pdf-redaction-benchmark/overlay.png'
+keywords:
+  [
+    'Redactable review',
+    'Redactable redaction',
+    'PDF redaction benchmark',
+    'AI redaction accuracy',
+    'over-redaction',
+  ]
+---
+
+**TL;DR:** We ran [Redactable](/tool/redactable) through the
+[extraction-conditions page](/blog/pdf-redaction-extraction-conditions-benchmark), the PDF
+that carries one invented name 54 times in 54 different forms. It removed **53 of 54**. That
+is the lowest leak rate on the leaderboard so far, and it includes all four letter-by-letter
+stacks that defeated every other tool running its own detection. It also removed things
+nobody asked it to: the byline, both header URLs, the case number and the date. Only 81% of
+the page's harmless text is still selectable, which fails our 90% usability bar.
+
+If you haven't read the original write-up, it explains how the page is built and how a leak
+is decided. This post only covers what is new.
+
+## What Redactable is
+
+Redactable is a cloud service built for redaction alone, not a PDF editor with a redaction
+button. You upload a document, and its **Auto** wizard lists suggested redactions by category
+(person and company names, credentials and so on). You tick what applies and it removes the
+content. It can also issue a redaction certificate that records what was removed.
+
+It runs in the cloud only, so documents leave your machine. Pricing is by documents per month,
+with a free tier for evaluation. The plans and their sources are in
+[the catalog](/tool/redactable).
+
+## The run
+
+We uploaded `extraction-conditions-1.pdf` through the web app, ran the Auto wizard with
+default settings and applied its suggestions. The wizard reported **122 suggested
+redactions** on a page that contains one name.
+
+![Redactable's editor with the test page loaded. The Redaction Wizard panel reports 122 suggested redactions; the first category, Company Names, lists "Redaction Tools" and "Freya".](/images/blog/redactable-pdf-redaction-benchmark/wizard.png)
+
+We scored the PDF it returned on our server, the same way as every other run:
+
+![The scored output. Every cell has a green box (removed) except t040, an upside-down handwritten form entry, boxed in red.](/images/blog/redactable-pdf-redaction-benchmark/overlay.png)
+
+| Where the name was         |   Removed | Note                                         |
+| -------------------------- | --------: | -------------------------------------------- |
+| Text layer (real text)     |     27/27 | upright, small, rotated, vertical stacks     |
+| Image only (no text layer) |     26/27 | scans, handwriting, inverse, watermarked     |
+| **Total**                  | **53/54** | leak rate 0.019, 95% interval [0.003, 0.098] |
+
+The [full run](/benchmarks/pdf/runs/20261005T140938-redactable-web-extraction-conditions-1-a1-b5eb0d)
+has the output PDF, so you can check all of this yourself.
+
+## What it got right
+
+### Vertical stacks
+
+Four names on the page are stacked one letter per line. They are real, selectable text, but
+a parser returns them one character at a time, so a name detector never sees `Freya Yamamoto`.
+PDF Redaction, AI-Redact, SafeRedact and KeptPDF, which all rely on their own detection,
+removed none of the four. Blinded removed all four, but only because it was told what to
+search for.
+
+Redactable removed all four on its own detection. So it rebuilds words from where the letters
+sit on the page, not only from the order the parser outputs them in.
+
+### Rotated and scanned text
+
+It removed 18 of the 19 rotated and skewed names, and every name in the turned-and-stacked
+band. The one rotated name it missed is the leak below. AI-Redact and SafeRedact removed none
+of the 19.
+
+### Names behind a watermark
+
+Three cells carry the name under a light "CONFIDENTIAL" watermark, with no text layer. This
+was PDF Redaction's weakest condition: it missed all three. Redactable removed the name in all
+three without drawing a box at all. The watermark is still there, and the name is gone.
+
+### Removal, not covering
+
+The name appears nowhere in the output's text layer. The page is still an A4 PDF with real,
+selectable text, not a flattened image. The metadata contains only `Producer: Redacted by
+Redactable`.
+
+## The one leak
+
+`t040` is a form line, `Name:`, with the name handwritten in cursive and upside down, as on a
+form that went through the scanner the wrong way round. Redactable drew a box over the
+"Freya" end and left "Yamamoto" readable:
+
+![The output at t040: "Name:" followed by the cursive word Yamamoto, upside down and fully legible, and a black box where Freya was.](/images/blog/redactable-pdf-redaction-benchmark/t040-leak.png)
+
+PDF Redaction leaked the same cell. A half-redacted name is still a leak, and a surname on its
+own is often enough to identify someone.
+
+## What it removed that it shouldn't have
+
+![The header of the output page. The byline after "by", both URLs on the right, the case number and the generated timestamp are all blacked out.](/images/blog/redactable-pdf-redaction-benchmark/header-over-redaction.png)
+
+Applying the wizard's suggestions also removed:
+
+- the byline **"Redaction Tools"**, which the wizard listed as a company name;
+- both URLs in the header;
+- the case number at the end of `extraction-conditions-1`;
+- the generated timestamp.
+
+None of these is personal data about Freya Yamamoto. Together they bring **text retention** to
+0.807: about a fifth of the page's harmless text can no longer be selected. Our usability gate
+is 0.9, so the run fails it.
+
+On this page that cost is small. On a contract or a court bundle, blacking out every company
+name, date and URL can make the document useless to whoever receives it. The alternative is
+to review 122 suggestions by hand. That is the trade-off of a wizard tuned to catch
+everything: you trade leaks for review time.
+
+The output has one more oddity. In cell `t037`, the name was printed upside down in light grey
+as real text. The output keeps a near-white, scrambled remnant of it, upright, and the text
+layer reads `Frmmammm Yyyoto`. Our checker does not count that as the name, and we agree it
+cannot be read as one. But it suggests Redactable rewrote the characters in that cell rather
+than deleting them, and a remnant in the text layer is worth knowing about.
+
+## Where it sits
+
+| Tool                                                 | Names removed | Leak rate, 95% interval | Text retention |
+| ---------------------------------------------------- | ------------: | ----------------------- | -------------: |
+| [Redactable](/benchmarks/pdf/tools/redactable)       |         53/54 | 0.02 [0.00, 0.10]       |          0.807 |
+| [Blinded](/benchmarks/pdf/tools/blinded)             |         51/54 | 0.06 [0.02, 0.15]       |          0.876 |
+| [PDF Redaction](/benchmarks/pdf/tools/pdf-redaction) |         42/54 | 0.22 [0.13, 0.35]       |          0.932 |
+| [AI-Redact](/benchmarks/pdf/tools/ai-redact)         |         30/54 | 0.44 [0.32, 0.58]       |          0.951 |
+| [KeptPDF](/benchmarks/pdf/tools/keptpdf)             |         19/54 | 0.65 [0.51, 0.76]       |          0.010 |
+| [SafeRedact](/benchmarks/pdf/tools/saferedact-app)   |         14/54 | 0.74 [0.61, 0.84]       |          0.000 |
+
+The figures are from the [live leaderboard](/benchmarks/pdf), dataset revision v0.1.1.
+Redactable's interval overlaps Blinded's, so this page alone cannot say which of the two is
+ahead. Both fail the retention gate: so far, the two lowest leak rates both come with more
+than a tenth of the page's harmless text removed.
+
+Disclosure: Redaction Tools is run by StabRise, which also makes PDF Redaction. The
+[About page](/about) explains how we handle that. Redactable's run was scored by the same
+server, with the same checker, as ours.
+
+## Caveats
+
+- **One page, one run, one category.** Every probe is a person's name, so this measures
+  reading, not how well Redactable picks categories. A wizard that suggests 122 redactions
+  for one name would likely look different on a page with many kinds of data.
+- **Settings.** We used the Auto wizard with defaults and applied its suggestions. Redactable
+  supports excluded terms and category selection. With the byline excluded, retention would
+  be higher, and we have not measured whether the leak count would change.
+- **Simulated handwriting.** The handwriting on the page is drawn from fonts, which makes it
+  tidier than real handwriting.
+
+Redactable can [submit its own runs](/docs/benchmarks/submitting-results), for example with
+tuned settings. We rescore every one, and an editor reviews it before it is listed.

@@ -125,6 +125,20 @@ describe('ToolProfile', () => {
     expect(within(facts).getByText('No')).toBeInTheDocument()
   })
 
+  // Staff add media in the admin; a list kept here would hide every new one.
+  it('lists every media facet the API sends, by its label', () => {
+    render(
+      makeToolDetail({
+        facets: [
+          { dimension: 'media', dimension_label: 'Media', slug: 'pdf', label: 'PDF' },
+          { dimension: 'media', dimension_label: 'Media', slug: 'word', label: 'Word' },
+        ],
+      }),
+    )
+
+    expect(within(screen.getByTestId('key-facts')).getByText('PDF, Word')).toBeInTheDocument()
+  })
+
   it('describes a trial as a trial in the key facts', () => {
     render()
 

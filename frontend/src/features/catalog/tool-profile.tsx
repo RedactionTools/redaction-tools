@@ -38,10 +38,6 @@ import { ToolLogo } from './tool-logo'
 import { ToolScreenshots } from './tool-screenshots'
 import { VendorMaintainedBadge } from './vendor-maintained-badge'
 
-const MEDIA = new Set(['pdf', 'image', 'video', 'audio', 'text'])
-const DEPLOYMENT = new Set(['online', 'desktop', 'self-hosted', 'api-tools', 'browser-extension'])
-const METHOD = new Set(['manual-redaction', 'ai', 'hybrid', 'rule-based'])
-
 /** The plan's own published figure, shared with the cost calculator so the two
  *  tables can never quote the same plan differently. */
 export function planPrice(plan: PlanOut): string {
@@ -240,16 +236,21 @@ function HeaderLinks({ tool }: { tool: ToolDetailOut }) {
 }
 
 function KeyFacts({ tool }: { tool: ToolDetailOut }) {
-  const facets = (allowed: Set<string>) =>
-    tool.facet_slugs.filter((slug) => allowed.has(slug)).join(', ') || 'Not recorded'
+  // From the API's facets rather than a slug list here, so a value staff add
+  // in the admin shows up without a deploy.
+  const facets = (dimension: string) =>
+    tool.facets
+      .filter((facet) => facet.dimension === dimension)
+      .map((facet) => facet.label)
+      .join(', ') || 'Not recorded'
 
   const summary = tool.price_summary
   const facts: [string, string][] = [
     ['Vendor', tool.vendor.name],
     ['Headquarters', tool.vendor.hq_country || 'Not recorded'],
-    ['Media', facets(MEDIA)],
-    ['Deployment', facets(DEPLOYMENT)],
-    ['Method', facets(METHOD)],
+    ['Media', facets('media')],
+    ['Deployment', facets('deployment')],
+    ['Method', facets('method')],
     ['Free tier', summary.has_free_tier ? 'Yes' : 'No'],
     ['Trial', summary.is_trial && summary.trial_days ? `${summary.trial_days}-day trial` : 'None'],
     [

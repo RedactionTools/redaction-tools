@@ -2,7 +2,8 @@ import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 
-import { getListToolsQueryKey } from '@/lib/api/generated/catalog/catalog'
+import { getListFacetsQueryKey, getListToolsQueryKey } from '@/lib/api/generated/catalog/catalog'
+import type { FacetDimensionOut } from '@/lib/api/generated/model'
 import type { CatalogFilters } from '@/lib/catalog/filters'
 import { makeQueryClient } from '@/lib/query/client'
 import { renderWithProviders } from '@/test/render'
@@ -10,9 +11,26 @@ import { renderWithProviders } from '@/test/render'
 import { makePage, makePlan, makePrice, makeTool } from './fixtures'
 import { ToolTable } from './tool-table'
 
+const medium = (slug: string, label: string) => ({
+  code: slug,
+  slug,
+  label,
+  has_landing_page: false,
+  tool_count: 1,
+})
+
+const FACETS: FacetDimensionOut[] = [
+  {
+    code: 'media',
+    label: 'Media',
+    values: [medium('pdf', 'PDF'), medium('word', 'Word'), medium('image', 'Image')],
+  },
+]
+
 function render(tools = [makeTool()], filters: CatalogFilters = {}) {
   const queryClient = makeQueryClient()
   queryClient.setQueryData(getListToolsQueryKey(filters), makePage(tools))
+  queryClient.setQueryData(getListFacetsQueryKey(), FACETS)
   return renderWithProviders(<ToolTable filters={filters} />, { queryClient })
 }
 
@@ -80,6 +98,18 @@ describe('ToolTable', () => {
         .getAllByRole('listitem')
         .map((chip) => chip.textContent),
     ).toEqual(['PDF', 'Image'])
+  })
+
+  // Staff add media in the admin; a list kept here would hide every new one.
+  it('shows a medium the taxonomy gained after this was written', () => {
+    render([makeTool({ facet_slugs: ['word', 'pdf'] })])
+
+    const covers = screen.getByTestId('covers-adobe-acrobat')
+    expect(
+      within(covers)
+        .getAllByRole('listitem')
+        .map((chip) => chip.textContent),
+    ).toEqual(['PDF', 'Word'])
   })
 
   // A "from" price answers what the cheapest plan costs, not what the reader's
