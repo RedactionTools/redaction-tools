@@ -544,7 +544,7 @@ class RemoveToolFacetResult(Struct):
 
 class CreateClaimInviteParams(Struct):
     slug: SLUG
-    email: Annotated[str, Meta(description="The owner's address, where you will send the link.")]
+    email: Annotated[str, Meta(description="The owner's address. The link is emailed there.")]
 
 
 class ClaimInviteResult(Struct):
@@ -552,6 +552,9 @@ class ClaimInviteResult(Struct):
     tool: str
     email: str
     url: Annotated[str, Meta(description="The only copy of the link: it is not stored.")]
+    emailed: Annotated[
+        bool, Meta(description="Whether we emailed it. If false, send the link yourself.")
+    ]
     created_at: str
 
 
@@ -1006,7 +1009,8 @@ def register(server):
             "Mint a one-time claim link for a listing's owner. Whoever opens it "
             "while signed in becomes an approved maintainer with no further "
             "review, so send it only to someone you have verified. It never "
-            "expires; this tool does not send mail - pass the url on yourself. "
+            "expires. It is emailed to the address; if `emailed` is false, "
+            "pass the url on yourself. "
             "A link sent to the wrong person is revoked in the admin."
         ),
         read_only=False,

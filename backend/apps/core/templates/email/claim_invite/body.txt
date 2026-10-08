@@ -1,0 +1,13 @@
+{% autoescape off %}Our team has invited you to maintain the {{ tool_name }} listing on Redaction Tools.
+
+Accept here:
+{{ url }}
+
+Sign in with Google, then accept. As a maintainer you can propose corrections to the listing's pricing and details, and the listing shows that its vendor maintains it.
+
+The link works once, for whoever accepts it first, so please do not forward it. If you were not expecting this, you can ignore it.
+
+-- 
+Redaction Tools
+{{ site_url }}
+{% endautoescape %}

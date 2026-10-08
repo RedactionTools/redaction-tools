@@ -14,5 +14,7 @@ export interface StaffClaimInviteOut {
   tool: string;
   email: string;
   url: string;
+  /** False when the mail failed: staff send the link by hand. */
+  emailed: boolean;
   created_at: string;
 }

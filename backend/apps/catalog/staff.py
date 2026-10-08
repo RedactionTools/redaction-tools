@@ -12,6 +12,7 @@ who did it.
 
 from decimal import Decimal, InvalidOperation
 
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.validators import validate_email
 from django.db import IntegrityError, transaction
@@ -910,6 +911,20 @@ def _screenshot(shot):
 # --- Claim links ---------------------------------------------------------------
 
 
+def find_users(*, q, limit=10):
+    """Active accounts whose email or name contains `q`, for choosing an invite's recipient."""
+    q = (q or "").strip()
+    if not q:
+        return []
+    found = (
+        get_user_model()
+        .objects.filter(is_active=True)
+        .filter(Q(email__icontains=q) | Q(name__icontains=q))
+        .order_by("email")[:limit]
+    )
+    return [{"id": account.pk, "email": account.email, "name": account.name} for account in found]
+
+
 def create_claim_invite(*, user, slug, email):
     """Mint a one-time link that grants this listing to whoever redeems it.
 
@@ -930,5 +945,6 @@ def create_claim_invite(*, user, slug, email):
         "tool": tool.slug,
         "email": invite.email,
         "url": url,
+        "emailed": claims.email_claim_invite(invite, url),
         "created_at": invite.created_at.isoformat(),
     }

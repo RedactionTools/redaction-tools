@@ -5,7 +5,10 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { useStaffCreateClaimInvite } from '@/lib/api/generated/catalog-staff/catalog-staff'
+import {
+  useStaffCreateClaimInvite,
+  useStaffFindUsers,
+} from '@/lib/api/generated/catalog-staff/catalog-staff'
 
 import { EditorActions } from './editor-actions'
 
@@ -20,10 +23,12 @@ function mailto(email: string, toolName: string, url: string) {
 }
 
 /**
- * Mints a one-time link that makes its recipient an approved maintainer.
+ * Mints a one-time link that makes its recipient an approved maintainer, and
+ * has the server email it to them.
  *
  * The server keeps only the link's hash, so this is the one place it is ever
- * shown; a lost link means minting another and revoking the first in the admin.
+ * shown - and the only way it reaches the owner when the email fails. A lost
+ * link means minting another and revoking the first in the admin.
  */
 export function ClaimInviteMinter({ slug, toolName }: { slug: string; toolName: string }) {
   const [open, setOpen] = useState(false)
@@ -31,11 +36,28 @@ export function ClaimInviteMinter({ slug, toolName }: { slug: string; toolName: 
   const [copied, setCopied] = useState(false)
   const create = useStaffCreateClaimInvite()
   const invite = create.data
+  const query = email.trim()
+  const accounts = useStaffFindUsers(
+    { q: query },
+    { query: { enabled: open && !invite && query.length >= 2 } },
+  )
+  // Once an account is chosen the field holds its exact address; offering it
+  // again would only repeat what is already there.
+  const matches = (accounts.data ?? []).filter((account) => account.email !== query)
 
   if (invite) {
     return (
       <div className="space-y-2" data-testid="claim-invite">
         <p className="text-sm font-medium">Claim link for {invite.email}</p>
+        {invite.emailed ? (
+          <p className="text-sm" role="status">
+            Emailed to {invite.email}. Copy it below if you also want to send it yourself.
+          </p>
+        ) : (
+          <p className="text-warn text-sm" role="alert">
+            We could not email it. Copy the link or open it in your email and send it yourself.
+          </p>
+        )}
         <div className="flex flex-wrap items-center gap-2">
           <Input
             readOnly
@@ -105,8 +127,28 @@ export function ClaimInviteMinter({ slug, toolName }: { slug: string; toolName: 
           value={email}
           onChange={(event) => setEmail(event.target.value)}
         />
+        {matches.length ? (
+          <ul
+            className="border-border divide-border divide-y rounded-md border"
+            aria-label="Accounts"
+          >
+            {matches.map((account) => (
+              <li key={account.id}>
+                <button
+                  type="button"
+                  className="hover:bg-muted w-full px-3 py-1.5 text-left text-sm"
+                  onClick={() => setEmail(account.email)}
+                >
+                  {account.name ? `${account.name} · ` : ''}
+                  <span className="text-muted-foreground">{account.email}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : null}
         <p className="text-muted-foreground text-xs">
-          Recorded as the owner&apos;s work email. Send the link only to someone you have verified.
+          Type an address, or part of a name or email to pick an existing account. Recorded as the
+          owner&apos;s work email. Send the link only to someone you have verified.
         </p>
       </div>
       <EditorActions

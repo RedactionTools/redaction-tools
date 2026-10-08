@@ -249,7 +249,10 @@ Things to know:
 
 Staff can hand a listing straight to its owner. **Create claim link** in the staff panel (or the
 `catalog_create_claim_invite` MCP tool) takes the owner's email and returns a URL of the form
-`<FRONTEND_URL>/claim/<token>`. Staff send it themselves: the server sends no mail. The owner signs
+`<FRONTEND_URL>/claim/<token>`. The server emails it to that address (`claim_invite`) and reports
+`emailed`; when that is false, staff send the link themselves. In the panel, typing part of a name or
+email also offers existing accounts (`GET /catalog/staff/users`), and picking one fills in its
+address. The owner signs
 in on that page and accepts, which gives them an **approved** `ToolClaim` on the spot. There is no
 code to enter and no review, because sending the link was the review.
 
@@ -292,6 +295,7 @@ production. Tests always use the in-memory backend.
 | `submission_received` | a tool is submitted (`POST /catalog/submissions`) | `contact_email`, else the account |
 | `submission_staff_notice` | the same, with a link to the row in the admin | every active `is_staff` account |
 | `claim_code` | a vendor claims a listing | the claimant's work email |
+| `claim_invite` | staff mint a claim link | the address the link was minted for |
 | `benchmark_sent` | a benchmark submission is sent (`finalize`) | the submitter |
 | `benchmark_scored` | scoring settles: waiting for review, or failed with each case's error | the submitter |
 | `benchmark_staff_notice` | the same, only when it is waiting for review; links to the admin via `BACKEND_URL` | every active `is_staff` account |
@@ -309,7 +313,9 @@ re-queued with the admin's **Re-score** action, `services.rescore`. It runs only
 submission that is scoring, failed or awaiting review, and settles it - emails included -
 like any other.
 
-All but `claim_code` go through the django-q2 queue after the transaction commits, so a
+`claim_code` and `claim_invite` are sent inside the request, never queued: a task's arguments are
+kept in the database, and both carry a credential the server otherwise stores only as a hash. All
+the others go through the django-q2 queue after the transaction commits, so a
 sign-in or a submission never waits on - or fails with - the mail provider, and a
 rolled-back request mails nobody. On the host that means they only leave while
 `make backend-worker` runs (or with `Q_SYNC=true` in `backend/.env`); the Docker stack

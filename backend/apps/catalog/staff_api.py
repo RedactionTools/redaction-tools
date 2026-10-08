@@ -33,6 +33,7 @@ from apps.catalog.schemas import (
     StaffToolReviewIn,
     StaffToolReviewOut,
     StaffToolUpdateOut,
+    StaffUserOut,
 )
 
 router = Router(tags=["catalog-staff"], auth=StaffJWTAuth())
@@ -188,6 +189,15 @@ def staff_upload_tool_logo(request: HttpRequest, slug: str, image: File[Uploaded
 
 
 # --- Claim links -------------------------------------------------------------
+
+
+@router.get(
+    "/users",
+    response=list[StaffUserOut],
+    summary="Find accounts by email or name, to choose a claim link's recipient",
+)
+def staff_find_users(request: HttpRequest, q: str = ""):
+    return staff.find_users(q=q)
 
 
 @router.post(

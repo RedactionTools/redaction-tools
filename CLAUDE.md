@@ -135,7 +135,8 @@ The parts that bite if you miss them:
   is what actually refuses writes.
 - **A staff claim link grants a listing with no review** (`ToolClaimInvite`, `/claim/<token>`).
   Only its hash is stored, it never expires and it redeems once. The off switch is the admin's
-  revoke action, not a TTL.
+  revoke action, not a TTL. It is emailed **in the request, never queued** - django-q keeps task
+  arguments in the database, which would store the raw link.
 
 ## Owner badges
 
