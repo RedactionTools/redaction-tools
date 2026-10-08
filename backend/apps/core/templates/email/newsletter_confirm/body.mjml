@@ -1,0 +1,24 @@
+<mjml lang="en">
+  <mj-head>
+    <mj-title>Confirm your Redaction Tools subscription</mj-title>
+    <mj-preview>One click and you will hear about new reviews, tools and benchmarks.</mj-preview>
+    <mj-include path="../_partials/head.mjml" />
+  </mj-head>
+  <mj-body background-color="#f4f4f5" width="624px">
+    <mj-include path="../_partials/header.mjml" />
+    <mj-section padding="0 32px" background-color="#f4f4f5">
+      <mj-column background-color="#ffffff" padding="32px 32px 16px">
+        <mj-text>Hi,</mj-text>
+        <mj-text padding="0 0 8px">Someone - hopefully you - asked to get Redaction Tools updates at this address:</mj-text>
+        <mj-text>
+          <ul style="margin:0;padding-left:20px;">
+            {% for topic in topics %}<li style="margin-bottom:4px;">{{ topic }}</li>{% endfor %}
+          </ul>
+        </mj-text>
+        <mj-button href="{{ confirm_url }}" background-color="#18181b" color="#ffffff" font-size="15px" border-radius="6px" align="left" padding="8px 0 16px">Confirm subscription</mj-button>
+        <mj-text font-size="13px" color="#71717a">The link works for 7 days. If this wasn't you, ignore this email: nothing is sent until the link is clicked.</mj-text>
+      </mj-column>
+    </mj-section>
+    <mj-include path="../_partials/footer.mjml" />
+  </mj-body>
+</mjml>

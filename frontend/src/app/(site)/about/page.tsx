@@ -70,8 +70,10 @@ export default function AboutPage() {
           {SITE_NAME} is operated by{' '}
           <ExternalLink href={OPERATOR_URL}>{OPERATOR_NAME}</ExternalLink>, a software company based
           in Marki, Poland, that builds AI-powered document processing software. You can reach us at{' '}
-          <ExternalLink href="mailto:info@stabrise.com">info@stabrise.com</ExternalLink> or on{' '}
-          <ExternalLink href={REDDIT_URL}>r/RedactionTools</ExternalLink>.
+          <ExternalLink href="mailto:info@redaction-tools.com">
+            info@redaction-tools.com
+          </ExternalLink>{' '}
+          or on <ExternalLink href={REDDIT_URL}>r/RedactionTools</ExternalLink>.
         </p>
       </section>
 
@@ -133,8 +135,10 @@ export default function AboutPage() {
         </ul>
         <p className="text-pretty">
           If a listing looks unfair to you, whether it is ours or a competitor&apos;s, tell us at{' '}
-          <ExternalLink href="mailto:info@stabrise.com">info@stabrise.com</ExternalLink>. Vendors
-          can also claim their listing and correct it.
+          <ExternalLink href="mailto:info@redaction-tools.com">
+            info@redaction-tools.com
+          </ExternalLink>
+          . Vendors can also claim their listing and correct it.
         </p>
       </section>
     </div>

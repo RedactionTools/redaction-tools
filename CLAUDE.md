@@ -164,6 +164,18 @@ The parts that bite if you miss them:
   it) only translate. The emails are queued from the services, so every surface sends them.
 - **Never serialise `str(user)` on a comment** - it is the email. Use `services.serialize()`.
 
+## The newsletter lives in `apps/newsletter/`
+
+`DEVELOPMENT.md` has the details. What bites:
+
+- **Double opt-in.** Subscribing stores `pending` and mails a link; only the confirm click makes a
+  row `active`, and only `active` rows may ever be mailed. Both landing pages act on a button,
+  never on load, because mail scanners open links.
+- **Subscribing answers 204 whatever the address's state** - never reveal who is on the list. An
+  active address keeps its topics until the owner confirms new ones (they ride in the token).
+- **Links are `django.core.signing` tokens, nothing stored**, and the email tasks take the row,
+  never a link, since django-q keeps task arguments in the database.
+
 ## Email
 
 Templates live in `backend/apps/core/templates/email/<name>/`; `DEVELOPMENT.md` has the

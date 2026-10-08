@@ -1,0 +1,4 @@
+{
+  "topics": ["Reviews", "New tools", "Benchmarks"],
+  "confirm_url": "http://localhost:3007/newsletter/confirm?token=preview"
+}

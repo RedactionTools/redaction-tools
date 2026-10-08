@@ -5,3 +5,4 @@ export * from './catalog-staff/catalog-staff';
 export * from './comments/comments';
 export * from './comments-staff/comments-staff';
 export * from './core/core';
+export * from './newsletter/newsletter';

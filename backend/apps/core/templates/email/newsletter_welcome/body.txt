@@ -1,0 +1,20 @@
+{% autoescape off %}Hi,
+
+Thanks for confirming - you're on the Redaction Tools list. We'll write when there is something new in:
+
+{% for topic in topics %}- {{ topic }}
+{% endfor %}
+No fixed schedule and no filler: a mail only goes out when we publish something.
+
+While you wait:
+
+- Compare tools by price, detection method and deployment: {{ site_url }}/
+- See how many sensitive values each tool leaves recoverable: {{ site_url }}/benchmarks
+- Read the reviews on the blog: {{ site_url }}/blog
+
+Changed your mind? Unsubscribe in one click: {{ unsubscribe_url }}
+
+-- 
+Redaction Tools
+{{ site_url }}
+{% endautoescape %}

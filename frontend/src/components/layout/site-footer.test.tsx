@@ -1,7 +1,8 @@
-import { render, screen } from '@testing-library/react'
+import { screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
 import { SiteFooter } from '@/components/layout/site-footer'
+import { renderWithProviders as render } from '@/test/render'
 
 describe('SiteFooter', () => {
   it('carries the brand mark back to the catalog', () => {
@@ -104,5 +105,12 @@ describe('SiteFooter', () => {
     render(<SiteFooter />)
 
     expect(screen.getByRole('link', { name: 'RSS' })).toHaveAttribute('href', '/blog/rss.xml')
+  })
+
+  it('offers the newsletter sign-up', () => {
+    render(<SiteFooter />)
+
+    expect(screen.getByRole('heading', { name: /reviews and benchmarks by email/i })).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Subscribe' })).toBeInTheDocument()
   })
 })

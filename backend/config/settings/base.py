@@ -76,6 +76,7 @@ INSTALLED_APPS = [
     "apps.catalog",
     "apps.benchmarks",
     "apps.comments",
+    "apps.newsletter",
 ]
 
 MIDDLEWARE = [
@@ -307,6 +308,10 @@ COMMENTS_MAX_PENDING = env.int("COMMENTS_MAX_PENDING", default=5)
 COMMENTS_MAX_LENGTH = env.int("COMMENTS_MAX_LENGTH", default=5000)
 # Replies to replies, at most this deep. The page stops indenting long before.
 COMMENTS_MAX_DEPTH = env.int("COMMENTS_MAX_DEPTH", default=8)
+
+# --- Newsletter ------------------------------------------------------------
+# Per IP. Subscribing needs no account and mails whatever address it is given.
+NEWSLETTER_SUBSCRIBE_RATE = env("NEWSLETTER_SUBSCRIBE_RATE", default="10/hour")
 
 # --- Benchmarks ------------------------------------------------------------
 # A redacted one-page case is a few hundred KB; a tool that rasterises every page

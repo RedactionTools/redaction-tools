@@ -3568,6 +3568,88 @@
           }
         ]
       }
+    },
+    "/api/v1/newsletter/subscriptions": {
+      "post": {
+        "operationId": "subscribe_newsletter",
+        "summary": "Subscribe to the newsletter",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "newsletter"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubscribeIn"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/api/v1/newsletter/confirmations": {
+      "post": {
+        "operationId": "confirm_newsletter",
+        "summary": "Confirm a newsletter subscription",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "newsletter"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenIn"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/api/v1/newsletter/unsubscriptions": {
+      "post": {
+        "operationId": "unsubscribe_newsletter",
+        "summary": "Leave the newsletter",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "newsletter"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenIn"
+              }
+            }
+          },
+          "required": true
+        }
+      }
     }
   },
   "components": {
@@ -8533,6 +8615,68 @@
           "body"
         ],
         "title": "CommentEditIn",
+        "type": "object"
+      },
+      "SubscribeIn": {
+        "properties": {
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "reviews": {
+            "default": false,
+            "title": "Reviews",
+            "type": "boolean"
+          },
+          "new_tools": {
+            "default": false,
+            "title": "New Tools",
+            "type": "boolean"
+          },
+          "benchmarks": {
+            "default": false,
+            "title": "Benchmarks",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "email"
+        ],
+        "title": "SubscribeIn",
+        "type": "object"
+      },
+      "SubscriptionOut": {
+        "properties": {
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "topics": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Topics",
+            "type": "array"
+          }
+        },
+        "required": [
+          "email",
+          "topics"
+        ],
+        "title": "SubscriptionOut",
+        "type": "object"
+      },
+      "TokenIn": {
+        "properties": {
+          "token": {
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "title": "TokenIn",
         "type": "object"
       }
     },

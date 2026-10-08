@@ -564,6 +564,34 @@ comments one account may leave waiting. Bodies are plain text and render as text
 markdown. The public thread never carries an email address: `User.__str__` is one, so names come
 from `user.name`, falling back to "Member".
 
+## Newsletter
+
+The footer form (`src/features/newsletter/newsletter-signup.tsx`) signs a reader up for any of
+three topics - Reviews, New tools, Benchmarks - and `backend/apps/newsletter/` keeps the list.
+It is **double opt-in**: `POST /newsletter/subscriptions` stores the address as `pending` and
+mails a confirmation link; only the click (`/newsletter/confirm`, which calls
+`/newsletter/confirmations`) makes it `active` and sends the welcome email. Only `active` rows may
+ever be mailed. Sending the actual updates is not built yet.
+
+**The links are signed, not stored** (`apps/newsletter/tokens.py`, `django.core.signing`). The
+confirmation carries the row and the topics and lasts 7 days; the unsubscribe link carries the
+row and never expires, because every mail carries one (the welcome also sets `List-Unsubscribe`).
+Rotating `SECRET_KEY` kills every outstanding link.
+
+What bites:
+
+- **Subscribing answers 204 whatever the address's state**, so the form cannot tell anyone who is
+  on the list. An address that is already `active` keeps its topics until its owner confirms the
+  new ones - the topics ride in the token, not in the row.
+- **Both landing pages act on a button, never on load**: mail scanners open links before people
+  do, and an auto-firing confirm would make the opt-in single.
+- **Task arguments are the row and the topics, never a link** - django-q stores arguments in the
+  database. The task builds the link when it sends.
+- Writes go through `apps/newsletter/services.py`; the routes only translate. Staff see the list,
+  with its `confirmed_at` / `unsubscribed_at` trail, in the Django admin.
+- Abuse control is `NEWSLETTER_SUBSCRIBE_RATE` per IP: each request mails whatever address it
+  names.
+
 ## Rendering and the API-down build
 
 Catalog routes and `sitemap.ts` declare `export const dynamic = 'force-dynamic'`. The frontend

@@ -1,0 +1,4 @@
+{
+  "topics": ["Reviews", "New tools", "Benchmarks"],
+  "unsubscribe_url": "http://localhost:3007/newsletter/unsubscribe?token=preview"
+}
