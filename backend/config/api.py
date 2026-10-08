@@ -16,6 +16,7 @@ from apps.catalog.staff_api import router as catalog_staff_router
 from apps.comments.api import router as comments_router
 from apps.comments.staff_api import router as comments_staff_router
 from apps.core.api import router as core_router
+from apps.newsletter.api import router as newsletter_router
 
 
 class RedactionAPI(NinjaAPI):
@@ -50,6 +51,7 @@ api.add_router("/catalog/staff/", catalog_staff_router)
 api.add_router("/benchmarks/", benchmarks_router)
 api.add_router("/comments/staff/", comments_staff_router)
 api.add_router("/comments/", comments_router)
+api.add_router("/newsletter/", newsletter_router)
 
 
 @api.exception_handler(StaffError)

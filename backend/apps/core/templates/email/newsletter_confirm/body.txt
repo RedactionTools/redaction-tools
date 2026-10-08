@@ -1,0 +1,16 @@
+{% autoescape off %}Hi,
+
+Someone - hopefully you - asked to get Redaction Tools updates at this address:
+
+{% for topic in topics %}- {{ topic }}
+{% endfor %}
+Confirm the subscription here (the link works for 7 days):
+
+{{ confirm_url }}
+
+If this wasn't you, ignore this email: nothing is sent until the link is clicked.
+
+-- 
+Redaction Tools
+{{ site_url }}
+{% endautoescape %}

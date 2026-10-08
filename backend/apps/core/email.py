@@ -27,7 +27,9 @@ def email_names() -> list[str]:
     )
 
 
-def send_templated_email(name: str, context: dict, *, to: list[str]) -> None:
+def send_templated_email(
+    name: str, context: dict, *, to: list[str], headers: dict[str, str] | None = None
+) -> None:
     context = {"site_url": settings.FRONTEND_URL, **context}
     folder = f"email/{name}"
 
@@ -39,6 +41,7 @@ def send_templated_email(name: str, context: dict, *, to: list[str]) -> None:
         body=render_to_string(f"{folder}/body.txt", context),
         from_email=settings.DEFAULT_FROM_EMAIL,
         to=to,
+        headers=headers,
     )
     message.attach_alternative(render_to_string(f"{folder}/body.html", context), "text/html")
     message.send()

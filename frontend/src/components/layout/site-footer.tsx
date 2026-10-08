@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 
 import { Container } from '@/components/layout/container'
 import { Logo } from '@/components/layout/logo'
+import { NewsletterSignup } from '@/features/newsletter/newsletter-signup'
 import {
   LINKEDIN_URL,
   OPERATOR_NAME,
@@ -51,47 +52,60 @@ export function SiteFooter() {
   return (
     <footer className="border-border mt-16 border-t py-8">
       <Container className="space-y-8">
-        <div className="flex flex-wrap items-start justify-between gap-x-8 gap-y-6">
-          <div className="space-y-3">
-            {/* The mark is decorative - the wordmark beside it names the link. */}
-            <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">
-              <Logo size={24} />
-              {SITE_NAME}
-            </Link>
-            <p className="text-muted-foreground max-w-sm text-sm">{SITE_DESCRIPTION}</p>
-          </div>
-          <nav className="text-muted-foreground flex flex-wrap gap-x-4 gap-y-2 text-sm">
-            <Link href="/" className="hover:text-foreground">
-              All tools
-            </Link>
-            <Link href="/docs/methodology" className="hover:text-foreground">
-              How we verify prices
-            </Link>
-            <Link href="/docs" className="hover:text-foreground">
-              Documentation
-            </Link>
-            <Link href="/blog" className="hover:text-foreground">
-              Blog
-            </Link>
-            <Link href="/about" className="hover:text-foreground">
-              About
-            </Link>
-            <Link href="/submit" className="hover:text-foreground">
-              Submit a tool
-            </Link>
-            <Link href="/my-listings" className="hover:text-foreground">
-              Your listings
-            </Link>
-            {/* The only discovery path a machine-readable file has is a link to
+        <div className="grid items-start gap-x-12 gap-y-8 md:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]">
+          <div className="space-y-6">
+            <div className="space-y-3">
+              {/* The mark is decorative - the wordmark beside it names the link. */}
+              <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">
+                <Logo size={24} />
+                {SITE_NAME}
+              </Link>
+              <p className="text-muted-foreground max-w-sm text-sm">{SITE_DESCRIPTION}</p>
+            </div>
+            <nav className="text-muted-foreground flex flex-wrap gap-x-4 gap-y-2 text-sm">
+              <Link href="/" className="hover:text-foreground">
+                All tools
+              </Link>
+              <Link href="/docs/methodology" className="hover:text-foreground">
+                How we verify prices
+              </Link>
+              <Link href="/docs" className="hover:text-foreground">
+                Documentation
+              </Link>
+              <Link href="/blog" className="hover:text-foreground">
+                Blog
+              </Link>
+              <Link href="/about" className="hover:text-foreground">
+                About
+              </Link>
+              <Link href="/submit" className="hover:text-foreground">
+                Submit a tool
+              </Link>
+              <Link href="/my-listings" className="hover:text-foreground">
+                Your listings
+              </Link>
+              {/* The only discovery path a machine-readable file has is a link to
                 it. Not a <Link>: it is a route handler, not a page, so there is
                 nothing for the router to prefetch. */}
-            <a href="/llms.txt" className="hover:text-foreground">
-              llms.txt
-            </a>
-            <a href="/blog/rss.xml" className="hover:text-foreground">
-              RSS
-            </a>
-          </nav>
+              <a href="/llms.txt" className="hover:text-foreground">
+                llms.txt
+              </a>
+              <a href="/blog/rss.xml" className="hover:text-foreground">
+                RSS
+              </a>
+            </nav>
+          </div>
+          <section aria-labelledby="newsletter-heading" className="space-y-3">
+            <div className="space-y-1">
+              <h2 id="newsletter-heading" className="text-sm font-semibold">
+                Reviews and benchmarks by email
+              </h2>
+              <p className="text-muted-foreground text-sm">
+                New tools, reviews and benchmark results as we publish them. No filler.
+              </p>
+            </div>
+            <NewsletterSignup />
+          </section>
         </div>
         <div className="border-border text-muted-foreground flex flex-wrap items-center justify-between gap-4 border-t pt-6 text-sm">
           <p>
