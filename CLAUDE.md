@@ -44,12 +44,17 @@ make schema   # regenerates openapi.json AND the TypeScript client
 ## Auth
 
 The frontend never uses session cookies against `/api/`. It gets a Google ID
-token, trades it at `/_allauth/app/v1/auth/provider/token` for our own JWT pair,
+token (or an emailed code - below), trades it at `/_allauth/app/v1/auth/provider/token` for our own JWT pair,
 and sends the access token as a bearer. Refresh tokens **rotate** — the new one
 must replace the old. Access tokens live 15 minutes.
 
 Session cookies still exist, but only for the Django admin and the
 server-rendered `/accounts/` allauth views.
+
+**Email sign-in is ours, not allauth's** (`apps/accounts/email_login.py`, next-auth provider
+`email`). One mail carries a code and a link that share one row, so using either spends both. It
+is sent in the request, never queued, because it carries the raw secrets. Requesting answers 204
+for every address. The verify page acts on a button, never on load.
 
 Google credentials come from environment variables, **not** a `SocialApp` row in
 the admin — configuring both raises `MultipleObjectsReturned`.

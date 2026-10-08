@@ -5,7 +5,7 @@
  * gets rewritten and this logic does not.
  */
 import { exchangeGoogleIdToken, refreshTokenPair } from '@/lib/auth/allauth'
-import { isAccessTokenExpired } from '@/lib/auth/tokens'
+import { isAccessTokenExpired, type TokenPair } from '@/lib/auth/tokens'
 
 export type AuthTokenError = 'MissingIdToken' | 'TokenExchangeError' | 'RefreshTokenError'
 
@@ -21,6 +21,11 @@ export interface ProviderAccount {
   id_token?: string
 }
 
+/** What the email provider's `authorize` returns: the pair it already traded for. */
+export interface SignedInUser {
+  tokens?: TokenPair
+}
+
 export interface ResolveAuthTokenDeps {
   exchange: typeof exchangeGoogleIdToken
   refresh: typeof refreshTokenPair
@@ -34,10 +39,10 @@ const defaultDeps: ResolveAuthTokenDeps = {
 }
 
 export async function resolveAuthToken<T extends AuthTokenState>(
-  args: { token: T; account?: ProviderAccount | null },
+  args: { token: T; account?: ProviderAccount | null; user?: SignedInUser | null },
   deps: ResolveAuthTokenDeps = defaultDeps,
 ): Promise<T & AuthTokenState> {
-  const { token, account } = args
+  const { token, account, user } = args
 
   // 1. Fresh sign-in. `account` is only passed on the first call after a
   //    successful provider login, which is why the exchange belongs here.
@@ -51,6 +56,13 @@ export async function resolveAuthToken<T extends AuthTokenState>(
     } catch {
       return { ...token, error: 'TokenExchangeError' }
     }
+  }
+
+  // 1b. Email sign-in. `authorize` has already traded the code or link for our
+  //     pair (it is the only place that sees the credentials), so just keep it.
+  if (account?.provider === 'email') {
+    if (!user?.tokens) return { ...token, error: 'TokenExchangeError' }
+    return { ...token, ...user.tokens, error: undefined }
   }
 
   // 2. Nothing to refresh with - a previous exchange must have failed.

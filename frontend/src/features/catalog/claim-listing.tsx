@@ -74,7 +74,7 @@ export function ClaimListing({ tool }: { tool: ToolDetailOut }) {
   if (!signedIn) {
     return (
       <ClaimPrompt vendor={tool.vendor.name}>
-        <Button onClick={() => void signIn('google')}>Sign in to claim this listing</Button>
+        <Button onClick={() => void signIn()}>Sign in to claim this listing</Button>
       </ClaimPrompt>
     )
   }

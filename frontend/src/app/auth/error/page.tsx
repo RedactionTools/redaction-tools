@@ -9,6 +9,9 @@ const MESSAGES: Record<string, string> = {
   MissingIdToken: 'Google did not return an identity token, so we could not sign you in.',
   TokenExchangeError: 'The backend rejected the Google sign-in. Please try again.',
   RefreshTokenError: 'Your session expired. Please sign in again.',
+  EmailLinkInvalid:
+    'That sign-in link is wrong, already used or has expired. Only the newest email works.',
+  CredentialsSignin: 'That sign-in code is wrong or has expired.',
   Configuration: 'Sign-in is misconfigured. Check the Google client id and secret.',
 }
 

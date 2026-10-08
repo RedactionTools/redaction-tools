@@ -1,0 +1,11 @@
+{% autoescape off %}Sign in to Redaction Tools with this link:
+{{ link }}
+
+Or enter this code on the sign-in page: {{ code }}
+
+The link and the code expire in {{ ttl_minutes }} minutes, and either one works once. If you did not ask to sign in, you can ignore this email.
+
+-- 
+Redaction Tools
+{{ site_url }}
+{% endautoescape %}

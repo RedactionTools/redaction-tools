@@ -33,6 +33,9 @@ import type {
   CliLoginStartOut,
   CliLoginTokenIn,
   CliLoginTokenOut,
+  EmailLoginConfirmIn,
+  EmailLoginIn,
+  EmailLoginTokenOut,
   GetMcpAuthorizationParams,
   McpAuthorizationDecisionIn,
   McpAuthorizationDecisionOut,
@@ -917,6 +920,180 @@ export const useDenyCliLogin = <TError = unknown,
         TContext
       > => {
       return useMutation(getDenyCliLoginMutationOptions(options), queryClient);
+    }
+    export const getRequestEmailLoginUrl = () => {
+
+
+
+
+  return `/api/v1/auth/email-login`
+}
+
+/**
+ * @summary Email a sign-in code and link
+ */
+export const requestEmailLogin = async (emailLoginIn: EmailLoginIn, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<void>(getRequestEmailLoginUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(emailLoginIn)
+  }
+);}
+
+
+
+
+
+export const getRequestEmailLoginMutationKey = () => ['requestEmailLogin'] as const;
+
+export const getRequestEmailLoginMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestEmailLogin>>, TError,RequestEmailLoginMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof requestEmailLogin>>, TError,RequestEmailLoginMutationVariables, TContext> => {
+
+const mutationKey = getRequestEmailLoginMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof requestEmailLogin>>, RequestEmailLoginMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  requestEmailLogin(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RequestEmailLoginMutationResult = NonNullable<Awaited<ReturnType<typeof requestEmailLogin>>>
+    export type RequestEmailLoginMutationBody = EmailLoginIn
+    export type RequestEmailLoginMutationError = unknown
+    export type RequestEmailLoginMutationVariables = {data: EmailLoginIn}
+
+    /**
+ * @summary Email a sign-in code and link
+ */
+export const useRequestEmailLogin = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestEmailLogin>>, TError,RequestEmailLoginMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof requestEmailLogin>>,
+        TError,
+        RequestEmailLoginMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRequestEmailLoginMutationOptions(options), queryClient);
+    }
+    export const getConfirmEmailLoginUrl = () => {
+
+
+
+
+  return `/api/v1/auth/email-login/confirm`
+}
+
+/**
+ * @summary Sign in with an emailed code or link
+ */
+export const confirmEmailLogin = async (emailLoginConfirmIn: EmailLoginConfirmIn, options?: Parameters<typeof customFetch>[1]): Promise<EmailLoginTokenOut> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<EmailLoginTokenOut>(getConfirmEmailLoginUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(emailLoginConfirmIn)
+  }
+);}
+
+
+
+
+
+export const getConfirmEmailLoginMutationKey = () => ['confirmEmailLogin'] as const;
+
+export const getConfirmEmailLoginMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmEmailLogin>>, TError,ConfirmEmailLoginMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof confirmEmailLogin>>, TError,ConfirmEmailLoginMutationVariables, TContext> => {
+
+const mutationKey = getConfirmEmailLoginMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof confirmEmailLogin>>, ConfirmEmailLoginMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  confirmEmailLogin(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ConfirmEmailLoginMutationResult = NonNullable<Awaited<ReturnType<typeof confirmEmailLogin>>>
+    export type ConfirmEmailLoginMutationBody = EmailLoginConfirmIn
+    export type ConfirmEmailLoginMutationError = unknown
+    export type ConfirmEmailLoginMutationVariables = {data: EmailLoginConfirmIn}
+
+    /**
+ * @summary Sign in with an emailed code or link
+ */
+export const useConfirmEmailLogin = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmEmailLogin>>, TError,ConfirmEmailLoginMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof confirmEmailLogin>>,
+        TError,
+        ConfirmEmailLoginMutationVariables,
+        TContext
+      > => {
+      return useMutation(getConfirmEmailLoginMutationOptions(options), queryClient);
     }
     export const getGetMcpAuthorizationUrl = (params?: GetMcpAuthorizationParams,) => {
   const normalizedParams = new URLSearchParams();

@@ -72,7 +72,7 @@ describe('ClaimInvite', () => {
 
     await user.click(screen.getByRole('button', { name: /sign in to accept/i }))
 
-    expect(signIn).toHaveBeenCalledWith('google', { redirectTo: `/claim/${TOKEN}` })
+    expect(signIn).toHaveBeenCalledWith(undefined, { redirectTo: `/claim/${TOKEN}` })
     expect(screen.queryByRole('button', { name: /^accept/i })).not.toBeInTheDocument()
   })
 

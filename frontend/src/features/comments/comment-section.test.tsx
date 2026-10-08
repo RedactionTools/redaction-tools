@@ -116,7 +116,7 @@ describe('CommentSection', () => {
 
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Sign in to comment' }))
-    expect(signIn).toHaveBeenCalledWith('google')
+    expect(signIn).toHaveBeenCalledWith()
   })
 
   it('nests replies under the comment they answer', () => {

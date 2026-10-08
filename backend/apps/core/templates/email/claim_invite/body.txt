@@ -3,7 +3,7 @@
 Accept here:
 {{ url }}
 
-Sign in with Google, then accept. As a maintainer you can propose corrections to the listing's pricing and details, and the listing shows that its vendor maintains it.
+Sign in, then accept. As a maintainer you can propose corrections to the listing's pricing and details, and the listing shows that its vendor maintains it.
 
 The link works once, for whoever accepts it first, so please do not forward it. If you were not expecting this, you can ignore it.
 

@@ -349,6 +349,63 @@
         ]
       }
     },
+    "/api/v1/auth/email-login": {
+      "post": {
+        "operationId": "request_email_login",
+        "summary": "Email a sign-in code and link",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "auth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailLoginIn"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/api/v1/auth/email-login/confirm": {
+      "post": {
+        "operationId": "confirm_email_login",
+        "summary": "Sign in with an emailed code or link",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailLoginTokenOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "auth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailLoginConfirmIn"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
     "/api/v1/auth/mcp-authorizations": {
       "get": {
         "operationId": "get_mcp_authorization",
@@ -4016,6 +4073,81 @@
           "expires_at"
         ],
         "title": "CliLoginOut",
+        "type": "object"
+      },
+      "EmailLoginIn": {
+        "properties": {
+          "email": {
+            "maxLength": 254,
+            "minLength": 3,
+            "title": "Email",
+            "type": "string"
+          },
+          "next": {
+            "default": "",
+            "maxLength": 500,
+            "title": "Next",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email"
+        ],
+        "title": "EmailLoginIn",
+        "type": "object"
+      },
+      "EmailLoginTokenOut": {
+        "properties": {
+          "access_token": {
+            "title": "Access Token",
+            "type": "string"
+          },
+          "refresh_token": {
+            "title": "Refresh Token",
+            "type": "string"
+          },
+          "token_type": {
+            "title": "Token Type",
+            "type": "string"
+          },
+          "expires_in": {
+            "title": "Expires In",
+            "type": "integer"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserSchema"
+          }
+        },
+        "required": [
+          "access_token",
+          "refresh_token",
+          "token_type",
+          "expires_in",
+          "user"
+        ],
+        "title": "EmailLoginTokenOut",
+        "type": "object"
+      },
+      "EmailLoginConfirmIn": {
+        "description": "Either `email` and `code`, as typed on the sign-in page, or the link's `token`.",
+        "properties": {
+          "email": {
+            "default": "",
+            "title": "Email",
+            "type": "string"
+          },
+          "code": {
+            "default": "",
+            "title": "Code",
+            "type": "string"
+          },
+          "token": {
+            "default": "",
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "title": "EmailLoginConfirmIn",
         "type": "object"
       },
       "McpAuthorizationParams": {
