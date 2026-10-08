@@ -14,7 +14,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Tooltip } from '@/components/ui/tooltip'
-import { useListTools } from '@/lib/api/generated/catalog/catalog'
+import { useListFacets, useListTools } from '@/lib/api/generated/catalog/catalog'
 import type { PriceSummaryOut } from '@/lib/api/generated/model'
 import { cheapestCost, type DocumentInput } from '@/lib/catalog/document-cost'
 import type { CatalogFilters } from '@/lib/catalog/filters'
@@ -165,9 +165,16 @@ export function ToolTable({ filters }: { filters: CatalogFilters }) {
 
 const HEADER = 'text-xs font-medium'
 
-/** Media as chips, in the taxonomy's order rather than whatever order the row carries. */
+/**
+ * Media as chips, in the taxonomy's order rather than whatever order the row carries.
+ *
+ * Read from the facets endpoint, which the hub prefetches beside the list, so a
+ * medium staff add in the admin shows up without a deploy.
+ */
 function MediaChips({ facetSlugs }: { facetSlugs: string[] }) {
-  const media = MEDIA.filter((medium) => facetSlugs.includes(medium.slug))
+  const { data } = useListFacets()
+  const taxonomy = data?.find((dimension) => dimension.code === 'media')?.values ?? []
+  const media = taxonomy.filter((medium) => facetSlugs.includes(medium.slug))
   if (!media.length) return <span className="text-muted-foreground">—</span>
   return (
     <ul className="flex flex-wrap gap-1" aria-label="Media">
@@ -303,11 +310,3 @@ function VolumeCostNote() {
     </div>
   )
 }
-
-const MEDIA = [
-  { slug: 'pdf', label: 'PDF' },
-  { slug: 'image', label: 'Image' },
-  { slug: 'video', label: 'Video' },
-  { slug: 'audio', label: 'Audio' },
-  { slug: 'text', label: 'Text' },
-]
