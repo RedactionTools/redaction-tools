@@ -89,6 +89,7 @@ export * from './runOutProvenance';
 export * from './runOutScoredBy';
 export * from './runScreenshotOut';
 export * from './screenshotUploadIn';
+export * from './staffBadgeSuggestionOut';
 export * from './staffChangesIn';
 export * from './staffChangesInChanges';
 export * from './staffClaimInviteIn';

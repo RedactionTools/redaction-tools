@@ -462,6 +462,7 @@ class StaffToolOut(Schema):
     plans: list[StaffPlanOut]
     open_revisions: int
     open_price_proposals: int
+    maintainers: list[str]
     listable: bool
     listability_reasons: list[str]
 
@@ -566,6 +567,11 @@ class StaffToolLogoOut(StaffToolUpdateOut):
 
 class StaffClaimInviteIn(Schema):
     email: str
+
+
+class StaffBadgeSuggestionOut(Schema):
+    tool: str
+    sent_to: list[str]
 
 
 class StaffUserOut(Schema):

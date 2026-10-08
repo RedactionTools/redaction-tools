@@ -1,0 +1,26 @@
+<mjml lang="en">
+  <mj-head>
+    <mj-title>Show your {{ tool_name }} listing on your site</mj-title>
+    <mj-preview>Add a Redaction Tools badge to your site</mj-preview>
+    <mj-include path="../_partials/head.mjml" />
+  </mj-head>
+  <mj-body background-color="#f4f4f5" width="624px">
+    <mj-include path="../_partials/header.mjml" />
+    <mj-section padding="0 32px" background-color="#f4f4f5">
+      <mj-column background-color="#ffffff" padding="32px 32px 16px">
+        <mj-text>Thank you for maintaining the <strong>{{ tool_name }}</strong> listing on Redaction Tools.</mj-text>
+        <mj-text>You can put a Redaction Tools badge on your own site, linking readers to your listing. There are three:</mj-text>
+        <mj-image src="{{ site_url }}/images/email/badge-listed.png" width="170px" height="54px" alt="Redaction Tools: Listed Tool" align="left" padding="8px 0 2px" />
+        <mj-text padding="0 0 12px" color="#52525b" font-size="14px">Your listing is published in the catalog.</mj-text>
+        <mj-image src="{{ site_url }}/images/email/badge-reviewed.png" width="195px" height="54px" alt="Redaction Tools: Editor Reviewed" align="left" padding="8px 0 2px" />
+        <mj-text padding="0 0 12px" color="#52525b" font-size="14px">Our editors have reviewed the listing.</mj-text>
+        <mj-image src="{{ site_url }}/images/email/badge-benchmarked.png" width="214px" height="54px" alt="Redaction Tools: Benchmarked Tool" align="left" padding="8px 0 2px" />
+        <mj-text padding="0 0 16px" color="#52525b" font-size="14px">The tool has an approved result on our benchmark leaderboard.</mj-text>
+        <mj-text>Each badge shows only what your listing has earned, and it updates itself: if a claim stops being true, the badge turns grey rather than staying wrong.</mj-text>
+        <mj-button href="{{ site_url }}/my-listings" background-color="#18181b" color="#ffffff" font-size="15px" border-radius="6px" align="left" padding="8px 0 16px">Get your badge</mj-button>
+        <mj-text color="#52525b" font-size="14px">Pick a badge, choose light or dark, and copy the HTML or Markdown snippet from your listings page.</mj-text>
+      </mj-column>
+    </mj-section>
+    <mj-include path="../_partials/footer.mjml" />
+  </mj-body>
+</mjml>

@@ -5,6 +5,7 @@ import { Card, CardDescription, CardTitle } from '@/components/ui/card'
 import { useStaffGetTool } from '@/lib/api/generated/catalog-staff/catalog-staff'
 import type { StaffToolOut } from '@/lib/api/generated/model'
 
+import { BadgeSuggestion } from './badge-suggestion'
 import { ClaimInviteMinter } from './claim-invite-minter'
 import { Editable } from './editable'
 import { type FieldSpec, ToolFieldEditor } from './tool-field-editor'
@@ -86,6 +87,12 @@ export function StaffPanel({ slug }: { slug: string }) {
           </Editable>
         ))}
       </dl>
+
+      {record.maintainers.length ? (
+        <div className="border-border border-t pt-4">
+          <BadgeSuggestion slug={slug} maintainers={record.maintainers} />
+        </div>
+      ) : null}
 
       <div className="border-border space-y-2 border-t pt-4">
         <CardDescription>

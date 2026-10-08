@@ -296,6 +296,7 @@ production. Tests always use the in-memory backend.
 | `submission_staff_notice` | the same, with a link to the row in the admin | every active `is_staff` account |
 | `claim_code` | a vendor claims a listing | the claimant's work email |
 | `claim_invite` | staff mint a claim link | the address the link was minted for |
+| `badge_suggestion` | staff press **Email badge suggestion** on a maintained listing | each maintainer's work email, one message each |
 | `benchmark_sent` | a benchmark submission is sent (`finalize`) | the submitter |
 | `benchmark_scored` | scoring settles: waiting for review, or failed with each case's error | the submitter |
 | `benchmark_staff_notice` | the same, only when it is waiting for review; links to the admin via `BACKEND_URL` | every active `is_staff` account |
@@ -500,6 +501,13 @@ preview it and copy it.
     colour as the text. It is inlined as a ~2KB PNG data URI (`src/lib/badges/logo.ts`),
     because an SVG shown through `<img>` cannot fetch a linked image. Regenerate it if the mark
     changes.
+- **Staff can nudge maintainers to use one.** On a listing someone maintains (an approved claim
+  on an active account), the staff panel lists their work emails and offers **Email badge
+  suggestion** (`POST /catalog/staff/tools/{slug}/badge-suggestion`, `staff.send_badge_suggestion`).
+  It queues the `badge_suggestion` email, which shows all three badges and links to
+  `/my-listings`. Email clients do not render SVG, so the email uses fixed PNGs in
+  `frontend/public/images/email/badge-*.png`, rendered from `svg.ts` (earned, light theme).
+  Re-render them if the badge design changes.
   - `/badge/` is outside the auth proxy's matcher, so no session cookie lands on a cached image.
 
 ## Blog

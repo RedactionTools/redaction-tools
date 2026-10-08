@@ -36,6 +36,7 @@ export interface StaffToolOut {
   plans: StaffPlanOut[];
   open_revisions: number;
   open_price_proposals: number;
+  maintainers: string[];
   listable: boolean;
   listability_reasons: string[];
 }

@@ -238,6 +238,26 @@ describe('ToolProfile for staff', () => {
     expect(screen.getByRole('button', { name: 'Edit editor notes' })).toBeInTheDocument()
   })
 
+  // The suggestion points at "your listings", which only a maintainer has.
+  it('offers the badge email only for a listing someone maintains', () => {
+    render({ staff: true })
+
+    expect(screen.queryByRole('button', { name: /email badge suggestion/i })).toBeNull()
+  })
+
+  it('emails the maintainers the badges and says who it went to', async () => {
+    const fetch = stubFetch(200, { tool: TOOL.slug, sent_to: ['ceo@adobe.com'] })
+    const user = userEvent.setup()
+    render({ staff: true, record: makeStaffTool({ maintainers: ['ceo@adobe.com'] }) })
+
+    expect(screen.getByTestId('staff-panel')).toHaveTextContent('ceo@adobe.com')
+    await user.click(screen.getByRole('button', { name: /email badge suggestion/i }))
+
+    const [url] = fetch.mock.calls[0]
+    expect(String(url)).toContain(`/catalog/staff/tools/${TOOL.slug}/badge-suggestion`)
+    expect(await screen.findByText(/sent to ceo@adobe\.com/i)).toBeInTheDocument()
+  })
+
   it('shows readers no staff panel', () => {
     render({ staff: false, record: makeStaffTool({ editor_notes: 'Recheck the trial.' }) })
 

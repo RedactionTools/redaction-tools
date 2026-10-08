@@ -13,6 +13,7 @@ from apps.accounts.api import StaffJWTAuth
 from apps.catalog import images, staff
 from apps.catalog.schemas import (
     ScreenshotUploadIn,
+    StaffBadgeSuggestionOut,
     StaffChangesIn,
     StaffClaimInviteIn,
     StaffClaimInviteOut,
@@ -186,6 +187,18 @@ def staff_review_screenshot(
 @router.post("/tools/{slug}/logo", response=StaffToolLogoOut, summary="Upload a listing's logo")
 def staff_upload_tool_logo(request: HttpRequest, slug: str, image: File[UploadedFile]):
     return staff.upload_tool_logo(user=request.auth, slug=slug, data=_read_upload(image))
+
+
+# --- Maintainers -------------------------------------------------------------
+
+
+@router.post(
+    "/tools/{slug}/badge-suggestion",
+    response=StaffBadgeSuggestionOut,
+    summary="Email the listing's maintainers its badges and where to get them",
+)
+def staff_send_badge_suggestion(request: HttpRequest, slug: str):
+    return staff.send_badge_suggestion(user=request.auth, slug=slug)
 
 
 # --- Claim links -------------------------------------------------------------

@@ -2203,6 +2203,43 @@
         ]
       }
     },
+    "/api/v1/catalog/staff/tools/{slug}/badge-suggestion": {
+      "post": {
+        "operationId": "staff_send_badge_suggestion",
+        "summary": "Email the listing's maintainers its badges and where to get them",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffBadgeSuggestionOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "catalog-staff"
+        ],
+        "security": [
+          {
+            "StaffJWTAuth": []
+          }
+        ]
+      }
+    },
     "/api/v1/catalog/staff/users": {
       "get": {
         "operationId": "staff_find_users",
@@ -6085,6 +6122,13 @@
             "title": "Open Price Proposals",
             "type": "integer"
           },
+          "maintainers": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Maintainers",
+            "type": "array"
+          },
           "listable": {
             "title": "Listable",
             "type": "boolean"
@@ -6124,6 +6168,7 @@
           "plans",
           "open_revisions",
           "open_price_proposals",
+          "maintainers",
           "listable",
           "listability_reasons"
         ],
@@ -6684,6 +6729,27 @@
           "logo_url"
         ],
         "title": "StaffToolLogoOut",
+        "type": "object"
+      },
+      "StaffBadgeSuggestionOut": {
+        "properties": {
+          "tool": {
+            "title": "Tool",
+            "type": "string"
+          },
+          "sent_to": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Sent To",
+            "type": "array"
+          }
+        },
+        "required": [
+          "tool",
+          "sent_to"
+        ],
+        "title": "StaffBadgeSuggestionOut",
         "type": "object"
       },
       "StaffUserOut": {
