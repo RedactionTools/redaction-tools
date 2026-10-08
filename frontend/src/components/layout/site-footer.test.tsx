@@ -86,6 +86,15 @@ describe('SiteFooter', () => {
     )
   })
 
+  it('invites guest posts', () => {
+    render(<SiteFooter />)
+
+    expect(screen.getByRole('link', { name: 'Submit a post' })).toHaveAttribute(
+      'href',
+      '/submit-post',
+    )
+  })
+
   it('links to the about page', () => {
     render(<SiteFooter />)
 

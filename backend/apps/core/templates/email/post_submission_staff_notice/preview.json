@@ -1,0 +1,10 @@
+{
+  "title": "Redacting scanned PDFs without missing the OCR layer",
+  "description": "What a black box over a scan leaves behind, and how to check for it.",
+  "author_name": "Ada Writer",
+  "author_role": "Records officer",
+  "tags": "OCR, Guides",
+  "excerpt": "A scanned PDF usually carries two copies of every word: the picture and an invisible OCR layer.\n\nDrawing a box over the picture leaves the second one untouched...",
+  "submitter_email": "ada@example.com",
+  "admin_url": "http://localhost:8007/admin/blog/postsubmission/1/change/"
+}

@@ -302,6 +302,7 @@ production. Tests always use the in-memory backend.
 | `benchmark_staff_notice` | the same, only when it is waiting for review; links to the admin via `BACKEND_URL` | every active `is_staff` account |
 | `benchmark_reviewed` | an editor approves (links to the tool's report) or rejects (passes on the note) | the submitter |
 | `comment_staff_notice` | a comment lands awaiting review, or an edit sends a published one back | every active `is_staff` account |
+| `post_submission_staff_notice` | a guest post is submitted (`POST /blog/submissions`); links to the admin via `BACKEND_URL` | every active `is_staff` account |
 | `comment_reply` | a reply is published - on posting or on approval - and not by the author it answers | the parent comment's author |
 
 A staff member's own benchmark submission approves itself on scoring and mails nobody.
@@ -591,6 +592,33 @@ What bites:
   with its `confirmed_at` / `unsubscribed_at` trail, in the Django admin.
 - Abuse control is `NEWSLETTER_SUBSCRIBE_RATE` per IP: each request mails whatever address it
   names.
+
+## Guest posts
+
+The footer's "Submit a post" leads to `/submit-post`. The page is public; the form behind it
+needs a signed-in account (the first Google sign-in creates one). It takes a title, summary, tags,
+a markdown body in `@uiw/react-md-editor` (loaded client-only, previewing through our own
+`<Markdown>`) and a byline: name, role, bio and up to three links.
+`POST /blog/submissions` stores a `PostSubmission` (`backend/apps/blog/`) as `pending` and mails
+staff. The writer follows its status under "Posts you submitted" on `/activity`.
+
+**A submission is a queue row, never a page.** Posts are MDX in `frontend/content/blog/`, built
+into the bundle, so accepting one in the admin publishes nothing. The admin's change page offers
+the post as a `.mdx` download with the frontmatter filled in and `draft: true`. The editor still
+registers the author in `src/lib/blog/authors.ts`, adds the id, and commits the file.
+
+What bites:
+
+- **`body_md` is never rendered as HTML on the backend.** The admin shows it in a `<pre>`, and the
+  email carries a plain excerpt.
+- **Writes go through `apps/blog/services.py`.** Refusals are `PostSubmissionError`, a
+  `StaffError`, so they reach the form as a 422 `detail`. Accept and reject are admin actions
+  calling `services.review`, which stamps `reviewed_by` / `reviewed_at`. Only `review_note`,
+  which the writer sees, is editable on the change page.
+- **Author links go through `validate_external_url`**, the catalog's SSRF guard, though nothing
+  fetches them today: they end up as links on our site.
+- Limits are settings: `BLOG_SUBMISSION_RATE` per account, `BLOG_SUBMISSION_MAX_OPEN` pending
+  per account, and `BLOG_SUBMISSION_MIN_LENGTH` / `BLOG_SUBMISSION_MAX_LENGTH` on the body.
 
 ## Rendering and the API-down build
 

@@ -44,6 +44,7 @@ export function buildSitemapEntries(
     { url: `${site}/`, lastModified: newestChange(tools), changeFrequency: 'weekly', priority: 1 },
     { url: `${site}/price-calculator`, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${site}/submit`, changeFrequency: 'monthly', priority: 0.5 },
+    { url: `${site}/submit-post`, changeFrequency: 'monthly', priority: 0.5 },
     { url: `${site}/about`, changeFrequency: 'yearly', priority: 0.4 },
   ]
 

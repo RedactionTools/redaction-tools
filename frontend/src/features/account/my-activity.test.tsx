@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { makeMySubmission } from '@/features/benchmarks/fixtures'
 import { makeListing } from '@/features/catalog/fixtures'
 import { getListMyBenchmarkSubmissionsQueryKey } from '@/lib/api/generated/benchmarks/benchmarks'
+import { getListMyPostSubmissionsQueryKey } from '@/lib/api/generated/blog/blog'
 import {
   getListMyClaimsQueryKey,
   getListMyListingsQueryKey,
@@ -13,6 +14,7 @@ import type {
   MyClaimOut,
   MyListingOut,
   MySubmissionOut,
+  PostSubmissionOut,
   ToolSubmissionOut,
 } from '@/lib/api/generated/model'
 import { makeTestQueryClient, renderWithProviders } from '@/test/render'
@@ -45,21 +47,39 @@ function makeToolSubmission(overrides: Partial<ToolSubmissionOut> = {}): ToolSub
   }
 }
 
+function makePostSubmission(overrides: Partial<PostSubmissionOut> = {}): PostSubmissionOut {
+  return {
+    id: 1,
+    title: 'Redacting scanned PDFs',
+    description: 'What OCR misses.',
+    tags: ['OCR'],
+    author_name: 'Ada Writer',
+    status: 'pending',
+    review_note: '',
+    created_at: '2026-10-01T09:00:00Z',
+    reviewed_at: null,
+    ...overrides,
+  }
+}
+
 function render({
   benchmarks = [],
   claims = [],
   tools = [],
+  posts = [],
   listings = [],
 }: {
   benchmarks?: MySubmissionOut[]
   claims?: MyClaimOut[]
   tools?: ToolSubmissionOut[]
+  posts?: PostSubmissionOut[]
   listings?: MyListingOut[]
 } = {}) {
   const queryClient = makeTestQueryClient()
   queryClient.setQueryData(getListMyBenchmarkSubmissionsQueryKey(), benchmarks)
   queryClient.setQueryData(getListMyClaimsQueryKey(), claims)
   queryClient.setQueryData(getListMySubmissionsQueryKey(), tools)
+  queryClient.setQueryData(getListMyPostSubmissionsQueryKey(), posts)
   queryClient.setQueryData(getListMyListingsQueryKey(), listings)
   return renderWithProviders(<MyActivity />, { queryClient })
 }
@@ -103,6 +123,19 @@ describe('MyActivity', () => {
     const tools = section(/tools you submitted/i)
     expect(within(tools).getByText('RedactPro')).toBeInTheDocument()
     expect(within(tools).getByText('Under review')).toBeInTheDocument()
+  })
+
+  it("lists submitted posts with the editor's note once there is one", () => {
+    render({
+      posts: [
+        makePostSubmission({ status: 'rejected', review_note: 'Too close to our OCR post.' }),
+      ],
+    })
+
+    const posts = section(/posts you submitted/i)
+    expect(within(posts).getByText('Redacting scanned PDFs')).toBeInTheDocument()
+    expect(within(posts).getByText('Not accepted')).toBeInTheDocument()
+    expect(within(posts).getByText('Too close to our OCR post.')).toBeInTheDocument()
   })
 
   it('lists the listings maintained, linking to where they are edited', () => {

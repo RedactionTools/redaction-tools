@@ -10,6 +10,7 @@ from ninja.operation import Operation
 
 from apps.accounts.api import router as accounts_router
 from apps.benchmarks.api import router as benchmarks_router
+from apps.blog.api import router as blog_router
 from apps.catalog.api import router as catalog_router
 from apps.catalog.staff import StaffError
 from apps.catalog.staff_api import router as catalog_staff_router
@@ -52,6 +53,7 @@ api.add_router("/benchmarks/", benchmarks_router)
 api.add_router("/comments/staff/", comments_staff_router)
 api.add_router("/comments/", comments_router)
 api.add_router("/newsletter/", newsletter_router)
+api.add_router("/blog/", blog_router)
 
 
 @api.exception_handler(StaffError)

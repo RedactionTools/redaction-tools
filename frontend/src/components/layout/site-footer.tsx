@@ -81,6 +81,9 @@ export function SiteFooter() {
               <Link href="/submit" className="hover:text-foreground">
                 Submit a tool
               </Link>
+              <Link href="/submit-post" className="hover:text-foreground">
+                Submit a post
+              </Link>
               <Link href="/my-listings" className="hover:text-foreground">
                 Your listings
               </Link>

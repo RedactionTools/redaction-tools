@@ -77,6 +77,7 @@ INSTALLED_APPS = [
     "apps.benchmarks",
     "apps.comments",
     "apps.newsletter",
+    "apps.blog",
 ]
 
 MIDDLEWARE = [
@@ -313,6 +314,14 @@ COMMENTS_MAX_DEPTH = env.int("COMMENTS_MAX_DEPTH", default=8)
 # Per IP. Subscribing needs no account and mails whatever address it is given.
 NEWSLETTER_SUBSCRIBE_RATE = env("NEWSLETTER_SUBSCRIBE_RATE", default="10/hour")
 
+# --- Blog submissions ------------------------------------------------------
+# Guest posts, per account: how often one may send, and how many may wait for review.
+# A post shorter than the minimum is a note, not a draft.
+BLOG_SUBMISSION_RATE = env("BLOG_SUBMISSION_RATE", default="5/day")
+BLOG_SUBMISSION_MIN_LENGTH = env.int("BLOG_SUBMISSION_MIN_LENGTH", default=300)
+BLOG_SUBMISSION_MAX_LENGTH = env.int("BLOG_SUBMISSION_MAX_LENGTH", default=60000)
+BLOG_SUBMISSION_MAX_OPEN = env.int("BLOG_SUBMISSION_MAX_OPEN", default=3)
+
 # --- Benchmarks ------------------------------------------------------------
 # A redacted one-page case is a few hundred KB; a tool that rasterises every page
 # at print resolution can reach a few MB. Well above that is not a redaction.
@@ -324,6 +333,8 @@ BENCHMARK_SUBMIT_RATE = env("BENCHMARK_SUBMIT_RATE", default="200/day")
 BENCHMARK_MAX_SCREENSHOTS_PER_RUN = env.int("BENCHMARK_MAX_SCREENSHOTS_PER_RUN", default=10)
 # How long one run may take to score in the worker. OCR at 300 dpi is most of it.
 BENCHMARK_SCORE_TIMEOUT = env.int("BENCHMARK_SCORE_TIMEOUT", default=300)
+BLOG_SUBMISSION_MAX_LENGTH = env.int("BLOG_SUBMISSION_MAX_LENGTH", default=60000)
+BLOG_SUBMISSION_MAX_OPEN = env.int("BLOG_SUBMISSION_MAX_OPEN", default=3)
 # Off only where tesseract is absent and the suite has to run anyway; a score
 # computed without OCR says so in its report notes.
 BENCHMARK_OCR = env.bool("BENCHMARK_OCR", default=True)

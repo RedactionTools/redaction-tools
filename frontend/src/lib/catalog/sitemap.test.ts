@@ -28,6 +28,7 @@ describe('buildSitemapEntries', () => {
 
     expect(urls).toContain(`${SITE}/`)
     expect(urls).toContain(`${SITE}/submit`)
+    expect(urls).toContain(`${SITE}/submit-post`)
     expect(urls).toContain(`${SITE}/price-calculator`)
   })
 

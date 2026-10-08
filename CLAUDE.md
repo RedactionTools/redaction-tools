@@ -176,6 +176,15 @@ The parts that bite if you miss them:
 - **Links are `django.core.signing` tokens, nothing stored**, and the email tasks take the row,
   never a link, since django-q keeps task arguments in the database.
 
+## Guest posts live in `apps/blog/`
+
+`DEVELOPMENT.md` has the details. What bites:
+
+- **A `PostSubmission` is a queue row, never a page.** Posts are frontend MDX, so accepting one
+  publishes nothing; the admin's `.mdx` download is the editor's starting file.
+- **`body_md` is never rendered as HTML on the backend.** Writes go through
+  `apps/blog/services.py`, and accept/reject are admin actions over `services.review`.
+
 ## Email
 
 Templates live in `backend/apps/core/templates/email/<name>/`; `DEVELOPMENT.md` has the

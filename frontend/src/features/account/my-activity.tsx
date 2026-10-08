@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { SUBMISSION_STATUS } from '@/features/benchmarks/my-submissions'
 import { useListMyBenchmarkSubmissions } from '@/lib/api/generated/benchmarks/benchmarks'
+import { useListMyPostSubmissions } from '@/lib/api/generated/blog/blog'
 import {
   useListMyClaims,
   useListMyListings,
@@ -33,13 +34,20 @@ const TOOL_STATUS: Record<string, Status> = {
   duplicate: { label: 'Already listed', tone: 'neutral' },
 }
 
+const POST_STATUS: Record<string, Status> = {
+  pending: { label: 'Awaiting review', tone: 'neutral' },
+  accepted: { label: 'Accepted', tone: 'ok' },
+  rejected: { label: 'Not accepted', tone: 'warn' },
+}
+
 function statusOf(table: Record<string, Status>, status: string): Status {
   return table[status] ?? { label: status, tone: 'neutral' }
 }
 
 /**
  * Everything the signed-in account has sent us, in one place: benchmark results,
- * listing claims, tools proposed for the catalog, and the listings it maintains.
+ * listing claims, tools proposed for the catalog, guest posts, and the listings it
+ * maintains.
  * Each section is a summary that links on to the page where the work is done - this
  * page decides nothing itself.
  */
@@ -49,6 +57,7 @@ export function MyActivity() {
       <BenchmarkSection />
       <ClaimSection />
       <ToolSubmissionSection />
+      <PostSubmissionSection />
       <ListingSection />
     </div>
   )
@@ -107,6 +116,28 @@ function ToolSubmissionSection() {
         title: tool.name,
         detail: tool.homepage_url,
         status: statusOf(TOOL_STATUS, tool.status),
+      }))}
+    />
+  )
+}
+
+function PostSubmissionSection() {
+  const { data } = useListMyPostSubmissions()
+  return (
+    <ActivitySection
+      title="Posts you submitted"
+      empty={
+        <>
+          Nothing yet. Have something to say about redaction?{' '}
+          <InlineLink href="/submit-post">Submit a post</InlineLink>.
+        </>
+      }
+      items={data?.map((post) => ({
+        key: post.id,
+        title: post.title,
+        // The editor's note says why, so it wins over the summary once there is one.
+        detail: post.review_note || post.description,
+        status: statusOf(POST_STATUS, post.status),
       }))}
     />
   )

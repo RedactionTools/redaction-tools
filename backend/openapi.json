@@ -3650,6 +3650,72 @@
           "required": true
         }
       }
+    },
+    "/api/v1/blog/submissions": {
+      "post": {
+        "operationId": "create_post_submission",
+        "summary": "Submit a blog post for review",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostSubmissionOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "blog"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostSubmissionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      },
+      "get": {
+        "operationId": "list_my_post_submissions",
+        "summary": "Blog posts you have submitted",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PostSubmissionOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "blog"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -8677,6 +8743,134 @@
           "token"
         ],
         "title": "TokenIn",
+        "type": "object"
+      },
+      "PostSubmissionOut": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "array"
+          },
+          "author_name": {
+            "title": "Author Name",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "review_note": {
+            "title": "Review Note",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "reviewed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewed At"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "description",
+          "tags",
+          "author_name",
+          "status",
+          "review_note",
+          "created_at",
+          "reviewed_at"
+        ],
+        "title": "PostSubmissionOut",
+        "type": "object"
+      },
+      "PostSubmissionIn": {
+        "description": "Limits match the columns. The body's are settings, checked in `services`.",
+        "properties": {
+          "title": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "body_md": {
+            "title": "Body Md",
+            "type": "string"
+          },
+          "author_name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Author Name",
+            "type": "string"
+          },
+          "tags": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "array"
+          },
+          "author_role": {
+            "default": "",
+            "maxLength": 120,
+            "title": "Author Role",
+            "type": "string"
+          },
+          "author_bio": {
+            "default": "",
+            "maxLength": 600,
+            "title": "Author Bio",
+            "type": "string"
+          },
+          "author_links": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Author Links",
+            "type": "array"
+          }
+        },
+        "required": [
+          "title",
+          "description",
+          "body_md",
+          "author_name"
+        ],
+        "title": "PostSubmissionIn",
         "type": "object"
       }
     },
