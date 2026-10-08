@@ -25,6 +25,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  StaffBadgeSuggestionOut,
   StaffChangesIn,
   StaffClaimInviteIn,
   StaffClaimInviteOut,
@@ -1220,6 +1221,79 @@ export const useStaffUploadToolLogo = <TError = unknown,
         TContext
       > => {
       return useMutation(getStaffUploadToolLogoMutationOptions(options), queryClient);
+    }
+    export const getStaffSendBadgeSuggestionUrl = (slug: string,) => {
+
+
+
+
+  return `/api/v1/catalog/staff/tools/${slug}/badge-suggestion`
+}
+
+/**
+ * @summary Email the listing's maintainers its badges and where to get them
+ */
+export const staffSendBadgeSuggestion = async (slug: string, options?: Parameters<typeof customFetch>[1]): Promise<StaffBadgeSuggestionOut> => {
+
+  return customFetch<StaffBadgeSuggestionOut>(getStaffSendBadgeSuggestionUrl(slug),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getStaffSendBadgeSuggestionMutationKey = () => ['staffSendBadgeSuggestion'] as const;
+
+export const getStaffSendBadgeSuggestionMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof staffSendBadgeSuggestion>>, TError,StaffSendBadgeSuggestionMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof staffSendBadgeSuggestion>>, TError,StaffSendBadgeSuggestionMutationVariables, TContext> => {
+
+const mutationKey = getStaffSendBadgeSuggestionMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof staffSendBadgeSuggestion>>, StaffSendBadgeSuggestionMutationVariables> = (props) => {
+          const {slug} = props ?? {};
+
+          return  staffSendBadgeSuggestion(slug,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type StaffSendBadgeSuggestionMutationResult = NonNullable<Awaited<ReturnType<typeof staffSendBadgeSuggestion>>>
+
+    export type StaffSendBadgeSuggestionMutationError = unknown
+    export type StaffSendBadgeSuggestionMutationVariables = {slug: string}
+
+    /**
+ * @summary Email the listing's maintainers its badges and where to get them
+ */
+export const useStaffSendBadgeSuggestion = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof staffSendBadgeSuggestion>>, TError,StaffSendBadgeSuggestionMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof staffSendBadgeSuggestion>>,
+        TError,
+        StaffSendBadgeSuggestionMutationVariables,
+        TContext
+      > => {
+      return useMutation(getStaffSendBadgeSuggestionMutationOptions(options), queryClient);
     }
     export const getStaffFindUsersUrl = (params?: StaffFindUsersParams,) => {
   const normalizedParams = new URLSearchParams();

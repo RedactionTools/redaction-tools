@@ -274,6 +274,7 @@ export function makeStaffTool(overrides: Partial<StaffToolOut> = {}): StaffToolO
     })),
     open_revisions: 0,
     open_price_proposals: 0,
+    maintainers: [],
     listable: true,
     listability_reasons: [],
     ...overrides,

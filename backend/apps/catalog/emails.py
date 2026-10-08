@@ -1,8 +1,9 @@
-"""Mail sent about the catalog: a receipt and a staff notice for each tool submission."""
+"""Mail sent about the catalog: a receipt and a staff notice for each tool submission, and
+the badge suggestion staff send a listing's maintainers."""
 
 from django.db import transaction
 
-from apps.catalog.models import ToolSubmission
+from apps.catalog.models import Tool, ToolSubmission
 from apps.core.email import send_templated_email, staff_addresses
 
 
@@ -61,3 +62,28 @@ def send_submission_notice(submission_pk, admin_url):
         },
         to=staff,
     )
+
+
+def queue_badge_suggestions(tool, addresses):
+    """Queue one badge suggestion per maintainer once the request commits.
+
+    One task each, so a retry cannot resend to someone already mailed and no
+    maintainer sees another's address.
+    """
+    from django_q.tasks import async_task
+
+    def queue():
+        for address in addresses:
+            async_task(
+                "apps.catalog.emails.send_badge_suggestion",
+                tool.pk,
+                address,
+                task_name=f"badge suggestion {tool.slug} {address}",
+            )
+
+    transaction.on_commit(queue)
+
+
+def send_badge_suggestion(tool_pk, address):
+    tool = Tool.objects.get(pk=tool_pk)
+    send_templated_email("badge_suggestion", {"tool_name": tool.name}, to=[address])

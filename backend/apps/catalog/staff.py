@@ -10,6 +10,7 @@ request, so there is no path that writes a price or a revision without recording
 who did it.
 """
 
+import logging
 from decimal import Decimal, InvalidOperation
 
 from django.contrib.auth import get_user_model
@@ -21,7 +22,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_date
 from django.utils.text import slugify
 
-from apps.catalog import claims, logos
+from apps.catalog import claims, emails, logos
 from apps.catalog import screenshots as screenshot_service
 from apps.catalog.constants import (
     PLAN_URL_FIELDS,
@@ -44,6 +45,8 @@ from apps.catalog.models import (
     PriceSource,
     PriceUnit,
     Tool,
+    ToolClaim,
+    ToolClaimStatus,
     ToolFacet,
     ToolRevision,
     ToolRevisionOrigin,
@@ -57,6 +60,8 @@ from apps.catalog.models import (
 )
 from apps.catalog.services import external_url_errors
 from apps.catalog.slugs import validate_catalog_slug as validate_slug
+
+logger = logging.getLogger(__name__)
 
 
 class StaffError(Exception):
@@ -153,8 +158,21 @@ def tool_detail(slug):
         "open_price_proposals": tool.price_proposals.filter(
             status=PriceProposalStatus.PENDING
         ).count(),
+        "maintainers": _maintainers(tool),
         **_summary(tool),
     }
+
+
+def _maintainers(tool):
+    """The work address of everyone who maintains the listing: an approved claim on an
+    account still active, the same rule as the public "vendor-maintained" mark."""
+    return sorted(
+        set(
+            ToolClaim.objects.filter(
+                tool=tool, status=ToolClaimStatus.APPROVED, user__is_active=True
+            ).values_list("work_email", flat=True)
+        )
+    )
 
 
 def list_plans(*, slug):
@@ -923,6 +941,22 @@ def find_users(*, q, limit=10):
         .order_by("email")[:limit]
     )
     return [{"id": account.pk, "email": account.email, "name": account.name} for account in found]
+
+
+def send_badge_suggestion(*, user, slug):
+    """Email each maintainer the listing's badges and where to get the snippet.
+
+    Refused for a listing nobody maintains: the email points at "your listings",
+    which only a maintainer has.
+    """
+    tool = _tool(slug)
+    addresses = _maintainers(tool)
+    if not addresses:
+        raise StaffError(f"Nobody maintains {tool.name} yet, so there is no one to email.")
+
+    emails.queue_badge_suggestions(tool, addresses)
+    logger.info("User %s sent the badge suggestion for %s", user.pk, tool.slug)
+    return {"tool": tool.slug, "sent_to": addresses}
 
 
 def create_claim_invite(*, user, slug, email):

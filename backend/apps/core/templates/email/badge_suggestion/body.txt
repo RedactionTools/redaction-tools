@@ -1,0 +1,17 @@
+{% autoescape off %}Thank you for maintaining the {{ tool_name }} listing on Redaction Tools.
+
+You can put a Redaction Tools badge on your own site, linking readers to your listing. There are three:
+
+- Listed Tool: your listing is published in the catalog.
+- Editor Reviewed: our editors have reviewed the listing.
+- Benchmarked Tool: the tool has an approved result on our benchmark leaderboard.
+
+Each badge shows only what your listing has earned, and it updates itself: if a claim stops being true, the badge turns grey rather than staying wrong.
+
+Pick a badge, choose light or dark, and copy the HTML or Markdown snippet from your listings page:
+{{ site_url }}/my-listings
+
+-- 
+Redaction Tools
+{{ site_url }}
+{% endautoescape %}
