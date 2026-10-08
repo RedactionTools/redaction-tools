@@ -1,0 +1,27 @@
+<mjml lang="en">
+  <mj-head>
+    <mj-title>New blog post submission: {{ title }}</mj-title>
+    <mj-preview>{{ title }} is waiting for review.</mj-preview>
+    <mj-include path="../_partials/head.mjml" />
+  </mj-head>
+  <mj-body background-color="#f4f4f5" width="624px">
+    <mj-include path="../_partials/header.mjml" />
+    <mj-section padding="0 32px" background-color="#f4f4f5">
+      <mj-column background-color="#ffffff" padding="32px 32px 16px">
+        <mj-text>A blog post was submitted and is waiting for review.</mj-text>
+        <mj-text>
+          <strong>Title:</strong> {{ title }}<br>
+          <strong>Author:</strong> {{ author_name }}{% if author_role %}, {{ author_role }}{% endif %}<br>{% if tags %}
+          <strong>Tags:</strong> {{ tags }}<br>{% endif %}
+          <strong>Submitted by:</strong> {{ submitter_email }}
+        </mj-text>
+        <mj-text padding="0 0 4px"><strong>Summary</strong></mj-text>
+        <mj-text>{{ description|linebreaksbr }}</mj-text>
+        <mj-text padding="0 0 4px"><strong>Opening</strong></mj-text>
+        <mj-text>{{ excerpt|linebreaksbr }}</mj-text>
+        <mj-button href="{{ admin_url }}" background-color="#18181b" color="#ffffff" font-size="15px" border-radius="6px" align="left" padding="8px 0 16px">Review in the admin</mj-button>
+      </mj-column>
+    </mj-section>
+    <mj-include path="../_partials/footer.mjml" />
+  </mj-body>
+</mjml>

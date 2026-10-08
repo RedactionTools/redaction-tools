@@ -1,0 +1,15 @@
+{% autoescape off %}A blog post was submitted and is waiting for review.
+
+Title: {{ title }}
+Author: {{ author_name }}{% if author_role %}, {{ author_role }}{% endif %}{% if tags %}
+Tags: {{ tags }}{% endif %}
+Submitted by: {{ submitter_email }}
+
+Summary:
+{{ description }}
+
+Opening:
+{{ excerpt }}
+
+Review it: {{ admin_url }}
+{% endautoescape %}
