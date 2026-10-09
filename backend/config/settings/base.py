@@ -139,14 +139,16 @@ AUTH_PASSWORD_VALIDATORS = [
 LOGIN_URL = "/accounts/login/"
 LOGIN_REDIRECT_URL = "/admin/"
 
-# allauth: email is the identifier, Google is the only provider for now.
+# allauth: email is the identifier, Google its only provider. Signing in by email is
+# ours, not allauth's (apps/accounts/email_login.py): allauth's login-by-code is bound to
+# the browser that asked, so its link could not finish on another device.
 ACCOUNT_LOGIN_METHODS = {"email"}
 ACCOUNT_SIGNUP_FIELDS = ["email*"]
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_EMAIL_VERIFICATION = "none"  # Google hands us verified addresses
 ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_PREVENT_ENUMERATION = True
-SOCIALACCOUNT_ONLY = True  # flip off when magic link / password login lands
+SOCIALACCOUNT_ONLY = True  # allauth's own local login stays off; see above
 SOCIALACCOUNT_STORE_TOKENS = False
 SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
 SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
@@ -300,6 +302,10 @@ CATALOG_MAX_SCREENSHOTS = env.int("CATALOG_MAX_SCREENSHOTS", default=8)
 MAX_API_KEYS_PER_USER = env.int("MAX_API_KEYS_PER_USER", default=10)
 # Per IP: how often `pdfredeval login` may open a sign-in. It needs no account.
 CLI_LOGIN_START_RATE = env("CLI_LOGIN_START_RATE", default="20/hour")
+# Per IP. Signing in by email needs no account: requesting mails whatever address it
+# names, and confirming is where a six-digit code would be guessed.
+EMAIL_LOGIN_REQUEST_RATE = env("EMAIL_LOGIN_REQUEST_RATE", default="10/hour")
+EMAIL_LOGIN_CONFIRM_RATE = env("EMAIL_LOGIN_CONFIRM_RATE", default="30/hour")
 
 # --- Comments --------------------------------------------------------------
 # Per account. Login is the primary anti-spam control; this stops one account

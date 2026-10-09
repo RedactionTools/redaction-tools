@@ -40,7 +40,7 @@ export function UserMenu() {
   // treat it as signed out rather than showing a menu that does not work.
   if (!session || session.error) {
     return (
-      <Button size="sm" onClick={() => void signIn('google')}>
+      <Button size="sm" onClick={() => void signIn()}>
         Sign in
       </Button>
     )

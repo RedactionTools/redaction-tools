@@ -83,7 +83,7 @@ export function CommentSection({
       ) : (
         <div className="border-border bg-surface flex flex-wrap items-center justify-between gap-3 rounded-(--radius-card) border p-4">
           <p className="text-muted-foreground text-sm">Sign in to join the discussion.</p>
-          <Button size="sm" onClick={() => void signIn('google')}>
+          <Button size="sm" onClick={() => void signIn()}>
             Sign in to comment
           </Button>
         </div>

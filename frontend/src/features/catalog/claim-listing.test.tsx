@@ -108,7 +108,7 @@ describe('ClaimListing', () => {
 
     await user.click(screen.getByRole('button', { name: /sign in to claim/i }))
 
-    expect(signIn).toHaveBeenCalledWith('google')
+    expect(signIn).toHaveBeenCalledWith()
   })
 
   // Asking an owner whether they work for the vendor is the catalog forgetting

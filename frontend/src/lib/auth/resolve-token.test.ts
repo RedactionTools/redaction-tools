@@ -53,6 +53,24 @@ describe('resolveAuthToken on sign-in', () => {
 
     expect(result.error).toBe('TokenExchangeError')
   })
+
+  it('keeps the pair an email sign-in already traded for, with no network call', async () => {
+    const d = deps()
+
+    const result = await resolveAuthToken(
+      {
+        token: { error: 'RefreshTokenError' },
+        account: { provider: 'email' },
+        user: { tokens: freshPair },
+      },
+      d,
+    )
+
+    expect(result).toMatchObject(freshPair)
+    expect(result.error).toBeUndefined()
+    expect(d.exchange).not.toHaveBeenCalled()
+    expect(d.refresh).not.toHaveBeenCalled()
+  })
 })
 
 describe('resolveAuthToken on subsequent calls', () => {

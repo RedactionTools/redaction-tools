@@ -110,3 +110,27 @@ class CliLogin(models.Model):
     @property
     def expired(self):
         return self.expires_at <= timezone.now()
+
+
+class EmailLogin(models.Model):
+    """One emailed sign-in: a six-digit code and a link, either of which signs in once.
+
+    Both secrets are stored only as SHA-256. They share the row, so using one spends the
+    other. Nothing ties the row to the browser that asked, which is what lets the link
+    finish on a phone a sign-in started on a laptop.
+    """
+
+    email = models.EmailField(db_index=True)
+    code_hash = models.CharField(max_length=64)
+    link_hash = models.CharField(max_length=64, unique=True)
+    attempts = models.PositiveSmallIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    used_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "accounts_email_login"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.email} ({self.created_at:%Y-%m-%d %H:%M})"

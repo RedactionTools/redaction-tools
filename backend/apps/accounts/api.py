@@ -1,7 +1,8 @@
 """API-side authentication: the bearer token scheme and the `/auth` router.
 
-Obtaining tokens is allauth's job (`/_allauth/app/v1/...`, including
-`auth/tokens/refresh`); this module only consumes them.
+Obtaining tokens is mostly allauth's job (`/_allauth/app/v1/...`, including
+`auth/tokens/refresh`). The exception is signing in by email (`email_login.py`),
+which ends here in the same token pair.
 """
 
 from django.conf import settings
@@ -13,7 +14,7 @@ from ninja.throttling import AnonRateThrottle
 from ninja_apikey.models import APIKey
 from ninja_apikey.security import APIKeyAuth, generate_key
 
-from . import cli_login, jwt, mcp_oauth
+from . import cli_login, email_login, jwt, mcp_oauth
 from .schemas import (
     ApiKeyCreatedOut,
     ApiKeyIn,
@@ -23,6 +24,9 @@ from .schemas import (
     CliLoginStartOut,
     CliLoginTokenIn,
     CliLoginTokenOut,
+    EmailLoginConfirmIn,
+    EmailLoginIn,
+    EmailLoginTokenOut,
     McpAuthorizationDecisionIn,
     McpAuthorizationDecisionOut,
     McpAuthorizationOut,
@@ -226,6 +230,55 @@ def deny_cli_login(request: HttpRequest, user_code: str):
         return _cli_login_out(cli_login.decide(user_code, user=request.auth, approve=False))
     except cli_login.CliLoginError as exc:
         raise _cli_error(exc) from exc
+
+
+# --- Signing in by email ----------------------------------------------------------
+# A code and a link in one message: see apps/accounts/email_login.py.
+
+
+class EmailLoginRequestThrottle(AnonRateThrottle):
+    scope = "email_login_request"
+
+    def __init__(self):
+        super().__init__(settings.EMAIL_LOGIN_REQUEST_RATE)
+
+
+class EmailLoginConfirmThrottle(AnonRateThrottle):
+    scope = "email_login_confirm"
+
+    def __init__(self):
+        super().__init__(settings.EMAIL_LOGIN_CONFIRM_RATE)
+
+
+@router.post(
+    "/email-login",
+    response={204: None},
+    throttle=[EmailLoginRequestThrottle()],
+    summary="Email a sign-in code and link",
+)
+def request_email_login(request: HttpRequest, payload: EmailLoginIn):
+    try:
+        email_login.request_login(payload.email, payload.next)
+    except email_login.InvalidAddress as exc:
+        raise HttpError(422, str(exc)) from exc
+    return Status(204, None)
+
+
+@router.post(
+    "/email-login/confirm",
+    response=EmailLoginTokenOut,
+    throttle=[EmailLoginConfirmThrottle()],
+    summary="Sign in with an emailed code or link",
+)
+def confirm_email_login(request: HttpRequest, payload: EmailLoginConfirmIn):
+    try:
+        if payload.token:
+            user = email_login.confirm_with_link(payload.token)
+        else:
+            user = email_login.confirm_with_code(payload.email, payload.code)
+    except email_login.EmailLoginError as exc:
+        raise HttpError(400, str(exc)) from exc
+    return {**jwt.issue_token_pair(user), "user": user}
 
 
 # --- MCP connector consent ---------------------------------------------------------

@@ -120,9 +120,39 @@ access, at the next request. Signing uses `JWT_SIGNING_KEY`, falling back to `SE
 A browser redirect flow (`/_allauth/app/v1/auth/provider/redirect`) and the server-rendered
 `/accounts/` views are also available; the latter is how you sign into the Django admin with Google.
 
-Email/password and magic-link login are deliberately switched off for now
-(`SOCIALACCOUNT_ONLY = True` in `config/settings/base.py`); allauth already ships both, so enabling
-them later is a settings change plus frontend work.
+### Signing in by email
+
+Readers without Google sign in by email. One message carries both a six-digit code and a link, and
+either one signs in. The first sign-in creates the account (and sends `welcome`). The endpoints are
+ours (`apps/accounts/email_login.py`), not allauth's: allauth's login-by-code is bound to the
+`X-Session-Token` of the browser that asked, so its link could not finish on a phone a sign-in
+started on a laptop. allauth's own local login stays off (`SOCIALACCOUNT_ONLY = True`).
+
+```
+# 1. mail a code and a link - 204 whatever the address, so the form reveals no accounts
+POST /api/v1/auth/email-login            { "email": "...", "next": "/tools/acme" }
+
+# 2a. the code, typed on /auth/signin       2b. the link, /auth/email/verify?token=...&next=...
+POST /api/v1/auth/email-login/confirm    { "email": "...", "code": "042917" }  |  { "token": "..." }
+-> { "access_token", "refresh_token", "token_type", "expires_in", "user": {...} }
+```
+
+The pair is the same one Google's exchange returns, so refreshing it is step 3 above. On the
+frontend it is a next-auth `Credentials` provider with id `email`: its `authorize` makes the confirm
+call, and `resolveAuthToken` keeps the pair.
+
+What bites:
+
+- **The code and link share one row**, stored as SHA-256 only: using one spends the other, a new
+  request spends the previous mail's, and the row dies after 15 minutes or 5 wrong codes.
+- **The mail is sent in the request, never queued**, like `claim_code`.
+- **A repeat within 60 seconds sends nothing** and still answers 204. Both endpoints are also
+  throttled per IP (`EMAIL_LOGIN_REQUEST_RATE`, `EMAIL_LOGIN_CONFIRM_RATE`).
+- **The verify page signs in on a button, never on load**, because mail scanners open links.
+- **Signing in records a verified allauth `EmailAddress`.** That is what lets a later Google
+  sign-in with the same address land on the same account.
+- **`next` is a path on this site or nothing.** The backend falls back to `/account`, and
+  `landingPath` (`src/lib/auth/landing.ts`) strips the origin that next-auth's `signIn()` adds.
 
 ## Adding an endpoint
 
@@ -291,7 +321,8 @@ production. Tests always use the in-memory backend.
 
 | Email | Sent when | To |
 | --- | --- | --- |
-| `welcome` | allauth's `user_signed_up` - a first Google sign-in, not an account made in the admin | the new user |
+| `welcome` | allauth's `user_signed_up` - a first Google or email sign-in, not an account made in the admin | the new user |
+| `login_link` | someone asks to sign in by email (`POST /auth/email-login`) | that address |
 | `submission_received` | a tool is submitted (`POST /catalog/submissions`) | `contact_email`, else the account |
 | `submission_staff_notice` | the same, with a link to the row in the admin | every active `is_staff` account |
 | `claim_code` | a vendor claims a listing | the claimant's work email |
@@ -315,8 +346,8 @@ re-queued with the admin's **Re-score** action, `services.rescore`. It runs only
 submission that is scoring, failed or awaiting review, and settles it - emails included -
 like any other.
 
-`claim_code` and `claim_invite` are sent inside the request, never queued: a task's arguments are
-kept in the database, and both carry a credential the server otherwise stores only as a hash. All
+`claim_code`, `claim_invite` and `login_link` are sent inside the request, never queued: a task's arguments are
+kept in the database, and each carries a credential the server otherwise stores only as a hash. All
 the others go through the django-q2 queue after the transaction commits, so a
 sign-in or a submission never waits on - or fails with - the mail provider, and a
 rolled-back request mails nobody. On the host that means they only leave while

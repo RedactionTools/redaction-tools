@@ -1,10 +1,16 @@
 import type { AuthTokenError } from '@/lib/auth/resolve-token'
+import type { TokenPair } from '@/lib/auth/tokens'
 
 // `next-auth/jwt` is a bare `export * from "@auth/core/jwt"`, so augmenting it
 // would declare a separate interface rather than merging with the real one.
 // The JWT augmentation therefore targets @auth/core/jwt directly.
 
 declare module 'next-auth' {
+  interface User {
+    /** Set only by the email provider's `authorize`: the pair it traded the code for. */
+    tokens?: TokenPair
+  }
+
   interface Session {
     /** Our backend's access token, not Google's. Absent once `error` is set. */
     accessToken?: string

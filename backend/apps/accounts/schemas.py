@@ -107,3 +107,25 @@ class McpAuthorizationDecisionIn(Schema):
 class McpAuthorizationDecisionOut(Schema):
     #: The client's redirect URI with the code or the refusal on it. Send the browser there.
     redirect_url: str
+
+
+class EmailLoginIn(Schema):
+    email: str = Field(min_length=3, max_length=254)
+    #: Where the link lands after signing in. A path on this site, or it is ignored.
+    next: str = Field(default="", max_length=500)
+
+
+class EmailLoginConfirmIn(Schema):
+    """Either `email` and `code`, as typed on the sign-in page, or the link's `token`."""
+
+    email: str = ""
+    code: str = ""
+    token: str = ""
+
+
+class EmailLoginTokenOut(Schema):
+    access_token: str
+    refresh_token: str
+    token_type: str
+    expires_in: int
+    user: UserSchema

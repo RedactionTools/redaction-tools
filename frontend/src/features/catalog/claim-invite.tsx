@@ -95,7 +95,7 @@ export function ClaimInvite({ token }: { token: string }) {
             {redeem.isPending ? 'Accepting…' : 'Accept and maintain this listing'}
           </Button>
         ) : (
-          <Button onClick={() => void signIn('google', { redirectTo: `/claim/${token}` })}>
+          <Button onClick={() => void signIn(undefined, { redirectTo: `/claim/${token}` })}>
             Sign in to accept
           </Button>
         )}

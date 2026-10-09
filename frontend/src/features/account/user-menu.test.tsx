@@ -67,7 +67,7 @@ describe('UserMenu when signed out', () => {
 
     await user.click(screen.getByRole('button', { name: /sign in/i }))
 
-    expect(signIn).toHaveBeenCalledWith('google')
+    expect(signIn).toHaveBeenCalledWith()
   })
 
   it('treats a session carrying a token error as signed out', () => {
