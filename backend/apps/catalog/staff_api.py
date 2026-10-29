@@ -23,9 +23,11 @@ from apps.catalog.schemas import (
     StaffPlanCreateOut,
     StaffPlanLimitIn,
     StaffPlanLimitOut,
+    StaffPlanLimitRemovedOut,
     StaffPlanPriceIn,
     StaffPlanPriceOut,
     StaffPlanUpdateOut,
+    StaffPricesVerifiedOut,
     StaffScreenshotOut,
     StaffScreenshotReviewIn,
     StaffToolFacetIn,
@@ -59,6 +61,15 @@ def staff_update_tool(request: HttpRequest, slug: str, payload: StaffChangesIn):
 )
 def staff_set_tool_review(request: HttpRequest, slug: str, payload: StaffToolReviewIn):
     return staff.set_editorial_review(user=request.auth, slug=slug, reviewed=payload.reviewed)
+
+
+@router.post(
+    "/tools/{slug}/prices-verified",
+    response=StaffPricesVerifiedOut,
+    summary="Record that the listing's prices were checked against the vendor's page today",
+)
+def staff_mark_prices_verified(request: HttpRequest, slug: str):
+    return staff.mark_prices_verified(user=request.auth, slug=slug)
 
 
 # --- Plans -------------------------------------------------------------------
@@ -98,6 +109,15 @@ def staff_set_plan_limit(
     return staff.set_plan_limit(
         user=request.auth, slug=slug, code=code, kind=kind, **payload.dict()
     )
+
+
+@router.delete(
+    "/tools/{slug}/plans/{code}/limits/{kind}",
+    response=StaffPlanLimitRemovedOut,
+    summary="Remove a plan's cap of one kind",
+)
+def staff_remove_plan_limit(request: HttpRequest, slug: str, code: str, kind: str):
+    return staff.remove_plan_limit(user=request.auth, slug=slug, code=code, kind=kind)
 
 
 @router.post(

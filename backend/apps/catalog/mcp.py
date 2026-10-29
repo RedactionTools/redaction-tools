@@ -257,6 +257,22 @@ class SetToolReviewParams(Struct):
     ]
 
 
+class MarkPricesVerifiedParams(Struct):
+    slug: SLUG
+    verified_on: Annotated[
+        str | UnsetType,
+        Meta(
+            description="ISO date the prices were checked, e.g. '2026-09-01'. Omit for now. "
+            "Never in the future."
+        ),
+    ] = UNSET
+
+
+class MarkPricesVerifiedResult(Struct):
+    slug: str
+    last_verified_at: str
+
+
 class SetToolReviewResult(Struct):
     slug: str
     editorial_reviewed_at: str | None
@@ -680,6 +696,32 @@ def register(server):
                     user=request.user, slug=params.slug, reviewed=params.reviewed
                 ),
                 SetToolReviewResult,
+            )
+
+    @server.tool(
+        description=(
+            "Record that every price on a listing was checked against the vendor's "
+            "page and still matches. This is the date the site shows as 'prices "
+            "verified'. Call it only after you have actually compared each figure; "
+            "for a figure that moved, catalog_set_plan_price stamps the check itself."
+        ),
+        read_only=False,
+        destructive=False,
+        idempotent=True,
+        open_world=False,
+        permission=is_staff,
+    )
+    def catalog_mark_prices_verified(
+        request, params: MarkPricesVerifiedParams
+    ) -> MarkPricesVerifiedResult:
+        with _as_tool_error():
+            return msgspec.convert(
+                staff.mark_prices_verified(
+                    user=request.user,
+                    slug=params.slug,
+                    verified_on=None if params.verified_on is UNSET else params.verified_on,
+                ),
+                MarkPricesVerifiedResult,
             )
 
     @server.tool(

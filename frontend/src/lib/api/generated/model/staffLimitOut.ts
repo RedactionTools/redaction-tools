@@ -10,4 +10,7 @@ export interface StaffLimitOut {
   kind: string;
   label: string;
   value: string;
+  number: number | null;
+  is_unlimited: boolean;
+  note: string;
 }

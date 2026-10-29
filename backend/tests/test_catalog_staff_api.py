@@ -248,3 +248,44 @@ def test_staff_can_sign_a_listing_off_as_reviewed(client, staff_bearer):
     assert response.status_code == 200
     assert response.json()["editorial_reviewed_at"] is not None
     assert Tool.objects.get(slug=SEEDED).editorial_reviewed_at is not None
+
+
+def test_staff_can_mark_a_listings_prices_verified(client, staff_bearer):
+    response = client.post(f"{TOOLS}/{SEEDED}/prices-verified", **staff_bearer)
+
+    assert response.status_code == 200
+    assert response.json()["last_verified_at"] is not None
+    tool = Tool.objects.get(slug=SEEDED)
+    assert response.json()["last_verified_at"] == tool.last_verified_at.isoformat()
+
+
+def test_staff_can_remove_a_plan_cap(client, staff_bearer):
+    plan = Plan.objects.filter(tool__slug=SEEDED).first()
+    PlanLimit.objects.update_or_create(plan=plan, kind="pages_per_month", defaults={"value": 500})
+
+    response = client.delete(
+        f"{TOOLS}/{SEEDED}/plans/{plan.code}/limits/pages_per_month", **staff_bearer
+    )
+
+    assert response.status_code == 200
+    assert not PlanLimit.objects.filter(plan=plan, kind="pages_per_month").exists()
+
+
+def test_the_record_carries_each_caps_raw_figure_so_it_can_be_edited(client, staff_bearer):
+    plan = Plan.objects.filter(tool__slug=SEEDED).first()
+    PlanLimit.objects.filter(plan=plan).delete()
+    PlanLimit.objects.create(plan=plan, kind="pages_per_month", value=500, note="Pooled")
+
+    body = client.get(f"{TOOLS}/{SEEDED}", **staff_bearer).json()
+
+    record = next(p for p in body["plans"] if p["code"] == plan.code)
+    assert record["limits"] == [
+        {
+            "kind": "pages_per_month",
+            "label": "Pages per month",
+            "value": "500 pages",
+            "number": 500,
+            "is_unlimited": False,
+            "note": "Pooled",
+        }
+    ]

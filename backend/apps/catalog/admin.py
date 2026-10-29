@@ -10,10 +10,13 @@ from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.db import transaction
+from django.http import HttpResponse
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import format_html, format_html_join
 from django.utils.text import slugify
 from unfold.admin import ModelAdmin, TabularInline
+from unfold.decorators import action
 from unfold.widgets import UnfoldAdminFileFieldWidget
 
 from apps.catalog import images, logos, staff
@@ -364,7 +367,8 @@ class ToolAdmin(LogoAdminMixin, ModelAdmin):
     autocomplete_fields = ("vendor",)
     inlines = (ToolFacetInline, ToolScreenshotInline, PlanInline)
     readonly_fields = ("listing_blockers", "editorial_reviewed_at", "created_at", "updated_at")
-    actions = ("mark_reviewed", "clear_review")
+    actions = ("mark_reviewed", "clear_review", "mark_prices_verified")
+    actions_detail = ("mark_prices_verified_detail",)
 
     @admin.action(description="Mark reviewed - earns the owner's Reviewed badge")
     def mark_reviewed(self, request, queryset):
@@ -379,6 +383,34 @@ class ToolAdmin(LogoAdminMixin, ModelAdmin):
         for tool in queryset:
             staff.set_editorial_review(user=request.user, slug=tool.slug, reviewed=False)
         self.message_user(request, f"Cleared the review on {queryset.count()} tools.")
+
+    @admin.action(description="Mark prices verified today")
+    def mark_prices_verified(self, request, queryset):
+        for tool in queryset:
+            staff.mark_prices_verified(user=request.user, slug=tool.slug)
+        self.message_user(request, f"Marked the prices of {queryset.count()} tools verified today.")
+
+    @action(
+        description="Mark prices verified today",
+        url_path="mark-prices-verified",
+        icon="verified",
+        # A detail action is a link, and a link can be followed by anything. The
+        # dialog makes the GET only ask; the stamp waits for its POST.
+        dialog={
+            "title": "Mark prices verified today",
+            "description": "Record that every price on this listing was checked against the "
+            "vendor's page today and still matches.",
+            "form_submit_text": "Mark verified",
+        },
+    )
+    def mark_prices_verified_detail(self, request, form, object_id):
+        tool = self.get_object(request, object_id)
+        staff.mark_prices_verified(user=request.user, slug=tool.slug)
+        self.message_user(request, "Marked the prices verified today.")
+        change_url = reverse("admin:catalog_tool_change", args=[tool.pk])
+        # The dialog posts over htmx, which would swap a followed redirect into the
+        # dialog; HX-Redirect sends the whole page back to the tool instead.
+        return HttpResponse(headers={"HX-Redirect": change_url})
 
     def get_fields(self, request, obj=None):
         """Blockers first: they are the reason an editor opens a draft."""

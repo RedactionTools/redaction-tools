@@ -5,7 +5,10 @@ MCP - so it is tested here as plain functions, and `test_mcp_catalog.py` only ha
 to prove the wiring.
 """
 
+from datetime import timedelta
+
 import pytest
+from django.utils import timezone
 
 from apps.catalog.models import (
     BillingPeriod,
@@ -25,6 +28,8 @@ from apps.catalog.staff import (
     create_plan,
     create_tool,
     list_facets,
+    mark_prices_verified,
+    remove_plan_limit,
     remove_tool_facet,
     set_editorial_review,
     set_plan_limit,
@@ -705,3 +710,51 @@ def test_set_editorial_review_again_keeps_the_first_stamp_and_trail(staff_user, 
 def test_set_editorial_review_on_an_unknown_slug_is_refused(staff_user):
     with pytest.raises(StaffError):
         set_editorial_review(user=staff_user, slug="no-such-tool", reviewed=True)
+
+
+def test_mark_prices_verified_stamps_the_check_and_records_it(staff_user, tool):
+    changed_before = tool.prices_changed_at
+
+    result = mark_prices_verified(user=staff_user, slug=SEEDED)
+
+    tool.refresh_from_db()
+    assert tool.last_verified_at.date() == timezone.now().date()
+    assert result["last_verified_at"] == tool.last_verified_at.isoformat()
+    # A check that found nothing moved is not a price change.
+    assert tool.prices_changed_at == changed_before
+    revision = ToolRevision.objects.get(tool=tool)
+    assert revision.origin == ToolRevisionOrigin.STAFF
+    assert revision.changes == {"last_verified_at": tool.last_verified_at.isoformat()}
+
+
+def test_mark_prices_verified_on_an_earlier_date_records_that_day(staff_user, tool):
+    result = mark_prices_verified(user=staff_user, slug=SEEDED, verified_on="2026-09-01")
+
+    tool.refresh_from_db()
+    assert timezone.localdate(tool.last_verified_at).isoformat() == "2026-09-01"
+    assert result["last_verified_at"] == tool.last_verified_at.isoformat()
+
+
+def test_mark_prices_verified_in_the_future_is_refused(staff_user, tool):
+    tomorrow = (timezone.localdate() + timedelta(days=1)).isoformat()
+
+    with pytest.raises(StaffError, match="future"):
+        mark_prices_verified(user=staff_user, slug=SEEDED, verified_on=tomorrow)
+
+
+def test_remove_plan_limit_deletes_the_cap(staff_user):
+    set_plan_limit(user=staff_user, slug=SEEDED, code="pro", kind="pages_per_month", value=4500)
+
+    result = remove_plan_limit(user=staff_user, slug=SEEDED, code="pro", kind="pages_per_month")
+
+    assert result == {"tool": SEEDED, "code": "pro", "kind": "pages_per_month", "removed": True}
+    assert not PlanLimit.objects.filter(
+        plan__tool__slug=SEEDED, plan__code="pro", kind="pages_per_month"
+    ).exists()
+
+
+def test_remove_plan_limit_the_plan_does_not_hold_is_refused(staff_user):
+    PlanLimit.objects.filter(plan__tool__slug=SEEDED, plan__code="pro").delete()
+
+    with pytest.raises(StaffError, match="no pages_per_month cap"):
+        remove_plan_limit(user=staff_user, slug=SEEDED, code="pro", kind="pages_per_month")

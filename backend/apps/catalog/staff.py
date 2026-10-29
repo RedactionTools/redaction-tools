@@ -11,6 +11,7 @@ who did it.
 """
 
 import logging
+from datetime import datetime, time
 from decimal import Decimal, InvalidOperation
 
 from django.contrib.auth import get_user_model
@@ -217,7 +218,15 @@ def _plan(plan):
         # explode, and it is not what an editor is looking at.
         "prices": [_price(p) for p in plan.prices.all() if p.is_current],
         "limits": [
-            {"kind": limit.kind, "label": limit.label, "value": limit.display_value}
+            {
+                "kind": limit.kind,
+                "label": limit.label,
+                "value": limit.display_value,
+                # The stored figure as well as how it reads, so an editor can prefill.
+                "number": limit.value,
+                "is_unlimited": limit.is_unlimited,
+                "note": limit.note,
+            }
             for limit in plan.limits.all()
         ],
     }
@@ -361,6 +370,38 @@ def set_editorial_review(*, user, slug, reviewed):
     }
 
 
+def mark_prices_verified(*, user, slug, verified_on=None):
+    """Record that staff checked the listing's prices against the vendor's page.
+
+    For a check that found nothing to change: `set_plan_price` already stamps
+    `last_verified_at` when a figure moves. `prices_changed_at` stays put, since
+    no price did. `verified_on` (an ISO date) backdates a check made earlier;
+    without it the check is now.
+    """
+    verified_on = _date(verified_on, "verified_on")
+    if verified_on is None or verified_on == timezone.localdate():
+        stamp = timezone.now()
+    elif verified_on > timezone.localdate():
+        raise StaffError("verified_on is in the future. A check is recorded once it is made.")
+    else:
+        stamp = timezone.make_aware(datetime.combine(verified_on, time.min))
+    with transaction.atomic():
+        tool = Tool.objects.select_for_update().filter(slug=slug).first()
+        if tool is None:
+            raise StaffError(f"No tool with slug {slug!r}.")
+        before = {"last_verified_at": _stamp(tool.last_verified_at)}
+        tool.last_verified_at = stamp
+        tool.save(update_fields=["last_verified_at", "updated_at"])
+        _record_revision(
+            tool=tool,
+            user=user,
+            changes={"last_verified_at": _stamp(tool.last_verified_at)},
+            before=before,
+        )
+    logger.info("User %s marked the prices of %s verified", user.pk, tool.slug)
+    return {"slug": tool.slug, "last_verified_at": _stamp(tool.last_verified_at)}
+
+
 def update_plan(*, user, slug, code, changes):
     """Apply a staff edit to one plan of one tool."""
     _reject_unknown_fields(changes, STAFF_EDITABLE_PLAN_FIELDS, "plan")
@@ -486,6 +527,20 @@ def set_plan_limit(*, user, slug, code, kind, value=None, is_unlimited=False, no
         "display": limit.display_value,
         "created": created,
     }
+
+
+def remove_plan_limit(*, user, slug, code, kind):
+    """Delete a plan's cap of one kind, for a cap the vendor no longer publishes or
+    one recorded by mistake. A wrong figure is corrected with `set_plan_limit`."""
+    with transaction.atomic():
+        plan = Plan.objects.select_for_update().filter(tool__slug=slug, code=code).first()
+        if plan is None:
+            raise StaffError(f"No plan {code!r} on tool {slug!r}.")
+        removed, _ = PlanLimit.objects.filter(plan=plan, kind=kind).delete()
+        if not removed:
+            raise StaffError(f"Plan {code!r} has no {kind} cap to remove.")
+    logger.info("User %s removed the %s cap of %s/%s", user.pk, kind, slug, code)
+    return {"tool": slug, "code": code, "kind": kind, "removed": True}
 
 
 def set_plan_price(

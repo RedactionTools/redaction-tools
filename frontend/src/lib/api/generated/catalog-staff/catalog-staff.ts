@@ -36,9 +36,11 @@ import type {
   StaffPlanCreateOut,
   StaffPlanLimitIn,
   StaffPlanLimitOut,
+  StaffPlanLimitRemovedOut,
   StaffPlanPriceIn,
   StaffPlanPriceOut,
   StaffPlanUpdateOut,
+  StaffPricesVerifiedOut,
   StaffScreenshotOut,
   StaffScreenshotReviewIn,
   StaffToolFacetIn,
@@ -352,6 +354,79 @@ export const useStaffSetToolReview = <TError = unknown,
       > => {
       return useMutation(getStaffSetToolReviewMutationOptions(options), queryClient);
     }
+    export const getStaffMarkPricesVerifiedUrl = (slug: string,) => {
+
+
+
+
+  return `/api/v1/catalog/staff/tools/${slug}/prices-verified`
+}
+
+/**
+ * @summary Record that the listing's prices were checked against the vendor's page today
+ */
+export const staffMarkPricesVerified = async (slug: string, options?: Parameters<typeof customFetch>[1]): Promise<StaffPricesVerifiedOut> => {
+
+  return customFetch<StaffPricesVerifiedOut>(getStaffMarkPricesVerifiedUrl(slug),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getStaffMarkPricesVerifiedMutationKey = () => ['staffMarkPricesVerified'] as const;
+
+export const getStaffMarkPricesVerifiedMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof staffMarkPricesVerified>>, TError,StaffMarkPricesVerifiedMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof staffMarkPricesVerified>>, TError,StaffMarkPricesVerifiedMutationVariables, TContext> => {
+
+const mutationKey = getStaffMarkPricesVerifiedMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof staffMarkPricesVerified>>, StaffMarkPricesVerifiedMutationVariables> = (props) => {
+          const {slug} = props ?? {};
+
+          return  staffMarkPricesVerified(slug,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type StaffMarkPricesVerifiedMutationResult = NonNullable<Awaited<ReturnType<typeof staffMarkPricesVerified>>>
+
+    export type StaffMarkPricesVerifiedMutationError = unknown
+    export type StaffMarkPricesVerifiedMutationVariables = {slug: string}
+
+    /**
+ * @summary Record that the listing's prices were checked against the vendor's page today
+ */
+export const useStaffMarkPricesVerified = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof staffMarkPricesVerified>>, TError,StaffMarkPricesVerifiedMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof staffMarkPricesVerified>>,
+        TError,
+        StaffMarkPricesVerifiedMutationVariables,
+        TContext
+      > => {
+      return useMutation(getStaffMarkPricesVerifiedMutationOptions(options), queryClient);
+    }
     export const getStaffCreatePlanUrl = (slug: string,) => {
 
 
@@ -621,6 +696,83 @@ export const useStaffSetPlanLimit = <TError = unknown,
         TContext
       > => {
       return useMutation(getStaffSetPlanLimitMutationOptions(options), queryClient);
+    }
+    export const getStaffRemovePlanLimitUrl = (slug: string,
+    code: string,
+    kind: string,) => {
+
+
+
+
+  return `/api/v1/catalog/staff/tools/${slug}/plans/${code}/limits/${kind}`
+}
+
+/**
+ * @summary Remove a plan's cap of one kind
+ */
+export const staffRemovePlanLimit = async (slug: string,
+    code: string,
+    kind: string, options?: Parameters<typeof customFetch>[1]): Promise<StaffPlanLimitRemovedOut> => {
+
+  return customFetch<StaffPlanLimitRemovedOut>(getStaffRemovePlanLimitUrl(slug,code,kind),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getStaffRemovePlanLimitMutationKey = () => ['staffRemovePlanLimit'] as const;
+
+export const getStaffRemovePlanLimitMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof staffRemovePlanLimit>>, TError,StaffRemovePlanLimitMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof staffRemovePlanLimit>>, TError,StaffRemovePlanLimitMutationVariables, TContext> => {
+
+const mutationKey = getStaffRemovePlanLimitMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof staffRemovePlanLimit>>, StaffRemovePlanLimitMutationVariables> = (props) => {
+          const {slug,code,kind} = props ?? {};
+
+          return  staffRemovePlanLimit(slug,code,kind,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type StaffRemovePlanLimitMutationResult = NonNullable<Awaited<ReturnType<typeof staffRemovePlanLimit>>>
+
+    export type StaffRemovePlanLimitMutationError = unknown
+    export type StaffRemovePlanLimitMutationVariables = {slug: string;code: string;kind: string}
+
+    /**
+ * @summary Remove a plan's cap of one kind
+ */
+export const useStaffRemovePlanLimit = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof staffRemovePlanLimit>>, TError,StaffRemovePlanLimitMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof staffRemovePlanLimit>>,
+        TError,
+        StaffRemovePlanLimitMutationVariables,
+        TContext
+      > => {
+      return useMutation(getStaffRemovePlanLimitMutationOptions(options), queryClient);
     }
     export const getStaffSetPlanPriceUrl = (slug: string,
     code: string,) => {

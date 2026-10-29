@@ -5,6 +5,8 @@ whether a tool is listable, where a price came from - have to be visible there
 rather than only in the API.
 """
 
+from datetime import timedelta
+
 import pytest
 from django.contrib import admin
 from django.utils import timezone
@@ -563,3 +565,37 @@ def test_marking_a_tool_reviewed_from_the_list_goes_through_the_staff_trail(admi
     tool.refresh_from_db()
     assert tool.editorial_reviewed_at is not None
     assert tool.revisions.filter(changes__has_key="editorial_reviewed_at").exists()
+
+
+def test_marking_prices_verified_from_the_list_stamps_today_through_the_staff_trail(admin_client):
+    tool = Tool.objects.get(slug="pdf-redaction")
+    Tool.objects.filter(pk=tool.pk).update(last_verified_at=timezone.now() - timedelta(days=90))
+
+    admin_client.post(
+        "/admin/catalog/tool/",
+        {"action": "mark_prices_verified", "_selected_action": [str(tool.pk)]},
+        follow=True,
+    )
+
+    tool.refresh_from_db()
+    assert tool.last_verified_at.date() == timezone.now().date()
+    assert tool.revisions.filter(changes__has_key="last_verified_at").exists()
+
+
+def test_the_tool_page_button_marks_prices_verified_only_once_confirmed(admin_client):
+    tool = Tool.objects.get(slug="pdf-redaction")
+    stale = timezone.now() - timedelta(days=90)
+    Tool.objects.filter(pk=tool.pk).update(last_verified_at=stale)
+    url = f"/admin/catalog/tool/{tool.pk}/mark-prices-verified/"
+    assert url.encode() in admin_client.get(f"/admin/catalog/tool/{tool.pk}/change/").content
+
+    # Opening the button's link only asks; a link can be followed by anything.
+    assert admin_client.get(url).status_code == 200
+    tool.refresh_from_db()
+    assert tool.last_verified_at == stale
+
+    response = admin_client.post(url, {"_form_submitted": "True"}, HTTP_HX_REQUEST="true")
+
+    tool.refresh_from_db()
+    assert tool.last_verified_at.date() == timezone.now().date()
+    assert response["HX-Redirect"] == f"/admin/catalog/tool/{tool.pk}/change/"

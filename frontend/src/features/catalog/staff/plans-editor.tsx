@@ -8,14 +8,16 @@ import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
+import { errorMessage } from '@/lib/api/error-message'
 import {
   useStaffCreatePlan,
   useStaffGetTool,
+  useStaffRemovePlanLimit,
   useStaffSetPlanLimit,
   useStaffSetPlanPrice,
   useStaffUpdatePlan,
 } from '@/lib/api/generated/catalog-staff/catalog-staff'
-import type { StaffPlanOut } from '@/lib/api/generated/model'
+import type { StaffLimitOut, StaffPlanOut } from '@/lib/api/generated/model'
 
 import { EditorActions } from './editor-actions'
 import { useAfterStaffWrite } from './use-staff-write'
@@ -30,7 +32,8 @@ type Form = 'details' | 'price' | 'cap'
  */
 export function PlansEditor({ slug, onDone }: { slug: string; onDone: () => void }) {
   const { data: record } = useStaffGetTool(slug)
-  const [open, setOpen] = useState<{ code: string; form: Form } | null>(null)
+  // `kind` names the cap being edited; a cap form without one adds a new cap.
+  const [open, setOpen] = useState<{ code: string; form: Form; kind?: string } | null>(null)
   const [adding, setAdding] = useState(false)
   if (!record) return <Skeleton className="h-40 w-full" />
 
@@ -70,11 +73,15 @@ export function PlansEditor({ slug, onDone }: { slug: string; onDone: () => void
             </Button>
           </div>
           {plan.limits.length ? (
-            <ul className="text-muted-foreground text-sm">
+            <ul className="text-muted-foreground space-y-1 text-sm">
               {plan.limits.map((limit) => (
-                <li key={limit.kind}>
-                  {limit.label}: {limit.value}
-                </li>
+                <CapRow
+                  key={limit.kind}
+                  slug={slug}
+                  plan={plan}
+                  limit={limit}
+                  onEdit={() => setOpen({ code: plan.code, form: 'cap', kind: limit.kind })}
+                />
               ))}
             </ul>
           ) : null}
@@ -85,7 +92,13 @@ export function PlansEditor({ slug, onDone }: { slug: string; onDone: () => void
             <PriceForm slug={slug} plan={plan} onDone={close} />
           ) : null}
           {open?.code === plan.code && open.form === 'cap' ? (
-            <CapForm slug={slug} plan={plan} onDone={close} />
+            <CapForm
+              key={open.kind ?? 'new'}
+              slug={slug}
+              plan={plan}
+              limit={plan.limits.find((limit) => limit.kind === open.kind)}
+              onDone={close}
+            />
           ) : null}
         </section>
       ))}
@@ -222,17 +235,69 @@ const CAP_KINDS = [
   ['other', 'Other'],
 ] as const
 
+/** A recorded cap, with its own edit and remove. */
+function CapRow({
+  slug,
+  plan,
+  limit,
+  onEdit,
+}: {
+  slug: string
+  plan: StaffPlanOut
+  limit: StaffLimitOut
+  onEdit: () => void
+}) {
+  const afterWrite = useAfterStaffWrite(slug)
+  const remove = useStaffRemovePlanLimit({ mutation: { onSuccess: () => afterWrite() } })
+  const what = `the ${limit.label.toLowerCase()} cap of ${plan.name}`
+
+  return (
+    <li className="flex flex-wrap items-center gap-2">
+      <span>
+        {limit.label}: {limit.value}
+      </span>
+      <Button size="sm" variant="ghost" aria-label={`Edit ${what}`} onClick={onEdit}>
+        Edit
+      </Button>
+      <Button
+        size="sm"
+        variant="ghost"
+        aria-label={`Remove ${what}`}
+        disabled={remove.isPending}
+        onClick={() => remove.mutate({ slug, code: plan.code, kind: limit.kind })}
+      >
+        Remove
+      </Button>
+      {remove.error ? (
+        <span className="text-warn" role="alert">
+          {errorMessage(remove.error, 'The cap could not be removed. Please try again.')}
+        </span>
+      ) : null}
+    </li>
+  )
+}
+
 /**
  * One published cap. An upsert on (plan, kind), so correcting a figure moves
  * it. A cap with no number, not unlimited and no note is refused by the API:
  * "not published" is a claim about the vendor, not a blank field.
  */
-function CapForm({ slug, plan, onDone }: { slug: string; plan: StaffPlanOut; onDone: () => void }) {
+function CapForm({
+  slug,
+  plan,
+  limit,
+  onDone,
+}: {
+  slug: string
+  plan: StaffPlanOut
+  limit?: StaffLimitOut
+  onDone: () => void
+}) {
   const [draft, setDraft] = useState({
-    kind: 'pages_per_month',
-    value: '',
-    is_unlimited: false,
-    note: '',
+    kind: limit?.kind ?? 'pages_per_month',
+    value: limit?.number == null ? '' : String(limit.number),
+    is_unlimited: limit?.is_unlimited ?? false,
+    note: limit?.note ?? '',
   })
   const afterWrite = useAfterStaffWrite(slug)
   const save = useStaffSetPlanLimit({
@@ -263,6 +328,8 @@ function CapForm({ slug, plan, onDone }: { slug: string; plan: StaffPlanOut; onD
           <Select
             id={id('kind')}
             value={draft.kind}
+            // Changing the kind of a recorded cap would add a second one rather than move it.
+            disabled={limit !== undefined}
             onChange={(event) => set({ kind: event.target.value })}
           >
             {CAP_KINDS.map(([value, label]) => (
