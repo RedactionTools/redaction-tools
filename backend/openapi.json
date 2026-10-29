@@ -2300,7 +2300,7 @@
     "/api/v1/catalog/staff/users": {
       "get": {
         "operationId": "staff_find_users",
-        "summary": "Find accounts by email or name, to choose a claim link's recipient",
+        "summary": "Find accounts by email or name, to choose a maintainer or a claim link's recipient",
         "parameters": [
           {
             "in": "query",
@@ -2374,6 +2374,53 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/StaffClaimInviteIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "StaffJWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/catalog/staff/tools/{slug}/maintainers": {
+      "post": {
+        "operationId": "staff_assign_maintainer",
+        "summary": "Make an existing account a maintainer of the listing, with no claim to review",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffMaintainersOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "catalog-staff"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StaffMaintainerIn"
               }
             }
           },
@@ -7108,6 +7155,40 @@
           "email"
         ],
         "title": "StaffClaimInviteIn",
+        "type": "object"
+      },
+      "StaffMaintainersOut": {
+        "properties": {
+          "tool": {
+            "title": "Tool",
+            "type": "string"
+          },
+          "maintainers": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Maintainers",
+            "type": "array"
+          }
+        },
+        "required": [
+          "tool",
+          "maintainers"
+        ],
+        "title": "StaffMaintainersOut",
+        "type": "object"
+      },
+      "StaffMaintainerIn": {
+        "properties": {
+          "email": {
+            "title": "Email",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email"
+        ],
+        "title": "StaffMaintainerIn",
         "type": "object"
       },
       "SuiteSummaryOut": {

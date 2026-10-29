@@ -106,6 +106,8 @@ export * from './staffFacetOut';
 export * from './staffFindUsersParams';
 export * from './staffLimitOut';
 export * from './staffListCommentsParams';
+export * from './staffMaintainerIn';
+export * from './staffMaintainersOut';
 export * from './staffPlanCreateIn';
 export * from './staffPlanCreateInChanges';
 export * from './staffPlanCreateOut';

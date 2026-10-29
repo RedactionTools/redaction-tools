@@ -569,6 +569,15 @@ class StaffClaimInviteIn(Schema):
     email: str
 
 
+class StaffMaintainerIn(Schema):
+    email: str
+
+
+class StaffMaintainersOut(Schema):
+    tool: str
+    maintainers: list[str]
+
+
 class StaffBadgeSuggestionOut(Schema):
     tool: str
     sent_to: list[str]

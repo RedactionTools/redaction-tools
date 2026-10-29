@@ -310,6 +310,15 @@ Things to know:
 - Accepting takes a button press. Opening the link does not redeem it, because mail scanners
   open links before people do. The page is `noindex` and sends no referrer.
 
+### Assigning a maintainer directly
+
+When the owner already has an account there is no link to send. **Add maintainer** in the staff
+panel (`POST /catalog/staff/tools/<slug>/maintainers`) or **Tool claims → Add** in the admin
+grants the listing on the spot. Both call `staff.assign_maintainer`, which writes the same
+approved `ToolClaim` a redeemed link does (`claims.grant_listing`), with the staff member as
+`reviewed_by`. An address that matches no account is refused with a pointer to the claim link, and
+so is a deactivated account. Nothing is emailed.
+
 ## Email
 
 Transactional mail is rendered from templates in the repo and sent through whatever

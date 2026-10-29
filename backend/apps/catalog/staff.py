@@ -959,6 +959,30 @@ def send_badge_suggestion(*, user, slug):
     return {"tool": tool.slug, "sent_to": addresses}
 
 
+def assign_maintainer(*, user, slug, email):
+    """Make the account behind `email` a maintainer of this listing, with no claim to
+    review. For someone with no account yet, `create_claim_invite` is the way."""
+    tool = _tool(slug)
+    email = (email or "").strip()
+    account = get_user_model().objects.filter(email__iexact=email).first()
+    if account is not None and not account.is_active:
+        raise StaffError(f"The account {email!r} is deactivated.")
+    if account is None:
+        raise StaffError(
+            f"No account uses {email!r}. Send a claim link instead: it grants the listing "
+            "to whoever redeems it, after they sign up."
+        )
+    claims.grant_listing(
+        tool=tool,
+        user=account,
+        email=account.email,
+        reviewed_by=user,
+        comment=f"Assigned by staff ({user.email}).",
+    )
+    logger.info("User %s made user %s a maintainer of %s", user.pk, account.pk, tool.slug)
+    return {"tool": tool.slug, "maintainers": _maintainers(tool)}
+
+
 def create_claim_invite(*, user, slug, email):
     """Mint a one-time link that grants this listing to whoever redeems it.
 

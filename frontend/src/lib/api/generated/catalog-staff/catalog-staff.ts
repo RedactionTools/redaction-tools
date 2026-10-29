@@ -30,6 +30,8 @@ import type {
   StaffClaimInviteIn,
   StaffClaimInviteOut,
   StaffFindUsersParams,
+  StaffMaintainerIn,
+  StaffMaintainersOut,
   StaffPlanCreateIn,
   StaffPlanCreateOut,
   StaffPlanLimitIn,
@@ -1311,7 +1313,7 @@ export const useStaffSendBadgeSuggestion = <TError = unknown,
 }
 
 /**
- * @summary Find accounts by email or name, to choose a claim link's recipient
+ * @summary Find accounts by email or name, to choose a maintainer or a claim link's recipient
  */
 export const staffFindUsers = async (params?: StaffFindUsersParams, options?: Parameters<typeof customFetch>[1]): Promise<StaffUserOut[]> => {
 
@@ -1382,7 +1384,7 @@ export function useStaffFindUsers<TData = Awaited<ReturnType<typeof staffFindUse
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary Find accounts by email or name, to choose a claim link's recipient
+ * @summary Find accounts by email or name, to choose a maintainer or a claim link's recipient
  */
 
 export function useStaffFindUsers<TData = Awaited<ReturnType<typeof staffFindUsers>>, TError = unknown>(
@@ -1489,4 +1491,92 @@ export const useStaffCreateClaimInvite = <TError = unknown,
         TContext
       > => {
       return useMutation(getStaffCreateClaimInviteMutationOptions(options), queryClient);
+    }
+    export const getStaffAssignMaintainerUrl = (slug: string,) => {
+
+
+
+
+  return `/api/v1/catalog/staff/tools/${slug}/maintainers`
+}
+
+/**
+ * @summary Make an existing account a maintainer of the listing, with no claim to review
+ */
+export const staffAssignMaintainer = async (slug: string,
+    staffMaintainerIn: StaffMaintainerIn, options?: Parameters<typeof customFetch>[1]): Promise<StaffMaintainersOut> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<StaffMaintainersOut>(getStaffAssignMaintainerUrl(slug),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(staffMaintainerIn)
+  }
+);}
+
+
+
+
+
+export const getStaffAssignMaintainerMutationKey = () => ['staffAssignMaintainer'] as const;
+
+export const getStaffAssignMaintainerMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof staffAssignMaintainer>>, TError,StaffAssignMaintainerMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof staffAssignMaintainer>>, TError,StaffAssignMaintainerMutationVariables, TContext> => {
+
+const mutationKey = getStaffAssignMaintainerMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof staffAssignMaintainer>>, StaffAssignMaintainerMutationVariables> = (props) => {
+          const {slug,data} = props ?? {};
+
+          return  staffAssignMaintainer(slug,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type StaffAssignMaintainerMutationResult = NonNullable<Awaited<ReturnType<typeof staffAssignMaintainer>>>
+    export type StaffAssignMaintainerMutationBody = StaffMaintainerIn
+    export type StaffAssignMaintainerMutationError = unknown
+    export type StaffAssignMaintainerMutationVariables = {slug: string;data: StaffMaintainerIn}
+
+    /**
+ * @summary Make an existing account a maintainer of the listing, with no claim to review
+ */
+export const useStaffAssignMaintainer = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof staffAssignMaintainer>>, TError,StaffAssignMaintainerMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof staffAssignMaintainer>>,
+        TError,
+        StaffAssignMaintainerMutationVariables,
+        TContext
+      > => {
+      return useMutation(getStaffAssignMaintainerMutationOptions(options), queryClient);
     }
