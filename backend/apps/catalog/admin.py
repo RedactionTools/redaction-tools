@@ -8,6 +8,7 @@ each published figure came from.
 from django import forms
 from django.conf import settings
 from django.contrib import admin
+from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
 from django.utils.html import format_html, format_html_join
@@ -594,6 +595,16 @@ class ToolSubmissionAdmin(ModelAdmin):
         self.message_user(request, f"{count} submission(s) marked duplicate.")
 
 
+class AssignMaintainerForm(forms.ModelForm):
+    class Meta:
+        model = ToolClaim
+        fields = ("tool", "user")
+
+    def validate_constraints(self):
+        # A claim the account already filed is approved in place, not refused as a duplicate.
+        pass
+
+
 @admin.register(ToolClaim)
 class ToolClaimAdmin(ModelAdmin):
     """Claim review.
@@ -622,6 +633,33 @@ class ToolClaimAdmin(ModelAdmin):
     )
     fields = (*readonly_fields, "status", "admin_comment")
     actions = ("approve_claims", "reject_claims", "revoke_claims")
+    # The add form is staff assigning a maintainer outright: pick the listing and the
+    # account, and `staff.assign_maintainer` writes an approved claim.
+    add_fields = ("tool", "user")
+    autocomplete_fields = ("tool", "user")
+
+    def get_fields(self, request, obj=None):
+        return self.add_fields if obj is None else self.fields
+
+    def get_readonly_fields(self, request, obj=None):
+        return () if obj is None else self.readonly_fields
+
+    def get_form(self, request, obj=None, **kwargs):
+        if obj is None:
+            kwargs["form"] = AssignMaintainerForm
+        return super().get_form(request, obj, **kwargs)
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "user":
+            kwargs["queryset"] = get_user_model().objects.filter(is_active=True)
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+    def save_model(self, request, obj, form, change):
+        if change:
+            return super().save_model(request, obj, form, change)
+        staff.assign_maintainer(user=request.user, slug=obj.tool.slug, email=obj.user.email)
+        obj.pk = ToolClaim.objects.get(tool=obj.tool, user=obj.user).pk
+        obj.refresh_from_db()
 
     def _decide(self, request, queryset, status_value):
         return queryset.update(

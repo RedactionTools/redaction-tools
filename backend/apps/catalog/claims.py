@@ -176,27 +176,41 @@ def redeem_claim_invite(raw, user):
             return invite.claim
         raise InviteUnavailable("This claim link has already been used.")
 
-    now = timezone.now()
-    # A person who already filed a claim the ordinary way has it approved, not
-    # duplicated: one claim per person per tool is a database constraint. Either
-    # way the claim records the address staff vouched for, not the one typed in.
-    claim, _ = ToolClaim.objects.update_or_create(
+    claim = grant_listing(
         tool=invite.tool,
         user=user,
-        defaults={
-            "work_email": invite.email,
-            "email_domain": invite.email.rsplit("@", 1)[-1].lower(),
-            "domain_matched": domain_matches(invite.email, invite.tool.website_url),
-            "status": ToolClaimStatus.APPROVED,
-            "email_verified_at": now,
-            "reviewed_by": invite.created_by,
-            "reviewed_at": now,
-            "admin_comment": f"Approved by staff claim link #{invite.pk}.",
-        },
+        email=invite.email,
+        reviewed_by=invite.created_by,
+        comment=f"Approved by staff claim link #{invite.pk}.",
     )
 
-    invite.redeemed_at = now
+    invite.redeemed_at = claim.reviewed_at
     invite.redeemed_by = user
     invite.claim = claim
     invite.save(update_fields=["redeemed_at", "redeemed_by", "claim", "updated_at"])
+    return claim
+
+
+def grant_listing(*, tool, user, email, reviewed_by, comment):
+    """Make `user` a maintainer of `tool` on staff's word. Returns the approved claim.
+
+    A person who already filed a claim the ordinary way has it approved, not
+    duplicated: one claim per person per tool is a database constraint. Either
+    way the claim records the address staff vouched for, not the one typed in.
+    """
+    now = timezone.now()
+    claim, _ = ToolClaim.objects.update_or_create(
+        tool=tool,
+        user=user,
+        defaults={
+            "work_email": email,
+            "email_domain": email.rsplit("@", 1)[-1].lower(),
+            "domain_matched": domain_matches(email, tool.website_url),
+            "status": ToolClaimStatus.APPROVED,
+            "email_verified_at": now,
+            "reviewed_by": reviewed_by,
+            "reviewed_at": now,
+            "admin_comment": comment,
+        },
+    )
     return claim

@@ -8,6 +8,7 @@ import type { StaffToolOut } from '@/lib/api/generated/model'
 import { BadgeSuggestion } from './badge-suggestion'
 import { ClaimInviteMinter } from './claim-invite-minter'
 import { Editable } from './editable'
+import { MaintainerAssigner } from './maintainer-assigner'
 import { type FieldSpec, ToolFieldEditor } from './tool-field-editor'
 import { useIsStaff } from './use-is-staff'
 
@@ -93,6 +94,13 @@ export function StaffPanel({ slug }: { slug: string }) {
           <BadgeSuggestion slug={slug} maintainers={record.maintainers} />
         </div>
       ) : null}
+
+      <div className="border-border space-y-2 border-t pt-4">
+        <CardDescription>
+          Make someone who already has an account a maintainer of this listing.
+        </CardDescription>
+        <MaintainerAssigner slug={slug} />
+      </div>
 
       <div className="border-border space-y-2 border-t pt-4">
         <CardDescription>

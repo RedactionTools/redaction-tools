@@ -17,6 +17,8 @@ from apps.catalog.schemas import (
     StaffChangesIn,
     StaffClaimInviteIn,
     StaffClaimInviteOut,
+    StaffMaintainerIn,
+    StaffMaintainersOut,
     StaffPlanCreateIn,
     StaffPlanCreateOut,
     StaffPlanLimitIn,
@@ -207,7 +209,7 @@ def staff_send_badge_suggestion(request: HttpRequest, slug: str):
 @router.get(
     "/users",
     response=list[StaffUserOut],
-    summary="Find accounts by email or name, to choose a claim link's recipient",
+    summary="Find accounts by email or name, to choose a maintainer or a claim link's recipient",
 )
 def staff_find_users(request: HttpRequest, q: str = ""):
     return staff.find_users(q=q)
@@ -220,3 +222,12 @@ def staff_find_users(request: HttpRequest, q: str = ""):
 )
 def staff_create_claim_invite(request: HttpRequest, slug: str, payload: StaffClaimInviteIn):
     return Status(201, staff.create_claim_invite(user=request.auth, slug=slug, email=payload.email))
+
+
+@router.post(
+    "/tools/{slug}/maintainers",
+    response=StaffMaintainersOut,
+    summary="Make an existing account a maintainer of the listing, with no claim to review",
+)
+def staff_assign_maintainer(request: HttpRequest, slug: str, payload: StaffMaintainerIn):
+    return staff.assign_maintainer(user=request.auth, slug=slug, email=payload.email)

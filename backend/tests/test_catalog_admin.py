@@ -206,6 +206,34 @@ def test_revoking_a_claim_takes_ownership_back(admin_client, user):
 
 
 @pytest.mark.django_db
+def test_staff_can_assign_a_maintainer_from_the_claim_add_form(admin_client, staff_user, user):
+    """No claim to review: staff pick the listing and the account, and it is granted."""
+    tool = Tool.objects.get(slug="foxit-editor")
+
+    response = admin_client.post(
+        "/admin/catalog/toolclaim/add/", {"tool": tool.pk, "user": user.pk}, follow=True
+    )
+
+    assert response.status_code == 200
+    assert list(Tool.objects.owned_by(user)) == [tool]
+    assert user.tool_claims.get().reviewed_by == staff_user
+
+
+@pytest.mark.django_db
+def test_assigning_someone_with_a_pending_claim_approves_it(admin_client, user):
+    tool = Tool.objects.get(slug="foxit-editor")
+    pending = ToolClaim.objects.create(
+        tool=tool, user=user, work_email="rep@gmail.com", email_domain="gmail.com"
+    )
+
+    admin_client.get("/admin/catalog/toolclaim/add/")
+    admin_client.post("/admin/catalog/toolclaim/add/", {"tool": tool.pk, "user": user.pk})
+
+    pending.refresh_from_db()
+    assert pending.status == ToolClaimStatus.APPROVED
+
+
+@pytest.mark.django_db
 def test_the_price_list_names_the_tool_each_plan_belongs_to(admin_client):
     """Plan names repeat across vendors, so "Pro" alone does not say whose price this is."""
     response = admin_client.get("/admin/catalog/planprice/")
