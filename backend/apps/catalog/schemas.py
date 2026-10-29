@@ -388,6 +388,11 @@ class StaffToolReviewIn(Schema):
     reviewed: bool
 
 
+class StaffPricesVerifiedOut(Schema):
+    slug: str
+    last_verified_at: str
+
+
 class StaffToolReviewOut(Schema):
     slug: str
     editorial_reviewed_at: str | None
@@ -409,6 +414,9 @@ class StaffLimitOut(Schema):
     kind: str
     label: str
     value: str
+    number: int | None
+    is_unlimited: bool
+    note: str
 
 
 class StaffPlanOut(Schema):
@@ -490,6 +498,13 @@ class StaffPlanLimitIn(Schema):
     value: int | None = None
     is_unlimited: bool = False
     note: str = ""
+
+
+class StaffPlanLimitRemovedOut(Schema):
+    tool: str
+    code: str
+    kind: str
+    removed: bool
 
 
 class StaffPlanLimitOut(Schema):

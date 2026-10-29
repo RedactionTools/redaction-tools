@@ -258,6 +258,19 @@ describe('ToolProfile for staff', () => {
     expect(await screen.findByText(/sent to ceo@adobe\.com/i)).toBeInTheDocument()
   })
 
+  it('shows when the prices were last verified and marks them verified today', async () => {
+    const fetch = stubFetch(200, { slug: TOOL.slug, last_verified_at: '2026-10-29T09:00:00Z' })
+    const user = userEvent.setup()
+    render({ staff: true, record: makeStaffTool({ last_verified_at: '2026-09-15T00:00:00Z' }) })
+
+    expect(screen.getByTestId('staff-panel')).toHaveTextContent(/prices last verified.*2026/i)
+    await user.click(screen.getByRole('button', { name: /mark prices verified today/i }))
+
+    const [url, init] = fetch.mock.calls[0]
+    expect(String(url)).toContain(`/catalog/staff/tools/${TOOL.slug}/prices-verified`)
+    expect(init?.method).toBe('POST')
+  })
+
   it('shows readers no staff panel', () => {
     render({ staff: false, record: makeStaffTool({ editor_notes: 'Recheck the trial.' }) })
 
@@ -333,6 +346,78 @@ describe('ToolProfile for staff', () => {
       expect(String(url)).toContain('/plans/pro/limits/pages_per_month')
       expect(init?.method).toBe('PUT')
       expect(JSON.parse(String(init?.body))).toEqual({ value: 500, is_unlimited: false, note: '' })
+    })
+
+    function withCap() {
+      const record = makeStaffTool()
+      return makeStaffTool({
+        plans: record.plans.map((plan) =>
+          plan.code === 'pro'
+            ? {
+                ...plan,
+                limits: [
+                  {
+                    kind: 'documents_per_month',
+                    label: 'Documents per month',
+                    value: '10 documents',
+                    number: 10,
+                    is_unlimited: false,
+                    note: 'Pooled',
+                  },
+                ],
+              }
+            : plan,
+        ),
+      })
+    }
+
+    it('edits an existing cap, starting from its figure', async () => {
+      const fetchSpy = stubFetch(200, {
+        tool: TOOL.slug,
+        code: 'pro',
+        kind: 'documents_per_month',
+        label: 'Documents per month',
+        display: '20 documents',
+        created: false,
+      })
+      const user = userEvent.setup()
+      render({ staff: true, record: withCap() })
+
+      await openPlan(user, /edit the documents per month cap of acrobat pro/i)
+      expect(screen.getByLabelText('Kind')).toHaveValue('documents_per_month')
+      const value = screen.getByLabelText('Value')
+      expect(value).toHaveValue(10)
+      expect(screen.getByLabelText('Note')).toHaveValue('Pooled')
+      await user.clear(value)
+      await user.type(value, '20')
+      await user.click(screen.getByRole('button', { name: 'Save' }))
+
+      await waitFor(() => expect(fetchSpy.mock.calls).not.toHaveLength(0))
+      const [url, init] = fetchSpy.mock.calls[0]
+      expect(String(url)).toContain('/plans/pro/limits/documents_per_month')
+      expect(JSON.parse(String(init?.body))).toEqual({
+        value: 20,
+        is_unlimited: false,
+        note: 'Pooled',
+      })
+    })
+
+    it('removes a cap', async () => {
+      const fetchSpy = stubFetch(200, {
+        tool: TOOL.slug,
+        code: 'pro',
+        kind: 'documents_per_month',
+        removed: true,
+      })
+      const user = userEvent.setup()
+      render({ staff: true, record: withCap() })
+
+      await openPlan(user, /remove the documents per month cap of acrobat pro/i)
+
+      await waitFor(() => expect(fetchSpy.mock.calls).not.toHaveLength(0))
+      const [url, init] = fetchSpy.mock.calls[0]
+      expect(String(url)).toContain('/plans/pro/limits/documents_per_month')
+      expect(init?.method).toBe('DELETE')
     })
 
     it('adds a plan', async () => {

@@ -24,6 +24,7 @@ TOOLS = {
     "catalog_list_plans",
     "catalog_update_tool",
     "catalog_set_tool_review",
+    "catalog_mark_prices_verified",
     "catalog_create_tool",
     "catalog_create_plan",
     "catalog_update_plan",
@@ -510,3 +511,20 @@ def test_set_tool_review_signs_the_listing_off(call_tool):
     assert Tool.objects.get(slug=SEEDED).editorial_reviewed_at is not None
     detail = payload(call_tool("catalog_get_tool", {"slug": SEEDED}))
     assert detail["editorial_reviewed_at"] == body["editorial_reviewed_at"]
+
+
+def test_mark_prices_verified_stamps_the_check_on_the_given_day(call_tool):
+    body = payload(
+        call_tool("catalog_mark_prices_verified", {"slug": SEEDED, "verified_on": "2026-09-01"})
+    )
+
+    assert body["last_verified_at"].startswith("2026-09-01")
+    detail = payload(call_tool("catalog_get_tool", {"slug": SEEDED}))
+    assert detail["last_verified_at"] == body["last_verified_at"]
+
+
+def test_mark_prices_verified_defaults_to_now(call_tool):
+    body = payload(call_tool("catalog_mark_prices_verified", {"slug": SEEDED}))
+
+    stamped = Tool.objects.get(slug=SEEDED).last_verified_at
+    assert body["last_verified_at"] == stamped.isoformat()

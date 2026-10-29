@@ -9,6 +9,7 @@ import { BadgeSuggestion } from './badge-suggestion'
 import { ClaimInviteMinter } from './claim-invite-minter'
 import { Editable } from './editable'
 import { MaintainerAssigner } from './maintainer-assigner'
+import { PricesVerified } from './prices-verified'
 import { type FieldSpec, ToolFieldEditor } from './tool-field-editor'
 import { useIsStaff } from './use-is-staff'
 
@@ -88,6 +89,10 @@ export function StaffPanel({ slug }: { slug: string }) {
           </Editable>
         ))}
       </dl>
+
+      <div className="border-border border-t pt-4">
+        <PricesVerified slug={slug} lastVerifiedAt={record.last_verified_at} />
+      </div>
 
       {record.maintainers.length ? (
         <div className="border-border border-t pt-4">

@@ -1710,6 +1710,43 @@
         ]
       }
     },
+    "/api/v1/catalog/staff/tools/{slug}/prices-verified": {
+      "post": {
+        "operationId": "staff_mark_prices_verified",
+        "summary": "Record that the listing's prices were checked against the vendor's page today",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffPricesVerifiedOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "catalog-staff"
+        ],
+        "security": [
+          {
+            "StaffJWTAuth": []
+          }
+        ]
+      }
+    },
     "/api/v1/catalog/staff/tools/{slug}/plans": {
       "post": {
         "operationId": "staff_create_plan",
@@ -1871,6 +1908,59 @@
           },
           "required": true
         },
+        "security": [
+          {
+            "StaffJWTAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "staff_remove_plan_limit",
+        "summary": "Remove a plan's cap of one kind",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "code",
+            "schema": {
+              "title": "Code",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "kind",
+            "schema": {
+              "title": "Kind",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffPlanLimitRemovedOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "catalog-staff"
+        ],
         "security": [
           {
             "StaffJWTAuth": []
@@ -6165,12 +6255,34 @@
           "value": {
             "title": "Value",
             "type": "string"
+          },
+          "number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Number"
+          },
+          "is_unlimited": {
+            "title": "Is Unlimited",
+            "type": "boolean"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
           }
         },
         "required": [
           "kind",
           "label",
-          "value"
+          "value",
+          "number",
+          "is_unlimited",
+          "note"
         ],
         "title": "StaffLimitOut",
         "type": "object"
@@ -6601,6 +6713,24 @@
         "title": "StaffToolReviewIn",
         "type": "object"
       },
+      "StaffPricesVerifiedOut": {
+        "properties": {
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "last_verified_at": {
+            "title": "Last Verified At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slug",
+          "last_verified_at"
+        ],
+        "title": "StaffPricesVerifiedOut",
+        "type": "object"
+      },
       "StaffPlanCreateOut": {
         "properties": {
           "tool": {
@@ -6742,6 +6872,34 @@
           }
         },
         "title": "StaffPlanLimitIn",
+        "type": "object"
+      },
+      "StaffPlanLimitRemovedOut": {
+        "properties": {
+          "tool": {
+            "title": "Tool",
+            "type": "string"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "removed": {
+            "title": "Removed",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "tool",
+          "code",
+          "kind",
+          "removed"
+        ],
+        "title": "StaffPlanLimitRemovedOut",
         "type": "object"
       },
       "StaffPlanPriceOut": {
